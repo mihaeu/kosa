@@ -7,24 +7,26 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/jest/bin/jest.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "tscd": "0.0.1",
-    "typescript": "^2.6.2"
+    "typescript": "^2.6.2",
+    "typescript-collections": "^1.2.5"
   },
   "devDependencies": {
     "@types/jest": "^21.1.8",
     "jest": "^21.2.1",
-    "ts-jest": "^21.2.4"
+    "ts-jest": "^21.2.4",
+    "tslint": "^5.8.0"
   },
   "jest": {
     "transform": {
       "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(tsx|js)$",
     "moduleFileExtensions": [
       "ts",
       "tsx",

@@ -6,5 +6,5 @@ export enum FieldType {
     MOUNTAIN,
     TUNDRA,
     FARM,
-    LAKE
+    LAKE,
 }

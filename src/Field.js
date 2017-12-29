@@ -1,16 +1,65 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const FieldType_1 = require("./FieldType");
 class Field {
     constructor(name, type) {
         this.name = name;
         this.type = type;
-        this.connectedFields = [];
-    }
-    connectField(field, connection) {
-        this.connectedFields.push({ field: field, connection: connection });
-    }
-    getConnectedFields() {
-        return this.connectedFields;
+        this.name = name;
+        this.type = type;
     }
 }
+Field.black = new Field("black", FieldType_1.FieldType.HOMEBASE);
+Field.blue = new Field("blue", FieldType_1.FieldType.HOMEBASE);
+Field.green = new Field("green", FieldType_1.FieldType.HOMEBASE);
+Field.purple = new Field("purple", FieldType_1.FieldType.HOMEBASE);
+Field.red = new Field("red", FieldType_1.FieldType.HOMEBASE);
+Field.white = new Field("white", FieldType_1.FieldType.HOMEBASE);
+Field.yellow = new Field("yellow", FieldType_1.FieldType.HOMEBASE);
+Field.F = new Field("F", FieldType_1.FieldType.FACTORY);
+Field.f1 = new Field("f1", FieldType_1.FieldType.FARM);
+Field.f2 = new Field("f2", FieldType_1.FieldType.FARM);
+Field.f3 = new Field("f3", FieldType_1.FieldType.FARM);
+Field.f4 = new Field("f4", FieldType_1.FieldType.FARM);
+Field.f5 = new Field("f5", FieldType_1.FieldType.FARM);
+Field.f6 = new Field("f6", FieldType_1.FieldType.FARM);
+Field.f7 = new Field("f7", FieldType_1.FieldType.FARM);
+Field.l1 = new Field("l1", FieldType_1.FieldType.LAKE);
+Field.l2 = new Field("l2", FieldType_1.FieldType.LAKE);
+Field.l4 = new Field("l4", FieldType_1.FieldType.LAKE);
+Field.l5 = new Field("l5", FieldType_1.FieldType.LAKE);
+Field.l6 = new Field("l6", FieldType_1.FieldType.LAKE);
+Field.l7 = new Field("l7", FieldType_1.FieldType.LAKE);
+Field.m1 = new Field("m1", FieldType_1.FieldType.MOUNTAIN);
+Field.m2 = new Field("m2", FieldType_1.FieldType.MOUNTAIN);
+Field.m3 = new Field("m3", FieldType_1.FieldType.MOUNTAIN);
+Field.m4 = new Field("m4", FieldType_1.FieldType.MOUNTAIN);
+Field.m5 = new Field("m5", FieldType_1.FieldType.MOUNTAIN);
+Field.m6 = new Field("m6", FieldType_1.FieldType.MOUNTAIN);
+Field.m7 = new Field("m7", FieldType_1.FieldType.MOUNTAIN);
+Field.m8 = new Field("m8", FieldType_1.FieldType.MOUNTAIN);
+Field.t1 = new Field("t1", FieldType_1.FieldType.TUNDRA);
+Field.t2 = new Field("t2", FieldType_1.FieldType.TUNDRA);
+Field.t3 = new Field("t3", FieldType_1.FieldType.TUNDRA);
+Field.t4 = new Field("t4", FieldType_1.FieldType.TUNDRA);
+Field.t5 = new Field("t5", FieldType_1.FieldType.TUNDRA);
+Field.t6 = new Field("t6", FieldType_1.FieldType.TUNDRA);
+Field.t7 = new Field("t7", FieldType_1.FieldType.TUNDRA);
+Field.t8 = new Field("t8", FieldType_1.FieldType.TUNDRA);
+Field.v1 = new Field("v1", FieldType_1.FieldType.VILLAGE);
+Field.v2 = new Field("v2", FieldType_1.FieldType.VILLAGE);
+Field.v3 = new Field("v3", FieldType_1.FieldType.VILLAGE);
+Field.v4 = new Field("v4", FieldType_1.FieldType.VILLAGE);
+Field.v5 = new Field("v5", FieldType_1.FieldType.VILLAGE);
+Field.v6 = new Field("v6", FieldType_1.FieldType.VILLAGE);
+Field.v7 = new Field("v7", FieldType_1.FieldType.VILLAGE);
+Field.v8 = new Field("v8", FieldType_1.FieldType.VILLAGE);
+Field.v9 = new Field("v9", FieldType_1.FieldType.VILLAGE);
+Field.w1 = new Field("w1", FieldType_1.FieldType.FOREST);
+Field.w2 = new Field("w2", FieldType_1.FieldType.FOREST);
+Field.w3 = new Field("w3", FieldType_1.FieldType.FOREST);
+Field.w4 = new Field("w4", FieldType_1.FieldType.FOREST);
+Field.w5 = new Field("w5", FieldType_1.FieldType.FOREST);
+Field.w6 = new Field("w6", FieldType_1.FieldType.FOREST);
+Field.w7 = new Field("w7", FieldType_1.FieldType.FOREST);
 exports.Field = Field;
