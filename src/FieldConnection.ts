@@ -1,5 +1,5 @@
 export enum FieldConnection {
-    DEFAULT,
-    RIVER,
-    TUNNEL,
+    DEFAULT = "DEFAULT",
+    RIVER = "RIVER",
+    TUNNEL = "TUNNEL",
 }

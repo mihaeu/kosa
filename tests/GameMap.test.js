@@ -13,8 +13,8 @@ test("Factory is connected to six fields", () => {
 test("Cannot walk from t3 to v1 without river-walk", () => {
     expect(new GameMap_1.GameMap().isReachable(Field_1.Field.t3, Field_1.Field.v1)).toBeFalsy();
 });
-test("Can walk from t3 to w4", () => {
-    expect(new GameMap_1.GameMap().isReachable(Field_1.Field.t3, Field_1.Field.w4)).toBeTruthy();
+test("Can walk from t3 to w3", () => {
+    expect(new GameMap_1.GameMap().isReachable(Field_1.Field.t3, Field_1.Field.w3)).toBeTruthy();
 });
 test("Cannot walk from t3 to l2", () => {
     expect(new GameMap_1.GameMap().isReachable(Field_1.Field.t3, Field_1.Field.l2)).toBeFalsy();

@@ -1,10 +1,10 @@
 export enum FieldType {
-    HOMEBASE,
-    FACTORY,
-    VILLAGE,
-    FOREST,
-    MOUNTAIN,
-    TUNDRA,
-    FARM,
-    LAKE,
+    HOMEBASE = "HOMEBASE",
+    FACTORY = "FACTORY",
+    VILLAGE = "VILLAGE",
+    FOREST = "FOREST",
+    MOUNTAIN = "MOUNTAIN",
+    TUNDRA = "TUNDRA",
+    FARM = "FARM",
+    LAKE = "LAKE",
 }

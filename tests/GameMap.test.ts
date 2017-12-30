@@ -14,8 +14,8 @@ test("Cannot walk from t3 to v1 without river-walk", () => {
     expect(new GameMap().isReachable(Field.t3, Field.v1)).toBeFalsy();
 });
 
-test("Can walk from t3 to w4", () => {
-    expect(new GameMap().isReachable(Field.t3, Field.w4)).toBeTruthy();
+test("Can walk from t3 to w3", () => {
+    expect(new GameMap().isReachable(Field.t3, Field.w3)).toBeTruthy();
 });
 
 test("Cannot walk from t3 to l2", () => {

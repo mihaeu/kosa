@@ -66,4 +66,8 @@ export class Field {
         this.name = name;
         this.type = type;
     }
+
+    public toString(): String {
+        return `${this.name}:${this.type}`;
+    }
 }
