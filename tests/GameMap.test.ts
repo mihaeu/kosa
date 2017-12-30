@@ -1,13 +1,10 @@
 import {Field} from "../src/Field";
 import {GameMap} from "../src/GameMap";
 
-test("Factory is connected to six fields", () => {
+test("Factory is connected to three non-lake fields", () => {
     expect(new GameMap().isReachable(Field.F, Field.w3)).toBeTruthy();
-    expect(new GameMap().isReachable(Field.F, Field.l5)).toBeTruthy();
     expect(new GameMap().isReachable(Field.F, Field.t5)).toBeTruthy();
-    expect(new GameMap().isReachable(Field.F, Field.l6)).toBeTruthy();
     expect(new GameMap().isReachable(Field.F, Field.m4)).toBeTruthy();
-    expect(new GameMap().isReachable(Field.F, Field.l4)).toBeTruthy();
 });
 
 test("Cannot walk from t3 to v1 without river-walk", () => {
