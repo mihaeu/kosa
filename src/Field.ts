@@ -63,12 +63,16 @@ export class Field {
     public static readonly w6 = new Field(FieldName.w6, FieldType.FOREST);
     public static readonly w7 = new Field(FieldName.w7, FieldType.FOREST);
 
-    private constructor(public readonly name: FieldName, public readonly type: FieldType) {
+    private constructor(private readonly name: FieldName, private readonly type: FieldType) {
         this.name = name;
         this.type = type;
     }
 
     public toString(): String {
         return `${this.name}:${this.type}`;
+    }
+
+    public static isNotLake(field: Field): boolean {
+        return field.type !== FieldType.LAKE;
     }
 }
