@@ -4,7 +4,7 @@ import {Character} from "../src/Units/Character";
 import {Mech} from "../src/Units/Mech";
 import {Worker} from "../src/Units/Worker";
 import {Resource} from "../src/Resource";
-import {Resources} from "../src/Resources";
+import {Building} from "../src/Building";
 
 test("Player has two more power after bolstering power", () => {
     expect(new Player(2).bolsterPower().bolsterPower().power()).toBe(4);
@@ -76,4 +76,18 @@ test("Player has two more resources after trade", () => {
     expect(resources.wood).toBe(1);
     expect(resources.metal).toBe(1);
     expect(resources.oil).toBe(0);
+});
+
+test("Cannot build the same building twice", () => {
+    const expectedError = /Building MILL has already been built./;
+    expect(() => {
+        new Player().build(Worker.WORKER_1, Building.MILL).build(Worker.WORKER_1, Building.MILL)
+    }).toThrowError(expectedError);
+});
+
+test("Cannot build on a location that already has a building", () => {
+    const expectedError = /m1.MOUNTAIN already has another building./;
+    expect(() => {
+        new Player().build(Worker.WORKER_1, Building.MILL).build(Worker.WORKER_1, Building.ARMORY)
+    }).toThrowError(expectedError);
 });

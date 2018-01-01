@@ -16,6 +16,10 @@ import {Worker} from "./Units/Worker";
 import {Resource} from "./Resource";
 import {ResourceEvent} from "./Events/ResourceEvent";
 import {Resources} from "./Resources";
+import {Building} from "./Building";
+import {BuildEvent} from "./Events/BuildEvent";
+import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
+import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
 
 function sumEvents(payloadFn: (event: Event) => number, events: Event[]) {
     return _.reduce((sum: number, event: Event) => payloadFn(event) + sum, 0, events);
@@ -70,6 +74,18 @@ export class Player {
         return this;
     }
 
+    public build(worker: Worker, building: Building): Player {
+        this.assertValidWorker(worker);
+        this.assertBuildingNotAlreadyBuilt(building);
+
+        const location = this.unitLocation(worker);
+        this.assertLocationHasNoOtherBuildings(location);
+
+        this.log.push(new BuildEvent(location, building));
+
+        return this;
+    }
+
     public unitLocation(unit: Unit): Field {
         let moves = _.filter(event => event instanceof MoveEvent && event.unit === unit, this.log);
         return moves[moves.length - 1].destination;
@@ -85,6 +101,18 @@ export class Player {
     private assertValidWorker(worker: Worker) {
         if (!worker.deployed) {
             throw new UnitNotDeployedError(worker);
+        }
+    }
+
+    private assertBuildingNotAlreadyBuilt(building: Building) {
+        if (!_.none((event: Event) => event instanceof BuildEvent && building === event.building, this.log)) {
+            throw new BuildingAlreadyBuildError(building);
+        }
+    }
+
+    private assertLocationHasNoOtherBuildings(location: Field) {
+        if (!_.none((event: Event) => event instanceof BuildEvent && location === event.location, this.log)) {
+            throw new LocationAlreadyHasAnotherBuildingError(location);
         }
     }
 
