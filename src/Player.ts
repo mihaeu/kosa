@@ -20,22 +20,20 @@ import {Building} from "./Building";
 import {BuildEvent} from "./Events/BuildEvent";
 import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
 import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
-
-function sumEvents(payloadFn: (event: Event) => number, events: Event[]) {
-    return _.reduce((sum: number, event: Event) => payloadFn(event) + sum, 0, events);
-}
+import {EventLog} from "./Events/EventLog";
 
 export class Player {
-    private log: Event[] = [];
+    private log: EventLog = new EventLog;
 
     constructor(coins: number = 0, power: number = 0, combatCards: CombatCard[] = []) {
-        this.log.push(new CoinEvent(coins));
-        this.log.push(new PowerEvent(power));
-        combatCards.forEach(combatCard => this.log.push(new CombatCardEvent(combatCard)));
+        combatCards.forEach(combatCard => this.log.add(new CombatCardEvent(combatCard)));
 
-        this.log.push(new MoveEvent(Character.CHARACTER, Field.green));
-        this.log.push(new MoveEvent(Worker.WORKER_1, Field.m1));
-        this.log.push(new MoveEvent(Worker.WORKER_2, Field.f1));
+        this.log
+            .add(new CoinEvent(coins))
+            .add(new PowerEvent(power))
+            .add(new MoveEvent(Character.CHARACTER, Field.green))
+            .add(new MoveEvent(Worker.WORKER_1, Field.m1))
+            .add(new MoveEvent(Worker.WORKER_2, Field.f1));
     }
 
     public move(unit: Unit, destination: Field) {
@@ -46,12 +44,12 @@ export class Player {
         if (!new GameMap().isReachable(currentLocation, destination)) {
             throw new IllegalMoveError(unit, currentLocation, destination);
         }
-        this.log.push(new MoveEvent(unit, destination));
+        this.log.add(new MoveEvent(unit, destination));
         return this;
     }
 
     public gainCoins(): Player {
-        this.log.push(new CoinEvent(+1));
+        this.log.add(new CoinEvent(+1));
         return this;
     }
 
@@ -68,8 +66,9 @@ export class Player {
         this.assertValidWorker(worker);
 
         const workerLocation = this.unitLocation(worker);
-        this.log.push(new ResourceEvent(workerLocation, resource1));
-        this.log.push(new ResourceEvent(workerLocation, resource2));
+        this.log
+            .add(new ResourceEvent(workerLocation, resource1))
+            .add(new ResourceEvent(workerLocation, resource2));
 
         return this;
     }
@@ -81,13 +80,13 @@ export class Player {
         const location = this.unitLocation(worker);
         this.assertLocationHasNoOtherBuildings(location);
 
-        this.log.push(new BuildEvent(location, building));
+        this.log.add(new BuildEvent(location, building));
 
         return this;
     }
 
     public unitLocation(unit: Unit): Field {
-        let moves = _.filter(event => event instanceof MoveEvent && event.unit === unit, this.log);
+        const moves = this.log.filter(MoveEvent).filter(event => event.unit === unit);
         return moves[moves.length - 1].destination;
     }
 
@@ -105,13 +104,13 @@ export class Player {
     }
 
     private assertBuildingNotAlreadyBuilt(building: Building) {
-        if (!_.none((event: Event) => event instanceof BuildEvent && building === event.building, this.log)) {
+        if (!_.none(event => building === event.building, this.log.filter(BuildEvent))) {
             throw new BuildingAlreadyBuildError(building);
         }
     }
 
     private assertLocationHasNoOtherBuildings(location: Field) {
-        if (!_.none((event: Event) => event instanceof BuildEvent && location === event.location, this.log)) {
+        if (!_.none(event => location === event.location, this.log.filter(BuildEvent))) {
             throw new LocationAlreadyHasAnotherBuildingError(location);
         }
     }
@@ -119,28 +118,26 @@ export class Player {
     private bolster(event: PowerEvent|CombatCardEvent): Player {
         this.assertCoins(1);
 
-        this.log.push(event);
-        this.log.push(new CoinEvent(-1));
+        this.log
+            .add(event)
+            .add(new CoinEvent(-1));
         return this;
     }
 
     public power(): number {
-        return sumEvents((event: Event) => event instanceof PowerEvent ? event.power : 0, this.log);
+        return _.sum(_.map(event => event.power, this.log.filter(PowerEvent)));
     }
 
     public coins(): number {
-        return sumEvents((event: Event) => event instanceof CoinEvent ? event.coins : 0, this.log);
+        return _.sum(_.map(event => event.coins, this.log.filter(CoinEvent)));
     }
 
     public combatCards(): CombatCard[] {
-        return _.map(event => event.combatCard, _.filter(event => event instanceof CombatCardEvent, this.log));
+        return _.map(event => event.combatCard, this.log.filter(CombatCardEvent));
     }
 
     public resources(): Resources {
-        const resources = _.map(
-            event => event.resource,
-            _.filter(event => event instanceof ResourceEvent, this.log)
-        );
+        const resources = _.map(event => event.resource, this.log.filter(ResourceEvent));
         return new Resources(
             this.countResource(Resource.METAL, resources),
             this.countResource(Resource.FOOD, resources),
