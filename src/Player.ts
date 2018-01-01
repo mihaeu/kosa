@@ -47,12 +47,6 @@ export class Player {
         return this;
     }
 
-    private assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
-        if (!new GameMap().isReachable(currentLocation, destination)) {
-            throw new IllegalMoveError(unit, currentLocation, destination);
-        }
-    }
-
     public gainCoins(): Player {
         this.log.add(new CoinEvent(+1));
         return this;
@@ -93,6 +87,12 @@ export class Player {
     public unitLocation(unit: Unit): Field {
         const moves = this.log.filter(LocationEvent).filter(event => event.unit === unit);
         return moves[moves.length - 1].destination;
+    }
+
+    private assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
+        if (!GameMap.isReachable(currentLocation, destination)) {
+            throw new IllegalMoveError(unit, currentLocation, destination);
+        }
     }
 
     private assertCoins(required: number): void {

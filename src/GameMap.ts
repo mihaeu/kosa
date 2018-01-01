@@ -4,9 +4,11 @@ import {FieldConnection} from "./FieldConnection";
 
 export class GameMap {
 
-    private fields: Map<Field, Connection[]> = new Map<Field, Connection[]>();
+    private static fields: Map<Field, Connection[]>;
 
-    constructor() {
+    private static init() {
+        this.fields = new Map<Field, Connection[]>();
+
         this.fields.set(Field.green, [
             new Connection(Field.m1, FieldConnection.DEFAULT),
             new Connection(Field.f1, FieldConnection.DEFAULT),
@@ -446,7 +448,11 @@ export class GameMap {
         ]);
     }
 
-    public isReachable(start: Field, end: Field, distance: number = 1): boolean {
+    public static isReachable(start: Field, end: Field, distance: number = 1): boolean {
+        if (this.fields === undefined) {
+            this.init();
+        }
+
         if (distance === 0) {
             return false;
         }
@@ -460,10 +466,10 @@ export class GameMap {
             return true;
         }
 
-        return options.some((field: Field) => this.isReachable(field, end, distance - 1));
+        return options.some((field: Field) => GameMap.isReachable(field, end, distance - 1));
     }
 
-    private options(field: Field): Field[] {
+    private static options(field: Field): Field[] {
         const connections = this.fields.get(field);
         return connections === undefined
             ? []
