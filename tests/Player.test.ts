@@ -3,6 +3,8 @@ import {Player} from "../src/Player";
 import {Character} from "../src/Units/Character";
 import {Mech} from "../src/Units/Mech";
 import {Worker} from "../src/Units/Worker";
+import {Resource} from "../src/Resource";
+import {Resources} from "../src/Resources";
 
 test("Player has two more power after bolstering power", () => {
     expect(new Player(2).bolsterPower().bolsterPower().power()).toBe(4);
@@ -56,4 +58,22 @@ test("Player can gain one coin", () => {
     expect(player.coins()).toBe(0);
     player.gainCoins();
     expect(player.coins()).toBe(1);
+});
+
+test("Trade requires coins", () => {
+    const expectedError = /1 coin.s. required, but only 0 coin.s. available./;
+    expect(() => new Player().trade(Worker.WORKER_1, Resource.FOOD, Resource.FOOD)).toThrowError(expectedError);
+});
+
+test("Trade requires a deployed worker", () => {
+    const expectedError = /WORKER_3 has not been deployed yet./;
+    expect(() => new Player(1).trade(Worker.WORKER_3, Resource.FOOD, Resource.FOOD)).toThrowError(expectedError);
+});
+
+test("Player has two more resources after trade", () => {
+    let resources = new Player(1).trade(Worker.WORKER_1, Resource.WOOD, Resource.METAL).resources();
+    expect(resources.food).toBe(0);
+    expect(resources.wood).toBe(1);
+    expect(resources.metal).toBe(1);
+    expect(resources.oil).toBe(0);
 });

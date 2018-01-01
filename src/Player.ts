@@ -13,6 +13,9 @@ import {UnitNotDeployedError} from "./UnitNotDeployedError";
 import {IllegalMoveError} from "./IllegalMoveError";
 import {Character} from "./Units/Character";
 import {Worker} from "./Units/Worker";
+import {Resource} from "./Resource";
+import {ResourceEvent} from "./Events/ResourceEvent";
+import {Resources} from "./Resources";
 
 function sumEvents(payloadFn: (event: Event) => number, events: Event[]) {
     return _.reduce((sum: number, event: Event) => payloadFn(event) + sum, 0, events);
@@ -56,16 +59,37 @@ export class Player {
         return this.bolster(new CombatCardEvent(new CombatCard(2)));
     }
 
+    public trade(worker: Worker, resource1: Resource,  resource2: Resource): Player {
+        this.assertCoins(1);
+        this.assertValidWorker(worker);
+
+        const workerLocation = this.unitLocation(worker);
+        this.log.push(new ResourceEvent(workerLocation, resource1));
+        this.log.push(new ResourceEvent(workerLocation, resource2));
+
+        return this;
+    }
+
     public unitLocation(unit: Unit): Field {
         let moves = _.filter(event => event instanceof MoveEvent && event.unit === unit, this.log);
         return moves[moves.length - 1].destination;
     }
 
-    private bolster(event: PowerEvent|CombatCardEvent): Player {
+    private assertCoins(required: number) {
         let coins = this.coins();
-        if (coins < 1) {
+        if (coins < required) {
             throw new NotEnoughCoinsError(1, coins);
         }
+    }
+
+    private assertValidWorker(worker: Worker) {
+        if (!worker.deployed) {
+            throw new UnitNotDeployedError(worker);
+        }
+    }
+
+    private bolster(event: PowerEvent|CombatCardEvent): Player {
+        this.assertCoins(1);
 
         this.log.push(event);
         this.log.push(new CoinEvent(-1));
@@ -82,5 +106,22 @@ export class Player {
 
     public combatCards(): CombatCard[] {
         return _.map(event => event.combatCard, _.filter(event => event instanceof CombatCardEvent, this.log));
+    }
+
+    public resources(): Resources {
+        const resources = _.map(
+            event => event.resource,
+            _.filter(event => event instanceof ResourceEvent, this.log)
+        );
+        return new Resources(
+            this.countResource(Resource.METAL, resources),
+            this.countResource(Resource.FOOD, resources),
+            this.countResource(Resource.OIL, resources),
+            this.countResource(Resource.WOOD, resources),
+        );
+    }
+
+    private countResource(type: Resource, resources: Resource[]): number {
+        return _.filter(resource => resource === type, resources).length;
     }
 }
