@@ -3,7 +3,6 @@ import {GameMap} from "./GameMap";
 import {Field} from "./Field";
 import {CombatCardEvent} from "./Events/CombatCardEvent";
 import {CombatCard} from "./CombatCard";
-import {Event} from "./Events/Event";
 import {CoinEvent} from "./Events/CoinEvent";
 import {PowerEvent} from "./Events/PowerEvent";
 import {NotEnoughCoinsError} from "./NotEnoughCoinsError";
@@ -21,6 +20,8 @@ import {BuildEvent} from "./Events/BuildEvent";
 import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
 import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
 import {EventLog} from "./Events/EventLog";
+import {DeployEvent} from "./Events/DeployEvent";
+import {LocationEvent} from "./Events/LocationEvent";
 
 export class Player {
     private log: EventLog = new EventLog;
@@ -31,21 +32,25 @@ export class Player {
         this.log
             .add(new CoinEvent(coins))
             .add(new PowerEvent(power))
-            .add(new MoveEvent(Character.CHARACTER, Field.green))
-            .add(new MoveEvent(Worker.WORKER_1, Field.m1))
-            .add(new MoveEvent(Worker.WORKER_2, Field.f1));
+            .add(new DeployEvent(Character.CHARACTER, Field.green))
+            .add(new DeployEvent(Worker.WORKER_1, Field.m1))
+            .add(new DeployEvent(Worker.WORKER_2, Field.f1));
     }
 
     public move(unit: Unit, destination: Field) {
-        if (!unit.deployed) {
-            throw new UnitNotDeployedError(unit);
-        }
+        this.assertUnitDeployed(unit);
+
         let currentLocation = this.unitLocation(unit);
+        this.assertLegalMove(currentLocation, destination, unit);
+
+        this.log.add(new MoveEvent(unit, destination));
+        return this;
+    }
+
+    private assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
         if (!new GameMap().isReachable(currentLocation, destination)) {
             throw new IllegalMoveError(unit, currentLocation, destination);
         }
-        this.log.add(new MoveEvent(unit, destination));
-        return this;
     }
 
     public gainCoins(): Player {
@@ -63,7 +68,7 @@ export class Player {
 
     public trade(worker: Worker, resource1: Resource,  resource2: Resource): Player {
         this.assertCoins(1);
-        this.assertValidWorker(worker);
+        this.assertUnitDeployed(worker);
 
         const workerLocation = this.unitLocation(worker);
         this.log
@@ -74,7 +79,7 @@ export class Player {
     }
 
     public build(worker: Worker, building: Building): Player {
-        this.assertValidWorker(worker);
+        this.assertUnitDeployed(worker);
         this.assertBuildingNotAlreadyBuilt(building);
 
         const location = this.unitLocation(worker);
@@ -86,30 +91,30 @@ export class Player {
     }
 
     public unitLocation(unit: Unit): Field {
-        const moves = this.log.filter(MoveEvent).filter(event => event.unit === unit);
+        const moves = this.log.filter(LocationEvent).filter(event => event.unit === unit);
         return moves[moves.length - 1].destination;
     }
 
-    private assertCoins(required: number) {
+    private assertCoins(required: number): void {
         let coins = this.coins();
         if (coins < required) {
             throw new NotEnoughCoinsError(1, coins);
         }
     }
 
-    private assertValidWorker(worker: Worker) {
-        if (!worker.deployed) {
-            throw new UnitNotDeployedError(worker);
+    private assertUnitDeployed(unit: Unit): void {
+        if (_.none(event => event.unit === unit, this.log.filter(DeployEvent))) {
+            throw new UnitNotDeployedError(unit);
         }
     }
 
-    private assertBuildingNotAlreadyBuilt(building: Building) {
+    private assertBuildingNotAlreadyBuilt(building: Building): void {
         if (!_.none(event => building === event.building, this.log.filter(BuildEvent))) {
             throw new BuildingAlreadyBuildError(building);
         }
     }
 
-    private assertLocationHasNoOtherBuildings(location: Field) {
+    private assertLocationHasNoOtherBuildings(location: Field): void {
         if (!_.none(event => location === event.location, this.log.filter(BuildEvent))) {
             throw new LocationAlreadyHasAnotherBuildingError(location);
         }

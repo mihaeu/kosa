@@ -1,12 +1,14 @@
 import {Field} from "../Field";
 import {Resource} from "../Resource";
 import {Unit} from "../Units/Unit";
-import {Event} from "./Event";
+import {LocationEvent} from "./LocationEvent";
 
-export class MoveEvent implements Event {
+export class MoveEvent extends LocationEvent {
     constructor(
         public readonly unit: Unit,
         public readonly destination: Field,
         public readonly resources: Resource[] = []
-    ) {}
+    ) {
+        super(unit, destination);
+    }
 }

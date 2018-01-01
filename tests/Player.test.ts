@@ -49,7 +49,7 @@ test("Player cannot move a mech which has not been deployed", () => {
 });
 
 test("Green character cannot move to another homebase", () => {
-    const expectedError = /CHARACTER:deployed is not allowed to move from green:HOMEBASE to black:HOMEBASE./;
+    const expectedError = /CHARACTER is not allowed to move from green:HOMEBASE to black:HOMEBASE./;
     expect(() => new Player().move(Character.CHARACTER, Field.black)).toThrowError(expectedError);
 });
 

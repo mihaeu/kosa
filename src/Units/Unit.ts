@@ -1,7 +1,7 @@
 export class Unit {
-    protected constructor(public readonly name: string, public readonly deployed: boolean = false) {}
+    protected constructor(public readonly name: string) {}
 
     public toString(): String {
-        return  `${this.name}:${this.deployed ? 'deployed' : 'not deployed'}`;
+        return this.name;
     }
 }
