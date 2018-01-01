@@ -1,6 +1,6 @@
 import {Field} from "../Field";
 import {Resource} from "../Resource";
-import {Unit} from "../Unit";
+import {Unit} from "../Units/Unit";
 import {Event} from "./Event";
 
 export class MoveEvent implements Event {

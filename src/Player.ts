@@ -3,13 +3,16 @@ import {GameMap} from "./GameMap";
 import {Field} from "./Field";
 import {CombatCardEvent} from "./Events/CombatCardEvent";
 import {CombatCard} from "./CombatCard";
+import {Event} from "./Events/Event";
 import {CoinEvent} from "./Events/CoinEvent";
 import {PowerEvent} from "./Events/PowerEvent";
 import {NotEnoughCoinsError} from "./NotEnoughCoinsError";
 import {MoveEvent} from "./Events/MoveEvent";
-import {Unit} from "./Unit";
+import {Unit} from "./Units/Unit";
 import {UnitNotDeployedError} from "./UnitNotDeployedError";
 import {IllegalMoveError} from "./IllegalMoveError";
+import {Character} from "./Units/Character";
+import {Worker} from "./Units/Worker";
 
 function sumEvents(payloadFn: (event: Event) => number, events: Event[]) {
     return _.reduce((sum: number, event: Event) => payloadFn(event) + sum, 0, events);
@@ -23,9 +26,9 @@ export class Player {
         this.log.push(new PowerEvent(power));
         combatCards.forEach(combatCard => this.log.push(new CombatCardEvent(combatCard)));
 
-        this.log.push(new MoveEvent(Unit.CHARACTER, Field.green));
-        this.log.push(new MoveEvent(Unit.WORKER_1, Field.m1));
-        this.log.push(new MoveEvent(Unit.WORKER_2, Field.f1));
+        this.log.push(new MoveEvent(Character.CHARACTER, Field.green));
+        this.log.push(new MoveEvent(Worker.WORKER_1, Field.m1));
+        this.log.push(new MoveEvent(Worker.WORKER_2, Field.f1));
     }
 
     public move(unit: Unit, destination: Field) {

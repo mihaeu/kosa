@@ -1,4 +1,4 @@
-import {Unit} from "./Unit";
+import {Unit} from "./Units/Unit";
 
 export class UnitNotDeployedError extends Error {
     constructor(unit: Unit) {
