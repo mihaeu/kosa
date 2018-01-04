@@ -12,23 +12,29 @@ import {UnitNotDeployedError} from "./UnitNotDeployedError";
 import {IllegalMoveError} from "./IllegalMoveError";
 import {Character} from "./Units/Character";
 import {Worker} from "./Units/Worker";
-import {Resource} from "./Resource";
-import {ResourceEvent} from "./Events/ResourceEvent";
+import {ResourceType} from "./ResourceType";
+import {GainResourceEvent} from "./Events/GainResourceEvent";
 import {Resources} from "./Resources";
-import {Building} from "./Building";
+import {BuildingType} from "./BuildingType";
 import {BuildEvent} from "./Events/BuildEvent";
 import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
 import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
 import {EventLog} from "./Events/EventLog";
 import {DeployEvent} from "./Events/DeployEvent";
 import {LocationEvent} from "./Events/LocationEvent";
+import {NotEnoughResourcesError} from "./NotEnoughResourcesError";
+import {Resource} from "./Resource";
+import {SpendResourceEvent} from "./Events/SpendResourceEvent";
+import {ResourceEvent} from "./Events/ResourceEvent";
+import {Building} from "./Building";
 
 export class Player {
-    private log: EventLog = new EventLog;
+    private log: EventLog;
 
-    constructor(coins: number = 0, power: number = 0, combatCards: CombatCard[] = []) {
+    constructor(log: EventLog = new EventLog, coins: number = 0, power: number = 0, combatCards: CombatCard[] = []) {
         combatCards.forEach(combatCard => this.log.add(new CombatCardEvent(combatCard)));
 
+        this.log = log;
         this.log
             .add(new CoinEvent(coins))
             .add(new PowerEvent(power))
@@ -60,33 +66,44 @@ export class Player {
         return this.bolster(new CombatCardEvent(new CombatCard(2)));
     }
 
-    public trade(worker: Worker, resource1: Resource,  resource2: Resource): Player {
+    public trade(worker: Worker, resource1: ResourceType, resource2: ResourceType): Player {
         this.assertCoins(1);
         this.assertUnitDeployed(worker);
 
         const workerLocation = this.unitLocation(worker);
         this.log
-            .add(new ResourceEvent(workerLocation, resource1))
-            .add(new ResourceEvent(workerLocation, resource2));
+            .add(new GainResourceEvent([
+                new Resource(workerLocation, resource1),
+                new Resource(workerLocation, resource2),
+            ]));
 
         return this;
     }
 
-    public build(worker: Worker, building: Building): Player {
+    public build(worker: Worker, building: BuildingType, resources: Resource[]): Player {
         this.assertUnitDeployed(worker);
         this.assertBuildingNotAlreadyBuilt(building);
+        this.assertEnoughResources(ResourceType.WOOD, 3);
 
         const location = this.unitLocation(worker);
         this.assertLocationHasNoOtherBuildings(location);
 
-        this.log.add(new BuildEvent(location, building));
-
+        this.log
+            .add(new SpendResourceEvent(resources))
+            .add(new BuildEvent(location, building));
         return this;
     }
 
     public unitLocation(unit: Unit): Field {
         const moves = this.log.filter(LocationEvent).filter(event => event.unit === unit);
         return moves[moves.length - 1].destination;
+    }
+
+    private assertEnoughResources(type: ResourceType, count: number) {
+        const availableResources = this.resources().countByType(type);
+        if (availableResources < count) {
+            throw new NotEnoughResourcesError(type, count, availableResources);
+        }
     }
 
     private assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
@@ -108,7 +125,7 @@ export class Player {
         }
     }
 
-    private assertBuildingNotAlreadyBuilt(building: Building): void {
+    private assertBuildingNotAlreadyBuilt(building: BuildingType): void {
         if (!_.none(event => building === event.building, this.log.filter(BuildEvent))) {
             throw new BuildingAlreadyBuildError(building);
         }
@@ -142,16 +159,41 @@ export class Player {
     }
 
     public resources(): Resources {
-        const resources = _.map(event => event.resource, this.log.filter(ResourceEvent));
+        const availableResources = this.availableResources();
         return new Resources(
-            this.countResource(Resource.METAL, resources),
-            this.countResource(Resource.FOOD, resources),
-            this.countResource(Resource.OIL, resources),
-            this.countResource(Resource.WOOD, resources),
+            this.resourceByType(ResourceType.METAL, availableResources),
+            this.resourceByType(ResourceType.FOOD, availableResources),
+            this.resourceByType(ResourceType.OIL, availableResources),
+            this.resourceByType(ResourceType.WOOD, availableResources),
         );
     }
 
-    private countResource(type: Resource, resources: Resource[]): number {
-        return _.filter(resource => resource === type, resources).length;
+    private resourceByType(type: ResourceType, resources: Resource[]): number {
+        return _.reduce(
+            (sum: number, resource: Resource) => resource.type === type ? sum + 1 : sum,
+            0,
+            resources
+        );
+    }
+
+    public buildings(): Building[] {
+        return _.map(Building.fromEvent, this.log.filter(BuildEvent));
+    }
+
+    /**
+     * @returns {Resource[]}
+     */
+    private availableResources(): Resource[] {
+        let gained = _.chain((event: ResourceEvent) => event.resources, this.log.filter(GainResourceEvent));
+        let spent = _.chain((event: ResourceEvent) => event.resources, this.log.filter(SpendResourceEvent));
+        for (let spentResource of spent) {
+            for (let gainedResource of gained) {
+                if (spentResource.location === gainedResource.location && spentResource.type === gainedResource.type) {
+                    gained.splice(gained.indexOf(gainedResource, 1));
+                    break;
+                }
+            }
+        }
+        return gained;
     }
 }

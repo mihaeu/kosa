@@ -8,7 +8,7 @@ export class EventLog {
         return this;
     }
 
-    public filter<T extends Event>(type: T): T[] {
+    public filter(type: any): Event[] {
         return this.log.filter(event => event instanceof type);
     }
 }

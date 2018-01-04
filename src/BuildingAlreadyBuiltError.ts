@@ -1,7 +1,7 @@
-import {Building} from "./Building";
+import {BuildingType} from "./BuildingType";
 
 export class BuildingAlreadyBuildError extends Error {
-    constructor(building: Building) {
+    constructor(building: BuildingType) {
         super(`Building ${building} has already been built.`);
     }
 }
