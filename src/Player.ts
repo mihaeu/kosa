@@ -27,6 +27,7 @@ import {Resource} from "./Resource";
 import {SpendResourceEvent} from "./Events/SpendResourceEvent";
 import {ResourceEvent} from "./Events/ResourceEvent";
 import {Building} from "./Building";
+import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
 
 export class Player {
     private log: EventLog;
@@ -83,7 +84,7 @@ export class Player {
     public build(worker: Worker, building: BuildingType, resources: Resource[]): Player {
         this.assertUnitDeployed(worker);
         this.assertBuildingNotAlreadyBuilt(building);
-        this.assertEnoughResources(ResourceType.WOOD, 3);
+        this.assertAvailableResources(ResourceType.WOOD, 3, resources);
 
         const location = this.unitLocation(worker);
         this.assertLocationHasNoOtherBuildings(location);
@@ -99,10 +100,15 @@ export class Player {
         return moves[moves.length - 1].destination;
     }
 
-    private assertEnoughResources(type: ResourceType, count: number) {
-        const availableResources = this.resources().countByType(type);
-        if (availableResources < count) {
-            throw new NotEnoughResourcesError(type, count, availableResources);
+    private assertAvailableResources(type: ResourceType, required: number, resources: Resource[]) {
+        const availableResourcesCount = this.resources().countByType(type);
+        if (availableResourcesCount < required) {
+            throw new NotEnoughResourcesError(type, required, availableResourcesCount);
+        }
+
+        const availableResources = this.availableResources();
+        if (!resources.every(resource => availableResources.indexOf(resource) !== -1)) {
+            throw new ProvidedResourcesNotAvailableError(availableResources, resources);
         }
     }
 
@@ -180,16 +186,14 @@ export class Player {
         return _.map(Building.fromEvent, this.log.filter(BuildEvent));
     }
 
-    /**
-     * @returns {Resource[]}
-     */
-    private availableResources(): Resource[] {
-        let gained = _.chain((event: ResourceEvent) => event.resources, this.log.filter(GainResourceEvent));
-        let spent = _.chain((event: ResourceEvent) => event.resources, this.log.filter(SpendResourceEvent));
+    public availableResources(): Resource[] {
+        const extractResource = (event: ResourceEvent) => event.resources;
+        let gained = _.chain(extractResource, this.log.filter(GainResourceEvent));
+        let spent = _.chain(extractResource, this.log.filter(SpendResourceEvent));
         for (let spentResource of spent) {
             for (let gainedResource of gained) {
                 if (spentResource.location === gainedResource.location && spentResource.type === gainedResource.type) {
-                    gained.splice(gained.indexOf(gainedResource, 1));
+                    gained.splice(gained.indexOf(gainedResource), 1);
                     break;
                 }
             }

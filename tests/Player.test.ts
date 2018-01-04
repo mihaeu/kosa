@@ -147,6 +147,11 @@ test("Cannot build without enough wood", () => {
     expect(() => new Player().build(Worker.WORKER_1, BuildingType.ARMORY, [])).toThrowError(expectedError);
 });
 
+test("Accepts only exact wood", () => {
+    const expectedError = /Not enough resources of type WOOD; 3 required, but only 0 available./;
+    expect(() => new Player().build(Worker.WORKER_1, BuildingType.ARMORY, [])).toThrowError(expectedError);
+});
+
 test("Player can build a mill", () => {
     const resources = [
         new Resource(Field.m1, ResourceType.WOOD),
@@ -158,4 +163,38 @@ test("Player can build a mill", () => {
 
     expect(player.resources().countByType(ResourceType.WOOD)).toBe(0);
     expect(player.buildings().pop()).toEqual(new Building(BuildingType.MILL, Field.m1));
+});
+
+test("Building uses specific resources", () => {
+    const resources1 = [
+        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.f1, ResourceType.WOOD),
+        new Resource(Field.m1, ResourceType.WOOD),
+    ];
+    const resources2 = [
+        new Resource(Field.f1, ResourceType.WOOD),
+        new Resource(Field.m1, ResourceType.WOOD),
+    ];
+    const player = new Player(new EventLog().add(new GainResourceEvent(resources1.concat(resources2))));
+    expect(player.availableResources()).toEqual(resources1.concat(resources2));
+
+    player.build(Worker.WORKER_1, BuildingType.MILL, resources1);
+    expect(player.availableResources()).toEqual(resources2);
+});
+
+test("Paying resources requires exact match", () => {
+    const resources1 = [
+        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.f1, ResourceType.WOOD),
+        new Resource(Field.m1, ResourceType.WOOD),
+    ];
+    const resources2 = [
+        new Resource(Field.f2, ResourceType.WOOD),
+        new Resource(Field.f2, ResourceType.WOOD),
+        new Resource(Field.f2, ResourceType.WOOD),
+    ];
+    const player = new Player(new EventLog().add(new GainResourceEvent(resources1)));
+
+    const expectedError = /The provided resources \(m1:MOUNTAIN:WOOD, f1:FARM:WOOD, m1:MOUNTAIN:WOOD\) are not among your available resources \(f2:FARM:WOOD, f2:FARM:WOOD, f2:FARM:WOOD\)./;
+    expect(() => player.build(Worker.WORKER_1, BuildingType.MILL, resources2)).toThrowError(expectedError);
 });
