@@ -87,20 +87,22 @@ test("Calculate resources", () => {
 
 test("Trade requires coins", () => {
     const expectedError = /1 coin.s. required, but only 0 coin.s. available./;
-    expect(() => new Player(new EventLog).trade(Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
+    expect(() => new Player(new EventLog).tradeResources(Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
 });
 
 test("Trade requires a deployed worker", () => {
     const expectedError = /WORKER_3 has not been deployed yet./;
-    expect(() => new Player(new EventLog, 1).trade(Worker.WORKER_3, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
+    expect(() => new Player(new EventLog, 1).tradeResources(Worker.WORKER_3, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
 });
 
-test("Player has two more resources after trade", () => {
-    let resources = new Player(new EventLog, 1).trade(Worker.WORKER_1, ResourceType.WOOD, ResourceType.METAL).resources();
+test("Player has two more resources after tradeResources", () => {
+    const player = new Player(new EventLog, 1);
+    let resources = player.tradeResources(Worker.WORKER_1, ResourceType.WOOD, ResourceType.METAL).resources();
     expect(resources.food).toBe(0);
     expect(resources.wood).toBe(1);
     expect(resources.metal).toBe(1);
     expect(resources.oil).toBe(0);
+    expect(player.coins()).toBe(0);
 });
 
 test("Cannot build the same building twice", () => {
@@ -197,4 +199,8 @@ test("Paying resources requires exact match", () => {
 
     const expectedError = /The provided resources \(m1:MOUNTAIN:WOOD, f1:FARM:WOOD, m1:MOUNTAIN:WOOD\) are not among your available resources \(f2:FARM:WOOD, f2:FARM:WOOD, f2:FARM:WOOD\)./;
     expect(() => player.build(Worker.WORKER_1, BuildingType.MILL, resources2)).toThrowError(expectedError);
+});
+
+test("Can trade for popularity", () => {
+    expect(new Player(new EventLog, 1).tradePopularity().popularity()).toBe(1);
 });

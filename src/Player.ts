@@ -28,6 +28,8 @@ import {SpendResourceEvent} from "./Events/SpendResourceEvent";
 import {ResourceEvent} from "./Events/ResourceEvent";
 import {Building} from "./Building";
 import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
+import {PopularityEvent} from "./Events/PopularityEvent";
+import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
 
 export class Player {
     private log: EventLog;
@@ -67,16 +69,28 @@ export class Player {
         return this.bolster(new CombatCardEvent(new CombatCard(2)));
     }
 
-    public trade(worker: Worker, resource1: ResourceType, resource2: ResourceType): Player {
+    public tradeResources(worker: Worker, resource1: ResourceType, resource2: ResourceType): Player {
         this.assertCoins(1);
         this.assertUnitDeployed(worker);
 
         const workerLocation = this.unitLocation(worker);
         this.log
+            .add(new CoinEvent(-1))
             .add(new GainResourceEvent([
                 new Resource(workerLocation, resource1),
                 new Resource(workerLocation, resource2),
             ]));
+
+        return this;
+    }
+
+    public tradePopularity(): Player {
+        this.assertCoins(1);
+        this.assertNotMoreThan20Popularity();
+
+        this.log
+            .add(new CoinEvent(-1))
+            .add(new PopularityEvent(1));
 
         return this;
     }
@@ -199,5 +213,15 @@ export class Player {
             }
         }
         return gained;
+    }
+
+    public popularity(): number {
+        return _.sum(_.map(event => event.popularity, <PopularityEvent[]> this.log.filter(PopularityEvent)));
+    }
+
+    private assertNotMoreThan20Popularity() {
+        if (this.popularity() > 20) {
+            throw new CannotHaveMoreThan20PopularityError();
+        }
     }
 }
