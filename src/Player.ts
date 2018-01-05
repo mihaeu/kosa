@@ -48,7 +48,7 @@ export class Player {
         this.assertUnitDeployed(unit);
 
         let currentLocation = this.unitLocation(unit);
-        this.assertLegalMove(currentLocation, destination, unit);
+        Player.assertLegalMove(currentLocation, destination, unit);
 
         this.log.add(new MoveEvent(unit, destination));
         return this;
@@ -96,7 +96,7 @@ export class Player {
     }
 
     public unitLocation(unit: Unit): Field {
-        const moves = this.log.filter(LocationEvent).filter(event => event.unit === unit);
+        const moves = (<LocationEvent[]> this.log.filter(LocationEvent)).filter(event => event.unit === unit);
         return moves[moves.length - 1].destination;
     }
 
@@ -112,7 +112,7 @@ export class Player {
         }
     }
 
-    private assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
+    private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
         if (!GameMap.isReachable(currentLocation, destination)) {
             throw new IllegalMoveError(unit, currentLocation, destination);
         }
@@ -126,19 +126,19 @@ export class Player {
     }
 
     private assertUnitDeployed(unit: Unit): void {
-        if (_.none(event => event.unit === unit, this.log.filter(DeployEvent))) {
+        if (_.none(event => event.unit === unit, <DeployEvent[]> this.log.filter(DeployEvent))) {
             throw new UnitNotDeployedError(unit);
         }
     }
 
     private assertBuildingNotAlreadyBuilt(building: BuildingType): void {
-        if (!_.none(event => building === event.building, this.log.filter(BuildEvent))) {
+        if (!_.none(event => building === event.building, <BuildEvent[]> this.log.filter(BuildEvent))) {
             throw new BuildingAlreadyBuildError(building);
         }
     }
 
     private assertLocationHasNoOtherBuildings(location: Field): void {
-        if (!_.none(event => location === event.location, this.log.filter(BuildEvent))) {
+        if (!_.none(event => location === event.location, <BuildEvent[]> this.log.filter(BuildEvent))) {
             throw new LocationAlreadyHasAnotherBuildingError(location);
         }
     }
@@ -153,15 +153,15 @@ export class Player {
     }
 
     public power(): number {
-        return _.sum(_.map(event => event.power, this.log.filter(PowerEvent)));
+        return _.sum(_.map(event => event.power, <PowerEvent[]> this.log.filter(PowerEvent)));
     }
 
     public coins(): number {
-        return _.sum(_.map(event => event.coins, this.log.filter(CoinEvent)));
+        return _.sum(_.map(event => event.coins, <CoinEvent[]> this.log.filter(CoinEvent)));
     }
 
     public combatCards(): CombatCard[] {
-        return _.map(event => event.combatCard, this.log.filter(CombatCardEvent));
+        return _.map(event => event.combatCard, <CombatCardEvent[]> this.log.filter(CombatCardEvent));
     }
 
     public resources(): Resources {
@@ -176,20 +176,20 @@ export class Player {
 
     private resourceByType(type: ResourceType, resources: Resource[]): number {
         return _.reduce(
-            (sum: number, resource: Resource) => resource.type === type ? sum + 1 : sum,
+            (sum, resource: Resource) => resource.type === type ? sum + 1 : sum,
             0,
             resources
         );
     }
 
     public buildings(): Building[] {
-        return _.map(Building.fromEvent, this.log.filter(BuildEvent));
+        return _.map(Building.fromEvent, <BuildEvent[]> this.log.filter(BuildEvent));
     }
 
     public availableResources(): Resource[] {
         const extractResource = (event: ResourceEvent) => event.resources;
-        let gained = _.chain(extractResource, this.log.filter(GainResourceEvent));
-        let spent = _.chain(extractResource, this.log.filter(SpendResourceEvent));
+        let gained = _.chain(extractResource, <GainResourceEvent[]> this.log.filter(GainResourceEvent));
+        let spent = _.chain(extractResource, <SpendResourceEvent[]> this.log.filter(SpendResourceEvent));
         for (let spentResource of spent) {
             for (let gainedResource of gained) {
                 if (spentResource.location === gainedResource.location && spentResource.type === gainedResource.type) {
