@@ -10,17 +10,19 @@
     "test": "node_modules/jest/bin/jest.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "ramda": "^0.25.0"
   },
   "devDependencies": {
-    "typescript": "^2.6.2",
-    "@types/ramda": "^0.25.12",
+    "@types/cucumber": "^3.2.1",
     "@types/jest": "^21.1.8",
+    "@types/ramda": "^0.25.12",
+    "cucumber": "^3.2.1",
     "jest": "^21.2.1",
     "ts-jest": "^21.2.4",
-    "tslint": "^5.8.0"
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2"
   },
   "jest": {
     "transform": {
