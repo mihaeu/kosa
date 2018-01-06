@@ -1,7 +1,7 @@
 import * as _ from "ramda";
 import {GameMap} from "./GameMap";
 import {Field} from "./Field";
-import {CombatCardEvent} from "./Events/CombatCardEvent";
+import {GainCombatCardEvent} from "./Events/CombatCardEvent";
 import {CombatCard} from "./CombatCard";
 import {CoinEvent} from "./Events/CoinEvent";
 import {PowerEvent} from "./Events/PowerEvent";
@@ -30,20 +30,73 @@ import {Building} from "./Building";
 import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
 import {PopularityEvent} from "./Events/PopularityEvent";
 import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
+import {Faction} from "./Faction";
+import {PlayerMat} from "./PlayerMat";
 
 export class Player {
     private log: EventLog;
 
-    constructor(log: EventLog = new EventLog, coins: number = 0, power: number = 0, combatCards: CombatCard[] = []) {
-        combatCards.forEach(combatCard => this.log.add(new CombatCardEvent(combatCard)));
-
+    public constructor(log: EventLog = new EventLog, faction: Faction, playerMat: PlayerMat) {
         this.log = log;
         this.log
-            .add(new CoinEvent(coins))
-            .add(new PowerEvent(power))
             .add(new DeployEvent(Character.CHARACTER, Field.green))
             .add(new DeployEvent(Worker.WORKER_1, Field.m1))
             .add(new DeployEvent(Worker.WORKER_2, Field.f1));
+
+        playerMat.setupEvents.forEach(event => this.log.add(event));
+    }
+
+    public static black(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new PowerEvent(1))
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard));
+        return new Player(log, Faction.BLACK, playerMat);
+    }
+
+    public static red(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new PowerEvent(3))
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard));
+        return new Player(log, Faction.RED, playerMat);
+    }
+
+    public static blue(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new PowerEvent(4))
+            .add(new GainCombatCardEvent(new CombatCard));
+        return new Player(log, Faction.BLUE, playerMat);
+    }
+
+    public static yellow(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new PowerEvent(5));
+        return new Player(log, Faction.YELLOW, playerMat);
+    }
+
+    public static white(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new PowerEvent(2))
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard));
+        return new Player(log, Faction.WHITE, playerMat);
+    }
+
+    public static purple(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new GainCombatCardEvent(new CombatCard))
+            .add(new GainCombatCardEvent(new CombatCard));
+        return new Player(log, Faction.PURPLE, playerMat);
+    }
+
+    public static green(playerMat: PlayerMat): Player {
+        const log = new EventLog()
+            .add(new PowerEvent(3));
+        return new Player(log, Faction.GREEN, playerMat);
     }
 
     public move(unit: Unit, destination: Field) {
@@ -66,7 +119,16 @@ export class Player {
     }
 
     public bolsterCombatCards(): Player {
-        return this.bolster(new CombatCardEvent(new CombatCard(2)));
+        return this.bolster(new GainCombatCardEvent(new CombatCard(2)));
+    }
+
+    private bolster(event: PowerEvent|GainCombatCardEvent): Player {
+        this.assertCoins(1);
+
+        this.log
+            .add(event)
+            .add(new CoinEvent(-1));
+        return this;
     }
 
     public tradeResources(worker: Worker, resource1: ResourceType, resource2: ResourceType): Player {
@@ -107,11 +169,6 @@ export class Player {
             .add(new SpendResourceEvent(resources))
             .add(new BuildEvent(location, building));
         return this;
-    }
-
-    public unitLocation(unit: Unit): Field {
-        const moves = (<LocationEvent[]> this.log.filter(LocationEvent)).filter(event => event.unit === unit);
-        return moves[moves.length - 1].destination;
     }
 
     private assertAvailableResources(type: ResourceType, required: number, resources: Resource[]) {
@@ -157,13 +214,9 @@ export class Player {
         }
     }
 
-    private bolster(event: PowerEvent|CombatCardEvent): Player {
-        this.assertCoins(1);
-
-        this.log
-            .add(event)
-            .add(new CoinEvent(-1));
-        return this;
+    public unitLocation(unit: Unit): Field {
+        const moves = (<LocationEvent[]> this.log.filter(LocationEvent)).filter(event => event.unit === unit);
+        return moves[moves.length - 1].destination;
     }
 
     public power(): number {
@@ -175,7 +228,7 @@ export class Player {
     }
 
     public combatCards(): CombatCard[] {
-        return _.map(event => event.combatCard, <CombatCardEvent[]> this.log.filter(CombatCardEvent));
+        return _.map(event => event.combatCard, <GainCombatCardEvent[]> this.log.filter(GainCombatCardEvent));
     }
 
     public resources(): Resources {

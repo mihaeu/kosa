@@ -1,3 +1,3 @@
 export class CombatCard {
-    constructor(public readonly value: 2|3|4|5) {}
+    constructor(public readonly value: 2|3|4|5 = 2) {}
 }
