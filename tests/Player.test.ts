@@ -12,11 +12,12 @@ import {SpendResourceEvent} from "../src/Events/SpendResourceEvent";
 import {Building} from "../src/Building";
 import {PlayerMat} from "../src/PlayerMat";
 import {Faction} from "../src/Faction";
+import {PlayerFactory} from "../src/PlayerFactory";
 
 let testPlayer: Player;
 
 // 1 power, 4 combat cards, 4 popularity, 7 coins
-beforeEach(() => testPlayer = Player.black(PlayerMat.agricultural()));
+beforeEach(() => testPlayer = PlayerFactory.black(PlayerMat.agricultural()));
 
 test("Black player has two more power after bolstering power", () => {
     expect(testPlayer.bolsterPower().bolsterPower().power()).toBe(5);
