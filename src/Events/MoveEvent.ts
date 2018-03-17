@@ -2,13 +2,15 @@ import {Field} from "../Field";
 import {ResourceType} from "../ResourceType";
 import {Unit} from "../Units/Unit";
 import {LocationEvent} from "./LocationEvent";
+import {PlayerId} from "../PlayerId";
 
 export class MoveEvent extends LocationEvent {
     constructor(
+        public readonly playerId: PlayerId,
         public readonly unit: Unit,
         public readonly destination: Field,
-        public readonly resources: ResourceType[] = []
+        public readonly resources: ResourceType[] = [],
     ) {
-        super(unit, destination);
+        super(playerId, unit, destination);
     }
 }

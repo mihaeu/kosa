@@ -1,4 +1,5 @@
 import {Event} from "./Event";
+import {PlayerId} from "../PlayerId";
 
 export class EventLog {
     private log: Event[] = [];
@@ -10,6 +11,10 @@ export class EventLog {
 
     public filter(type: any): Event[] {
         return this.log.filter(event => event instanceof type);
+    }
+
+    public filter(playerId: PlayerId, type: any): Event[] {
+        return this.log.filter(event => event.playerId === playerId && event instanceof type);
     }
 
     public lastOf(type: any): Event {

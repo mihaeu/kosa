@@ -43,10 +43,18 @@ Units are easy to track because the position is simply the last move, all previo
  
 ## Open Questions
 
- - how do mechs move other units?
- - how to units move resources?
- - how are top and bottom row actions matched together?
- 
+ - [x] ~~how are top and bottom row actions matched together?~~
+ - [ ] how do mechs move other units?
+ - [ ] how do units move resources?
+ - [ ] who validates the information? read request is easy and goes straight to game info, for write requests we have to first validate the request 
+
+        example "red can always take the same action":
+            valid action
+                special: red -> top action multiple times
+                others: last top action different or none?
+                is bottom action -> last action of same user and matches top action?
+                
+        example "yellow can use resources for payment":
 
 ## Contributing
 
