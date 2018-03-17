@@ -32,32 +32,46 @@ import {PopularityEvent} from "./Events/PopularityEvent";
 import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
 import {Faction} from "./Faction";
 import {PlayerMat} from "./PlayerMat";
+import {ActionEvent} from "./Events/ActionEvent";
+import {TopAction} from "./TopAction";
+import {BottomAction} from "./BottomAction";
+import {IllegalActionError} from "./IllegalActionError";
 
 export class Player {
     private log: EventLog;
+    private playerMat: PlayerMat;
 
     public constructor(log: EventLog = new EventLog, faction: Faction, playerMat: PlayerMat) {
         this.log = log;
+        this.playerMat = playerMat;
+
         this.log
             .add(new DeployEvent(Character.CHARACTER, Field.green))
             .add(new DeployEvent(Worker.WORKER_1, Field.m1))
             .add(new DeployEvent(Worker.WORKER_2, Field.f1));
 
-        playerMat.setupEvents.forEach(event => this.log.add(event));
+        this.playerMat.setupEvents.forEach(event => this.log.add(event));
     }
 
     public move(unit: Unit, destination: Field) {
+        this.assertTopActionAllowed(TopAction.MOVE);
         this.assertUnitDeployed(unit);
 
         let currentLocation = this.unitLocation(unit);
         Player.assertLegalMove(currentLocation, destination, unit);
 
-        this.log.add(new MoveEvent(unit, destination));
+        this.log
+            .add(new ActionEvent(TopAction.MOVE))
+            .add(new MoveEvent(unit, destination));
         return this;
     }
 
     public gainCoins(): Player {
-        this.log.add(new CoinEvent(+1));
+        this.assertTopActionAllowed(TopAction.MOVE);
+
+        this.log
+            .add(new ActionEvent(TopAction.MOVE))
+            .add(new CoinEvent(+1));
         return this;
     }
 
@@ -70,20 +84,24 @@ export class Player {
     }
 
     private bolster(event: PowerEvent|GainCombatCardEvent): Player {
+        this.assertTopActionAllowed(TopAction.BOLSTER);
         this.assertCoins(1);
 
         this.log
+            .add(new ActionEvent(TopAction.BOLSTER))
             .add(event)
             .add(new CoinEvent(-1));
         return this;
     }
 
     public tradeResources(worker: Worker, resource1: ResourceType, resource2: ResourceType): Player {
+        this.assertTopActionAllowed(TopAction.TRADE);
         this.assertCoins(1);
         this.assertUnitDeployed(worker);
 
         const workerLocation = this.unitLocation(worker);
         this.log
+            .add(new ActionEvent(TopAction.TRADE))
             .add(new CoinEvent(-1))
             .add(new GainResourceEvent([
                 new Resource(workerLocation, resource1),
@@ -94,17 +112,30 @@ export class Player {
     }
 
     public tradePopularity(): Player {
+        this.assertTopActionAllowed(TopAction.TRADE);
         this.assertCoins(1);
         this.assertNotMoreThan20Popularity();
 
         this.log
+            .add(new ActionEvent(TopAction.TRADE))
             .add(new CoinEvent(-1))
             .add(new PopularityEvent(1));
 
         return this;
     }
 
+    public produce(): Player {
+        this.assertTopActionAllowed(TopAction.PRODUCE);
+
+        this.log
+            .add(new ActionEvent(TopAction.PRODUCE));
+
+        return this;
+    }
+
     public build(worker: Worker, building: BuildingType, resources: Resource[]): Player {
+        this.assertBottomActionAllowed(BottomAction.BUILD);
+
         this.assertUnitDeployed(worker);
         this.assertBuildingNotAlreadyBuilt(building);
         this.assertAvailableResources(ResourceType.WOOD, 3, resources);
@@ -113,8 +144,33 @@ export class Player {
         this.assertLocationHasNoOtherBuildings(location);
 
         this.log
+            .add(new ActionEvent(BottomAction.BUILD))
             .add(new SpendResourceEvent(resources))
             .add(new BuildEvent(location, building));
+        return this;
+    }
+
+    public deploy() {
+        this.assertBottomActionAllowed(BottomAction.DEPLOY);
+
+        this.log
+            .add(new ActionEvent(BottomAction.DEPLOY));
+        return this;
+    }
+
+    public enlist() {
+        this.assertBottomActionAllowed(BottomAction.ENLIST);
+
+        this.log
+            .add(new ActionEvent(BottomAction.ENLIST));
+        return this;
+    }
+
+    public upgrade() {
+        this.assertBottomActionAllowed(BottomAction.UPGRADE);
+
+        this.log
+            .add(new ActionEvent(BottomAction.UPGRADE));
         return this;
     }
 
@@ -158,6 +214,19 @@ export class Player {
     private assertLocationHasNoOtherBuildings(location: Field): void {
         if (!_.none(event => location === event.location, <BuildEvent[]> this.log.filter(BuildEvent))) {
             throw new LocationAlreadyHasAnotherBuildingError(location);
+        }
+    }
+
+    private assertTopActionAllowed(topAction: TopAction): void {
+        const lastAction = this.log.lastOf(ActionEvent);
+        if (lastAction !== null && (lastAction as ActionEvent).action === topAction) {
+            throw new IllegalActionError("Cannot use the same action twice.");
+        }
+    }
+
+    private assertBottomActionAllowed(bottomAction: BottomAction): void {
+        if (false) {
+            throw new IllegalActionError("Cannot use this bottom action with the last top action.");
         }
     }
 
@@ -223,5 +292,17 @@ export class Player {
         if (this.popularity() > 20) {
             throw new CannotHaveMoreThan20PopularityError();
         }
+    }
+
+    /**
+     * @deprecated this is only for testing purposes
+     *
+     * @param {Event} event
+     * @returns {Player}
+     */
+    public addEvent(event: Event): Player {
+        this.log.add(event);
+
+        return this;
     }
 }

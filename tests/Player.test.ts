@@ -13,6 +13,7 @@ import {Building} from "../src/Building";
 import {PlayerMat} from "../src/PlayerMat";
 import {Faction} from "../src/Faction";
 import {PlayerFactory} from "../src/PlayerFactory";
+import {CoinEvent} from "../src/Events/CoinEvent";
 
 let testPlayer: Player;
 
@@ -20,7 +21,7 @@ let testPlayer: Player;
 beforeEach(() => testPlayer = PlayerFactory.black(PlayerMat.agricultural()));
 
 test("Black player has two more power after bolstering power", () => {
-    expect(testPlayer.bolsterPower().bolsterPower().power()).toBe(5);
+    expect(testPlayer.bolsterPower().power()).toBe(3);
 });
 
 test("Player has one more combat card after bolstering combat cards", () => {
@@ -34,7 +35,7 @@ test("Player pays one coin for bolster", () => {
 });
 
 test("Player cannot bolster without coins", () => {
-    for (let i = 0; i < 7; i++) testPlayer.bolsterPower();
+    testPlayer.addEvent(new CoinEvent(-7));
     expect(() => testPlayer.bolsterPower()).toThrowError(/1 coin\(s\) required, but only 0 coin\(s\) available./);
 });
 
@@ -47,6 +48,7 @@ test("Green character starts on green with two adjacent workers", () => {
 test("Green character can move from base to encounter on v1 in 2 moves", () => {
     testPlayer.move(Character.CHARACTER, Field.f1);
     expect(testPlayer.unitLocation(Character.CHARACTER)).toBe(Field.f1);
+    testPlayer.produce();
     testPlayer.move(Character.CHARACTER, Field.v1);
     expect(testPlayer.unitLocation(Character.CHARACTER)).toBe(Field.v1);
 });
@@ -87,10 +89,10 @@ test("Calculate resources", () => {
 });
 
 test("Trade requires coins", () => {
-    for (let i = 0; i < 7; i++) testPlayer.bolsterPower();
-
     const expectedError = /1 coin.s. required, but only 0 coin.s. available./;
-    expect(() => testPlayer.tradeResources(Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
+    expect(() => testPlayer
+        .addEvent(new CoinEvent(-7))
+        .tradeResources(Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
 });
 
 test("Trade requires a deployed worker", () => {
@@ -216,4 +218,8 @@ test("Paying resources requires exact match", () => {
 
 test("Can trade for popularity", () => {
     expect(testPlayer.tradePopularity().popularity()).toBe(5);
+});
+
+test("Black cannot take the same top action twice", () => {
+    expect(() => testPlayer.produce().produce()).toThrowError("Cannot use the same action twice.");
 });
