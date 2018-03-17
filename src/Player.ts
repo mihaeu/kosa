@@ -3,6 +3,7 @@ import {GameMap} from "./GameMap";
 import {Field} from "./Field";
 import {GainCombatCardEvent} from "./Events/CombatCardEvent";
 import {CombatCard} from "./CombatCard";
+import {Event} from "./Events/Event";
 import {CoinEvent} from "./Events/CoinEvent";
 import {PowerEvent} from "./Events/PowerEvent";
 import {NotEnoughCoinsError} from "./NotEnoughCoinsError";
@@ -54,7 +55,7 @@ export class Player {
     }
 
     public move(unit: Unit, destination: Field) {
-        this.assertTopActionAllowed(TopAction.MOVE);
+        this.assertActionCanBeTaken(TopAction.MOVE);
         this.assertUnitDeployed(unit);
 
         let currentLocation = this.unitLocation(unit);
@@ -67,7 +68,7 @@ export class Player {
     }
 
     public gainCoins(): Player {
-        this.assertTopActionAllowed(TopAction.MOVE);
+        this.assertActionCanBeTaken(TopAction.MOVE);
 
         this.log
             .add(new ActionEvent(TopAction.MOVE))
@@ -84,7 +85,7 @@ export class Player {
     }
 
     private bolster(event: PowerEvent|GainCombatCardEvent): Player {
-        this.assertTopActionAllowed(TopAction.BOLSTER);
+        this.assertActionCanBeTaken(TopAction.BOLSTER);
         this.assertCoins(1);
 
         this.log
@@ -95,7 +96,7 @@ export class Player {
     }
 
     public tradeResources(worker: Worker, resource1: ResourceType, resource2: ResourceType): Player {
-        this.assertTopActionAllowed(TopAction.TRADE);
+        this.assertActionCanBeTaken(TopAction.TRADE);
         this.assertCoins(1);
         this.assertUnitDeployed(worker);
 
@@ -112,7 +113,7 @@ export class Player {
     }
 
     public tradePopularity(): Player {
-        this.assertTopActionAllowed(TopAction.TRADE);
+        this.assertActionCanBeTaken(TopAction.TRADE);
         this.assertCoins(1);
         this.assertNotMoreThan20Popularity();
 
@@ -125,7 +126,7 @@ export class Player {
     }
 
     public produce(): Player {
-        this.assertTopActionAllowed(TopAction.PRODUCE);
+        this.assertActionCanBeTaken(TopAction.PRODUCE);
 
         this.log
             .add(new ActionEvent(TopAction.PRODUCE));
@@ -134,8 +135,7 @@ export class Player {
     }
 
     public build(worker: Worker, building: BuildingType, resources: Resource[]): Player {
-        this.assertBottomActionAllowed(BottomAction.BUILD);
-
+        this.assertActionCanBeTaken(BottomAction.BUILD);
         this.assertUnitDeployed(worker);
         this.assertBuildingNotAlreadyBuilt(building);
         this.assertAvailableResources(ResourceType.WOOD, 3, resources);
@@ -151,7 +151,7 @@ export class Player {
     }
 
     public deploy() {
-        this.assertBottomActionAllowed(BottomAction.DEPLOY);
+        this.assertActionCanBeTaken(BottomAction.DEPLOY);
 
         this.log
             .add(new ActionEvent(BottomAction.DEPLOY));
@@ -159,7 +159,7 @@ export class Player {
     }
 
     public enlist() {
-        this.assertBottomActionAllowed(BottomAction.ENLIST);
+        this.assertActionCanBeTaken(BottomAction.ENLIST);
 
         this.log
             .add(new ActionEvent(BottomAction.ENLIST));
@@ -167,7 +167,7 @@ export class Player {
     }
 
     public upgrade() {
-        this.assertBottomActionAllowed(BottomAction.UPGRADE);
+        this.assertActionCanBeTaken(BottomAction.UPGRADE);
 
         this.log
             .add(new ActionEvent(BottomAction.UPGRADE));
@@ -217,15 +217,25 @@ export class Player {
         }
     }
 
-    private assertTopActionAllowed(topAction: TopAction): void {
-        const lastAction = this.log.lastOf(ActionEvent);
-        if (lastAction !== null && (lastAction as ActionEvent).action === topAction) {
+    /**
+     * @TODO #round
+     *
+     * @param {TopAction | BottomAction} action
+     */
+    private assertActionCanBeTaken(action: TopAction|BottomAction): void {
+        const lastActionEvent = this.log.lastOf(ActionEvent);
+        if (lastActionEvent === null) {
+            return;
+        }
+
+        const lastAction = (lastActionEvent as ActionEvent).action;
+        if (lastAction === action) {
             throw new IllegalActionError("Cannot use the same action twice.");
         }
-    }
 
-    private assertBottomActionAllowed(bottomAction: BottomAction): void {
-        if (false) {
+        if (action in BottomAction
+            && lastAction in TopAction
+            && !this.playerMat.topActionMatchesBottomAction(lastAction, action)) {
             throw new IllegalActionError("Cannot use this bottom action with the last top action.");
         }
     }

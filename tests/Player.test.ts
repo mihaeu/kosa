@@ -14,6 +14,10 @@ import {PlayerMat} from "../src/PlayerMat";
 import {Faction} from "../src/Faction";
 import {PlayerFactory} from "../src/PlayerFactory";
 import {CoinEvent} from "../src/Events/CoinEvent";
+import {MoveEvent} from "../src/Events/MoveEvent";
+import {Unit} from "../src/Units/Unit";
+import {ActionEvent} from "../src/Events/ActionEvent";
+import {TopAction} from "../src/TopAction";
 
 let testPlayer: Player;
 
@@ -122,7 +126,10 @@ test("Cannot build the same building twice", () => {
 
     const expectedError = /Building MILL has already been built./;
     expect(() => {
-        player.build(Worker.WORKER_1, BuildingType.MILL, resources).build(Worker.WORKER_1, BuildingType.MILL, resources)
+        player
+            .build(Worker.WORKER_1, BuildingType.MILL, resources)
+            .addEvent(new ActionEvent(TopAction.MOVE))
+            .build(Worker.WORKER_1, BuildingType.MILL, resources)
     }).toThrowError(expectedError);
 });
 
@@ -143,6 +150,7 @@ test("Cannot build on a location that already has a building", () => {
     expect(() => {
         player
             .build(Worker.WORKER_1, BuildingType.MILL, resources1)
+            .addEvent(new ActionEvent(TopAction.MOVE))
             .build(Worker.WORKER_1, BuildingType.ARMORY, resources2)
     }).toThrowError(expectedError);
 });
@@ -222,4 +230,11 @@ test("Can trade for popularity", () => {
 
 test("Black cannot take the same top action twice", () => {
     expect(() => testPlayer.produce().produce()).toThrowError("Cannot use the same action twice.");
+});
+
+test("Top action and bottom action have to match", () => {
+    expect(() => testPlayer
+        .produce()
+        .enlist())
+        .toThrowError("Cannot use this bottom action with the last top action.");
 });
