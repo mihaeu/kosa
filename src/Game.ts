@@ -11,7 +11,6 @@ import {MoveEvent} from "./Events/MoveEvent";
 import {Unit} from "./Units/Unit";
 import {UnitNotDeployedError} from "./UnitNotDeployedError";
 import {IllegalMoveError} from "./IllegalMoveError";
-import {Character} from "./Units/Character";
 import {Worker} from "./Units/Worker";
 import {ResourceType} from "./ResourceType";
 import {GainResourceEvent} from "./Events/GainResourceEvent";
@@ -31,20 +30,16 @@ import {Building} from "./Building";
 import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
 import {PopularityEvent} from "./Events/PopularityEvent";
 import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
-import {Faction} from "./Faction";
-import {PlayerMat} from "./PlayerMat";
 import {ActionEvent} from "./Events/ActionEvent";
 import {TopAction} from "./TopAction";
 import {BottomAction} from "./BottomAction";
 import {IllegalActionError} from "./IllegalActionError";
 import {Player} from "./Player";
-import {PlayerId} from "./PlayerId";
 
 export class Game {
     private log: EventLog;
-    private players: Player[];
-    
-    public constructor(log: EventLog = new EventLog, public readonly players: Player[]) {
+
+    public constructor(log: EventLog = new EventLog, private readonly players: Player[]) {
         this.log = log;
         this.players = players;
 
@@ -217,28 +212,64 @@ export class Game {
         }
     }
 
-    /**
-     * @TODO #round
-     *
-     * @param player
-     * @param {TopAction | BottomAction} action
-     */
-    private assertActionCanBeTaken(player: Player, action: TopAction | BottomAction): void {
-        const lastActionEvent = this.log.lastOf(ActionEvent);
-        if (lastActionEvent === null) {
+    private static actionFromTheSameColumn(
+        currentAction: TopAction | BottomAction,
+        lastAction: TopAction | BottomAction,
+        player: Player,
+    ) {
+        return currentAction === lastAction
+            || (lastAction in TopAction
+                && currentAction in BottomAction
+                && player.playerMat.topActionMatchesBottomAction(lastAction, currentAction))
+            || (lastAction in BottomAction
+                && currentAction in TopAction
+                && player.playerMat.topActionMatchesBottomAction(currentAction, lastAction));
+    }
+
+    private assertActionCanBeTaken(player: Player, currentAction: TopAction | BottomAction): void {
+        if (this.gameJustStarted() && !this.playerIsFirstPlayer(player)) {
+            throw new IllegalActionError("You are not the starting player.")
+        }
+
+        const lastAction = this.lastActionFor(player);
+        if (lastAction === null) {
             return;
         }
 
-        const lastAction = (lastActionEvent as ActionEvent).action;
-        if (lastAction === action) {
-            throw new IllegalActionError("Cannot use the same action twice.");
+        if (!this.playerIsNext(player, currentAction)) {
+            throw new IllegalActionError("It is not your turn yet.")
         }
 
-        if (action in BottomAction
+        if (Game.actionFromTheSameColumn(lastAction, currentAction, player)) {
+            throw new IllegalActionError("Cannot use actions from the same column.");
+        }
+
+        if (currentAction in BottomAction
             && lastAction in TopAction
-            && !player.playerMat.topActionMatchesBottomAction(lastAction, action)) {
+            && this.lastPlayer() === player
+            && !player.playerMat.topActionMatchesBottomAction(lastAction, currentAction)) {
             throw new IllegalActionError("Cannot use this bottom action with the last top action.");
         }
+    }
+
+    private gameJustStarted(): boolean {
+        return this.log.lastOf(ActionEvent, () => true) === null;
+    }
+
+    private lastActionFor(player: Player): TopAction|BottomAction|null {
+        const lastActionEvent = this.log.lastOf(ActionEvent, event => event.playerId === player.playerId);
+        return lastActionEvent !== null
+            ? (lastActionEvent as ActionEvent).action
+            : null;
+    }
+
+    private playerIsFirstPlayer(currentPlayer: Player): boolean {
+        for (const otherPlayer of this.players) {
+            if (otherPlayer.playerMat.startPosition < currentPlayer.playerMat.startPosition) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public unitLocation(player: Player, unit: Unit): Field {
@@ -247,15 +278,18 @@ export class Game {
     }
 
     public power(player: Player): number {
-        return _.sum(_.map(event => event.power, <PowerEvent[]> this.log.filter(player.playerId, PowerEvent)));
+        // @ts-ignore
+        return _.sum(_.pluck("power", this.log.filter(player.playerId, PowerEvent)));
     }
 
     public coins(player: Player): number {
-        return _.sum(_.map(event => event.coins, <CoinEvent[]> this.log.filter(player.playerId, CoinEvent)));
+        // @ts-ignore
+        return _.sum(_.pluck("coins", this.log.filter(player.playerId, CoinEvent)));
     }
 
     public combatCards(player: Player): CombatCard[] {
-        return _.map(event => event.combatCard, <GainCombatCardEvent[]> this.log.filter(player.playerId, GainCombatCardEvent));
+        // @ts-ignore
+        return _.pluck("combatCard", this.log.filter(player.playerId, GainCombatCardEvent));
     }
 
     public resources(player: Player): Resources {
@@ -315,5 +349,50 @@ export class Game {
         this.log.add(event);
 
         return this;
+    }
+
+    private lastPlayer(): Player|null {
+        const lastActionEvent = this.log.lastOf(ActionEvent, () => true);
+        if (lastActionEvent === null) {
+            return null;
+        }
+
+        for (const player of this.players) {
+            if (player.playerId === lastActionEvent.playerId) {
+                return player;
+            }
+        }
+        return null;
+
+    }
+
+    private playerOrder(): Player[] {
+        return _.sort(_.comparator((player1: Player, player2: Player) => {
+            return Player.FACTION_TURN_ORDER.indexOf(player1.faction) < Player.FACTION_TURN_ORDER.indexOf(player2.faction);
+        }), this.players);
+    }
+
+    private playerIsNext(player: Player, action: TopAction | BottomAction): boolean {
+        const lastPlayer = this.lastPlayer();
+        if (lastPlayer === null) {
+            return true;
+        }
+
+        const playerOrder = this.playerOrder();
+        if (playerOrder.lastIndexOf(lastPlayer) === playerOrder.length - 1 && playerOrder.indexOf(player) === 0) {
+            return true;
+        }
+
+        return Game.playerPlaysBottomActionAfterTopAction(lastPlayer, playerOrder, player, action)
+            || lastPlayer === playerOrder[playerOrder.indexOf(player) - 1];
+    }
+
+    private static playerPlaysBottomActionAfterTopAction(
+        lastPlayer: Player,
+        playerOrder: Player[],
+        player: Player,
+        action: TopAction | BottomAction
+    ): boolean {
+        return lastPlayer === playerOrder[playerOrder.indexOf(player)] && action in BottomAction;
     }
 }

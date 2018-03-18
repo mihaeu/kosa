@@ -18,82 +18,94 @@ import {PlayerId} from "../src/PlayerId";
 import {Player} from "../src/Player";
 
 let game: Game;
-const playerId = new PlayerId(1);
 
-// 1 power, 4 combat cards, 4 popularity, 7 coins
-const player = PlayerFactory.black(playerId, PlayerMat.agricultural(playerId));
+const blackIndustrialPlayerId = new PlayerId(1);
+const greenAgriculturalPlayerId = new PlayerId(2);
+
+const blackIndustrialPlayer = PlayerFactory.black(
+    blackIndustrialPlayerId,
+    PlayerMat.industrial(blackIndustrialPlayerId)
+);
+const greenAgriculturalPlayer = PlayerFactory.green(
+    greenAgriculturalPlayerId,
+    PlayerMat.agricultural(greenAgriculturalPlayerId)
+);
 
 beforeEach(() => {
     game = new Game(
         new EventLog(),
-        [player],
+        [blackIndustrialPlayer, greenAgriculturalPlayer],
     );
 });
 
 test("Black player has two more power after bolstering power", () => {
-    expect(game.bolsterPower(player).power(player)).toBe(3);
+    expect(game.bolsterPower(blackIndustrialPlayer).power(blackIndustrialPlayer)).toBe(3);
 });
 
 test("Player has one more combat card after bolstering combat cards", () => {
-    expect(game.combatCards(player).length).toBe(4);
-    expect(game.bolsterCombatCards(player).combatCards(player).length).toBe(5);
+    expect(game.combatCards(blackIndustrialPlayer).length).toBe(4);
+    expect(game.bolsterCombatCards(blackIndustrialPlayer).combatCards(blackIndustrialPlayer).length).toBe(5);
 });
 
 test("Player pays one coin for bolster", () => {
-    expect(game.coins(player)).toBe(7);
-    expect(game.bolsterPower(player).coins(player)).toBe(6);
+    expect(game.coins(blackIndustrialPlayer)).toBe(4);
+    expect(game.bolsterPower(blackIndustrialPlayer).coins(blackIndustrialPlayer)).toBe(3);
 });
 
 test("Player cannot bolster without coins", () => {
-    game.addEvent(new CoinEvent(player.playerId, -7));
-    expect(() => game.bolsterPower(player)).toThrowError(/1 coin\(s\) required, but only 0 coin\(s\) available./);
+    game.addEvent(new CoinEvent(blackIndustrialPlayer.playerId, -4));
+    expect(() => game.bolsterPower(blackIndustrialPlayer)).toThrowError(/1 coin\(s\) required, but only 0 coin\(s\) available./);
 });
 
 test("Black character starts on black with two adjacent workers", () => {
-    expect(game.unitLocation(player, Character.CHARACTER)).toBe(Field.black);
-    expect(game.unitLocation(player, Worker.WORKER_1)).toBe(Field.m6);
-    expect(game.unitLocation(player, Worker.WORKER_2)).toBe(Field.t8);
+    expect(game.unitLocation(blackIndustrialPlayer, Character.CHARACTER)).toBe(Field.black);
+    expect(game.unitLocation(blackIndustrialPlayer, Worker.WORKER_1)).toBe(Field.m6);
+    expect(game.unitLocation(blackIndustrialPlayer, Worker.WORKER_2)).toBe(Field.t8);
 });
 
-test("Black character can move from base to encounter on v6 in 2 moves", () => {
-    game.move(player, Character.CHARACTER, Field.m6);
-    expect(game.unitLocation(player, Character.CHARACTER)).toBe(Field.m6);
-    game.produce(player);
-    game.move(player, Character.CHARACTER, Field.v6);
-    expect(game.unitLocation(player, Character.CHARACTER)).toBe(Field.v6);
+test("Black character can move from base to encounter on v6 in 2 moves (3 turns)", () => {
+    game.move(blackIndustrialPlayer, Character.CHARACTER, Field.m6);
+    expect(game.unitLocation(blackIndustrialPlayer, Character.CHARACTER)).toBe(Field.m6);
+    game.produce(greenAgriculturalPlayer);
+
+    game.produce(blackIndustrialPlayer);
+    game.bolsterPower(greenAgriculturalPlayer);
+
+    game.move(blackIndustrialPlayer, Character.CHARACTER, Field.v6);
+    expect(game.unitLocation(blackIndustrialPlayer, Character.CHARACTER)).toBe(Field.v6);
 });
 
 test("Player cannot move a mech which has not been deployed", () => {
     const expectedError = /MECH_1 has not been deployed yet./;
-    expect(() => game.move(player, Mech.MECH_1, Field.black)).toThrowError(expectedError);
+    expect(() => game.move(blackIndustrialPlayer, Mech.MECH_1, Field.black)).toThrowError(expectedError);
 });
 
 test("Black character cannot move to another homebase", () => {
     const expectedError = /CHARACTER is not allowed to move from black:HOMEBASE to green:HOMEBASE./;
-    expect(() => game.move(player, Character.CHARACTER, Field.green)).toThrowError(expectedError);
+    expect(() => game.move(blackIndustrialPlayer, Character.CHARACTER, Field.green)).toThrowError(expectedError);
 });
 
 test("Player can gain one coin", () => {
-    expect(game.coins(player)).toBe(7);
-    expect(game.gainCoins(player).coins(player)).toBe(8);
+    expect(game.coins(blackIndustrialPlayer)).toBe(4);
+    expect(game.gainCoins(blackIndustrialPlayer).coins(blackIndustrialPlayer)).toBe(5);
 });
 
 test("Calculate resources", () => {
     let log = new EventLog()
-        .add(new GainResourceEvent(playerId, [
+        .add(new GainResourceEvent(blackIndustrialPlayerId, [
             new Resource(Field.F, ResourceType.FOOD),
             new Resource(Field.F, ResourceType.FOOD),
             new Resource(Field.F, ResourceType.FOOD),
             new Resource(Field.F, ResourceType.FOOD),
             new Resource(Field.F, ResourceType.FOOD),
         ]))
-        .add(new SpendResourceEvent(playerId, [
+        .add(new SpendResourceEvent(blackIndustrialPlayerId, [
             new Resource(Field.F, ResourceType.FOOD),
             new Resource(Field.F, ResourceType.FOOD),
             new Resource(Field.F, ResourceType.FOOD),
         ])
     );
-    const player = new Player(playerId, Faction.GREEN, PlayerMat.industrial(playerId));
+    const player = new Player(blackIndustrialPlayerId, Faction.GREEN, PlayerMat.industrial(blackIndustrialPlayerId));
     const game = new Game(log, [player]);
     expect(game.resources(player).food).toBe(2);
 });
@@ -101,22 +113,22 @@ test("Calculate resources", () => {
 test("Trade requires coins", () => {
     const expectedError = /1 coin.s. required, but only 0 coin.s. available./;
     expect(() => game
-        .addEvent(new CoinEvent(playerId, -7))
-        .tradeResources(player, Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
+        .addEvent(new CoinEvent(blackIndustrialPlayerId, -4))
+        .tradeResources(blackIndustrialPlayer, Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
 });
 
 test("Trade requires a deployed worker", () => {
     const expectedError = /WORKER_3 has not been deployed yet./;
-    expect(() => game.tradeResources(player, Worker.WORKER_3, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
+    expect(() => game.tradeResources(blackIndustrialPlayer, Worker.WORKER_3, ResourceType.FOOD, ResourceType.FOOD)).toThrowError(expectedError);
 });
 
 test("Player has two more resources after tradeResources", () => {
-    let resources = game.tradeResources(player, Worker.WORKER_1, ResourceType.WOOD, ResourceType.METAL).resources(player);
+    let resources = game.tradeResources(blackIndustrialPlayer, Worker.WORKER_1, ResourceType.WOOD, ResourceType.METAL).resources(blackIndustrialPlayer);
     expect(resources.food).toBe(0);
     expect(resources.wood).toBe(1);
     expect(resources.metal).toBe(1);
     expect(resources.oil).toBe(0);
-    expect(game.coins(player)).toBe(6);
+    expect(game.coins(blackIndustrialPlayer)).toBe(3);
 });
 
 test("Cannot build the same building twice", () => {
@@ -128,14 +140,16 @@ test("Cannot build the same building twice", () => {
         new Resource(Field.m1, ResourceType.WOOD),
         new Resource(Field.m1, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(playerId, resources));
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources));
 
     const expectedError = /Building MILL has already been built./;
     expect(() => {
         game
-            .build(player, Worker.WORKER_1, BuildingType.MILL, resources)
-            .produce(player)
-            .build(player, Worker.WORKER_1, BuildingType.MILL, resources);
+            .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources)
+            .bolsterPower(greenAgriculturalPlayer)
+            .produce(blackIndustrialPlayer)
+            .gainCoins(greenAgriculturalPlayer)
+            .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources);
     }).toThrowError(expectedError);
 });
 
@@ -150,25 +164,31 @@ test("Cannot build on a location that already has a building", () => {
         new Resource(Field.m1, ResourceType.WOOD),
         new Resource(Field.m1, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(playerId, resources1));
-    game.addEvent(new GainResourceEvent(playerId, resources2));
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources2));
     const expectedError = /m6.MOUNTAIN already has another building./;
     expect(() => {
         game
-            .build(player, Worker.WORKER_1, BuildingType.MILL, resources1)
-            .produce(player)
-            .build(player, Worker.WORKER_1, BuildingType.ARMORY, resources2)
+            .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources1)
+            .bolsterPower(greenAgriculturalPlayer)
+            .bolsterPower(blackIndustrialPlayer)
+            .produce(greenAgriculturalPlayer)
+            .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, resources2)
     }).toThrowError(expectedError);
 });
 
 test("Cannot build without enough wood", () => {
     const expectedError = /Not enough resources of type WOOD; 3 required, but only 0 available./;
-    expect(() => game.build(player, Worker.WORKER_1, BuildingType.ARMORY, [])).toThrowError(expectedError);
+    expect(() => game
+        .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, []))
+        .toThrowError(expectedError);
 });
 
 test("Accepts only exact wood", () => {
     const expectedError = /Not enough resources of type WOOD; 3 required, but only 0 available./;
-    expect(() => game.build(player, Worker.WORKER_1, BuildingType.ARMORY, [])).toThrowError(expectedError);
+    expect(() => game
+        .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, []))
+        .toThrowError(expectedError);
 });
 
 test("Player can build a mill", () => {
@@ -177,11 +197,11 @@ test("Player can build a mill", () => {
         new Resource(Field.m1, ResourceType.WOOD),
         new Resource(Field.m1, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(playerId, resources));
-    game.build(player, Worker.WORKER_1, BuildingType.MILL, resources);
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources));
+    game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources);
 
-    expect(game.resources(player).countByType(ResourceType.WOOD)).toBe(0);
-    expect(game.buildings(player).pop()).toEqual(new Building(BuildingType.MILL, Field.m6));
+    expect(game.resources(blackIndustrialPlayer).countByType(ResourceType.WOOD)).toBe(0);
+    expect(game.buildings(blackIndustrialPlayer).pop()).toEqual(new Building(BuildingType.MILL, Field.m6));
 });
 
 test("Building uses specific resources", () => {
@@ -194,11 +214,11 @@ test("Building uses specific resources", () => {
         new Resource(Field.f1, ResourceType.WOOD),
         new Resource(Field.m1, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(playerId, resources1.concat(resources2)));
-    expect(game.availableResources(player)).toEqual(resources1.concat(resources2));
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1.concat(resources2)));
+    expect(game.availableResources(blackIndustrialPlayer)).toEqual(resources1.concat(resources2));
 
-    game.build(player, Worker.WORKER_1, BuildingType.MILL, resources1);
-    expect(game.availableResources(player)).toEqual(resources2);
+    game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources1);
+    expect(game.availableResources(blackIndustrialPlayer)).toEqual(resources2);
 });
 
 test("Paying resources requires exact match", () => {
@@ -213,23 +233,58 @@ test("Paying resources requires exact match", () => {
         new Resource(Field.f2, ResourceType.WOOD),
     ];
 
-    game.addEvent(new GainResourceEvent(playerId, resources1));
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
 
     const expectedError = /The provided resources \(m1:MOUNTAIN:WOOD, f1:FARM:WOOD, m1:MOUNTAIN:WOOD\) are not among your available resources \(f2:FARM:WOOD, f2:FARM:WOOD, f2:FARM:WOOD\)./;
-    expect(() => game.build(player, Worker.WORKER_1, BuildingType.MILL, resources2)).toThrowError(expectedError);
+    expect(() => game
+        .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources2)
+    ).toThrowError(expectedError);
 });
 
 test("Can trade for popularity", () => {
-    expect(game.tradePopularity(player).popularity(player)).toBe(5);
+    expect(game.tradePopularity(blackIndustrialPlayer).popularity(blackIndustrialPlayer)).toBe(3);
 });
 
 test("Black cannot take the same top action twice", () => {
-    expect(() => game.produce(player).produce(player)).toThrowError("Cannot use the same action twice.");
+    expect(() => game
+        .produce(blackIndustrialPlayer)
+        .produce(greenAgriculturalPlayer)
+        .produce(blackIndustrialPlayer)
+    ).toThrowError("Cannot use actions from the same column.");
+});
+
+test("Black cannot take bottom action from the same column as last turn's top action", () => {
+    expect(() => game
+        .produce(blackIndustrialPlayer)
+        .produce(greenAgriculturalPlayer)
+        .deploy(blackIndustrialPlayer)
+    ).toThrowError("Cannot use actions from the same column.");
+});
+
+test("Black cannot take top action from the same column as last turn's bottom action", () => {
+    expect(() => game
+        .deploy(blackIndustrialPlayer)
+        .produce(greenAgriculturalPlayer)
+        .produce(blackIndustrialPlayer)
+    ).toThrowError("Cannot use actions from the same column.");
 });
 
 test("Top action and bottom action have to match", () => {
     expect(() => game
-        .produce(player)
-        .enlist(player))
-        .toThrowError("Cannot use this bottom action with the last top action.");
+        .produce(blackIndustrialPlayer)
+        .enlist(blackIndustrialPlayer)
+    ).toThrowError("Cannot use this bottom action with the last top action.");
+});
+
+test("Player with industrial (1) map starts before agricultural (7)", () => {
+    expect(() => game
+        .produce(greenAgriculturalPlayer)
+    ).toThrowError("You are not the starting player.");
+});
+
+test("Player cannot play out of order", () => {
+    expect(() => game
+        .gainCoins(blackIndustrialPlayer)
+        .bolsterPower(blackIndustrialPlayer)
+    ).toThrowError("It is not your turn yet.");
 });
