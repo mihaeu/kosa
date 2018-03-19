@@ -35,6 +35,8 @@ import {TopAction} from "./TopAction";
 import {BottomAction} from "./BottomAction";
 import {IllegalActionError} from "./IllegalActionError";
 import {Player} from "./Player";
+import {Mech} from "./Units/Mech";
+import {RecruitReward} from "./RecruitReward";
 
 export class Game {
     private log: EventLog;
@@ -145,24 +147,29 @@ export class Game {
         return this;
     }
 
-    public deploy(player: Player) {
+    public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.DEPLOY);
+        this.assertAvailableResources(player, ResourceType.METAL, 4, resources);
 
+        const location = this.unitLocation(player, worker);
         this.log
-            .add(new ActionEvent(player.playerId, BottomAction.DEPLOY));
+            .add(new ActionEvent(player.playerId, BottomAction.DEPLOY))
+            .add(new DeployEvent(player.playerId, mech, location));
         return this;
     }
 
-    public enlist(player: Player) {
+    public enlist(player: Player, bottomAction: BottomAction, recruiter: RecruitReward, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.ENLIST);
+        this.assertAvailableResources(player, ResourceType.FOOD, 4, resources);
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST));
         return this;
     }
 
-    public upgrade(player: Player) {
+    public upgrade(player: Player, topAction: TopAction, bottomAction: BottomAction, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.UPGRADE);
+        this.assertAvailableResources(player, ResourceType.OIL, 2, resources);
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.UPGRADE));

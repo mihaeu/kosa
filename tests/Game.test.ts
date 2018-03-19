@@ -16,6 +16,8 @@ import {PlayerFactory} from "../src/PlayerFactory";
 import {CoinEvent} from "../src/Events/CoinEvent";
 import {PlayerId} from "../src/PlayerId";
 import {Player} from "../src/Player";
+import {BottomAction} from "../src/BottomAction";
+import {RecruitReward} from "../src/RecruitReward";
 
 let game: Game;
 
@@ -100,11 +102,11 @@ test("Calculate resources", () => {
             new Resource(Field.F, ResourceType.FOOD),
         ]))
         .add(new SpendResourceEvent(blackIndustrialPlayerId, [
-            new Resource(Field.F, ResourceType.FOOD),
-            new Resource(Field.F, ResourceType.FOOD),
-            new Resource(Field.F, ResourceType.FOOD),
-        ])
-    );
+                new Resource(Field.F, ResourceType.FOOD),
+                new Resource(Field.F, ResourceType.FOOD),
+                new Resource(Field.F, ResourceType.FOOD),
+            ])
+        );
     const player = new Player(blackIndustrialPlayerId, Faction.GREEN, PlayerMat.industrial(blackIndustrialPlayerId));
     const game = new Game(log, [player]);
     expect(game.resources(player).food).toBe(2);
@@ -257,13 +259,21 @@ test("Black cannot take bottom action from the same column as last turn's top ac
     expect(() => game
         .produce(blackIndustrialPlayer)
         .produce(greenAgriculturalPlayer)
-        .deploy(blackIndustrialPlayer)
+        .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, [])
     ).toThrowError("Cannot use actions from the same column.");
 });
 
 test("Black cannot take top action from the same column as last turn's bottom action", () => {
+    const resources = [
+        new Resource(Field.m6, ResourceType.METAL),
+        new Resource(Field.m6, ResourceType.METAL),
+        new Resource(Field.m6, ResourceType.METAL),
+        new Resource(Field.m6, ResourceType.METAL),
+    ];
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources));
+
     expect(() => game
-        .deploy(blackIndustrialPlayer)
+        .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources)
         .produce(greenAgriculturalPlayer)
         .produce(blackIndustrialPlayer)
     ).toThrowError("Cannot use actions from the same column.");
@@ -272,7 +282,7 @@ test("Black cannot take top action from the same column as last turn's bottom ac
 test("Top action and bottom action have to match", () => {
     expect(() => game
         .produce(blackIndustrialPlayer)
-        .enlist(blackIndustrialPlayer)
+        .enlist(blackIndustrialPlayer, BottomAction.BUILD, RecruitReward.COINS, [])
     ).toThrowError("Cannot use this bottom action with the last top action.");
 });
 
