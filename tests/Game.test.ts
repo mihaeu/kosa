@@ -18,6 +18,8 @@ import {PlayerId} from "../src/PlayerId";
 import {Player} from "../src/Player";
 import {BottomAction} from "../src/BottomAction";
 import {RecruitReward} from "../src/RecruitReward";
+import {DeployEvent} from "../src/Events/DeployEvent";
+import _ = require("ramda");
 
 let game: Game;
 
@@ -298,3 +300,66 @@ test("Player cannot play out of order", () => {
         .bolsterPower(blackIndustrialPlayer)
     ).toThrowError("It is not your turn yet.");
 });
+
+test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {
+    game.produce(blackIndustrialPlayer);
+    expect(game.availableResources(blackIndustrialPlayer)).toEqual([
+        new Resource(Field.m6, ResourceType.METAL),
+        new Resource(Field.t8, ResourceType.OIL),
+    ]);
+});
+
+test.skip("Producing with 8 workers costs 1 popularity, 1 coins, 1 power", () => {
+    game
+        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.t8))
+        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.t8))
+        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.t8))
+        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.t8))
+        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.t8))
+        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.t8));
+
+    game.produce(blackIndustrialPlayer);
+    expect(game.availableResources(blackIndustrialPlayer)).toEqual([
+        new Resource(Field.m6, ResourceType.METAL),
+        new Resource(Field.t8, ResourceType.OIL),
+        new Resource(Field.t8, ResourceType.OIL),
+        new Resource(Field.t8, ResourceType.OIL),
+        new Resource(Field.t8, ResourceType.OIL),
+        new Resource(Field.t8, ResourceType.OIL),
+        new Resource(Field.t8, ResourceType.OIL),
+        new Resource(Field.t8, ResourceType.OIL),
+    ]);
+    expect(game.power(blackIndustrialPlayer)).toBe(0);
+    expect(game.popularity(blackIndustrialPlayer)).toBe(1);
+    expect(game.coins(blackIndustrialPlayer)).toBe(3);
+});
+
+test.skip("Cannot deploy the same mech twice", () => {
+    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer, Field.t8);
+
+    expect(() => game
+        .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resourcesFrom(4, Field.t8, ResourceType.METAL))
+        .bolsterPower(greenAgriculturalPlayer)
+        .bolsterPower(blackIndustrialPlayer)
+        .tradePopularity(greenAgriculturalPlayer)
+        .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resourcesFrom(4, Field.t8, ResourceType.METAL))
+    ).toThrowError("Mech already deployed.");
+});
+
+const resources = (location: Field, resourceType: ResourceType): Resource[] => {
+    return _.map(() => new Resource(location, resourceType),_.range(10));
+};
+
+const mockResourcesAndCoinsForPlayer = (player: Player, location: Field) => {
+    game
+        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.METAL)))
+        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.WOOD)))
+        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.OIL)))
+        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.FOOD)))
+        .addEvent(new CoinEvent(player.playerId, 10))
+    ;
+};
+
+const resourcesFrom = (amount: number, location: Field, resourceType: ResourceType): Resource[] => {
+    return _.map(() => new Resource(location, resourceType), _.range(amount));
+};
