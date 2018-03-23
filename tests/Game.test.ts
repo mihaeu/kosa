@@ -11,7 +11,6 @@ import {Resource} from "../src/Resource";
 import {SpendResourceEvent} from "../src/Events/SpendResourceEvent";
 import {Building} from "../src/Building";
 import {PlayerMat} from "../src/PlayerMat";
-import {Faction} from "../src/Faction";
 import {PlayerFactory} from "../src/PlayerFactory";
 import {CoinEvent} from "../src/Events/CoinEvent";
 import {PlayerId} from "../src/PlayerId";
@@ -95,23 +94,21 @@ test("Player can gain one coin", () => {
 });
 
 test("Calculate resources", () => {
-    let log = new EventLog()
-        .add(new GainResourceEvent(blackIndustrialPlayerId, [
-            new Resource(Field.F, ResourceType.FOOD),
-            new Resource(Field.F, ResourceType.FOOD),
-            new Resource(Field.F, ResourceType.FOOD),
-            new Resource(Field.F, ResourceType.FOOD),
-            new Resource(Field.F, ResourceType.FOOD),
+    game
+        .addEvent(new GainResourceEvent(blackIndustrialPlayerId, [
+            new Resource(Field.black, ResourceType.FOOD),
+            new Resource(Field.black, ResourceType.FOOD),
+            new Resource(Field.black, ResourceType.FOOD),
+            new Resource(Field.black, ResourceType.FOOD),
+            new Resource(Field.black, ResourceType.FOOD),
         ]))
-        .add(new SpendResourceEvent(blackIndustrialPlayerId, [
-                new Resource(Field.F, ResourceType.FOOD),
-                new Resource(Field.F, ResourceType.FOOD),
-                new Resource(Field.F, ResourceType.FOOD),
+        .addEvent(new SpendResourceEvent(blackIndustrialPlayerId, [
+                new Resource(Field.black, ResourceType.FOOD),
+                new Resource(Field.black, ResourceType.FOOD),
+                new Resource(Field.black, ResourceType.FOOD),
             ])
         );
-    const player = new Player(blackIndustrialPlayerId, Faction.GREEN, PlayerMat.industrial(blackIndustrialPlayerId));
-    const game = new Game(log, [player]);
-    expect(game.resources(player).food).toBe(2);
+    expect(game.resources(blackIndustrialPlayer).food).toBe(2);
 });
 
 test("Trade requires coins", () => {
@@ -137,12 +134,12 @@ test("Player has two more resources after tradeResources", () => {
 
 test("Cannot build the same building twice", () => {
     const resources = [
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources));
 
@@ -159,14 +156,14 @@ test("Cannot build the same building twice", () => {
 
 test("Cannot build on a location that already has a building", () => {
     const resources1 = [
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     const resources2 = [
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources2));
@@ -197,9 +194,9 @@ test("Accepts only exact wood", () => {
 
 test("Player can build a mill", () => {
     const resources = [
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources));
     game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources);
@@ -210,13 +207,13 @@ test("Player can build a mill", () => {
 
 test("Building uses specific resources", () => {
     const resources1 = [
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.f1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.m6, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     const resources2 = [
-        new Resource(Field.f1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.m6, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1.concat(resources2)));
     expect(game.availableResources(blackIndustrialPlayer)).toEqual(resources1.concat(resources2));
@@ -227,19 +224,19 @@ test("Building uses specific resources", () => {
 
 test("Paying resources requires exact match", () => {
     const resources1 = [
-        new Resource(Field.m1, ResourceType.WOOD),
-        new Resource(Field.f1, ResourceType.WOOD),
-        new Resource(Field.m1, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.m6, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
     ];
     const resources2 = [
-        new Resource(Field.f2, ResourceType.WOOD),
-        new Resource(Field.f2, ResourceType.WOOD),
-        new Resource(Field.f2, ResourceType.WOOD),
+        new Resource(Field.t8, ResourceType.WOOD),
+        new Resource(Field.t8, ResourceType.WOOD),
+        new Resource(Field.t8, ResourceType.WOOD),
     ];
 
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
 
-    const expectedError = /The provided resources \(m1:MOUNTAIN:WOOD, f1:FARM:WOOD, m1:MOUNTAIN:WOOD\) are not among your available resources \(f2:FARM:WOOD, f2:FARM:WOOD, f2:FARM:WOOD\)./;
+    const expectedError = /The provided resources \(t8:TUNDRA:WOOD, t8:TUNDRA:WOOD, t8:TUNDRA:WOOD\) are not among your available resources \(black:HOMEBASE:WOOD, m6:MOUNTAIN:WOOD, black:HOMEBASE:WOOD\)./;
     expect(() => game
         .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources2)
     ).toThrowError(expectedError);
@@ -305,6 +302,17 @@ test("Players can take all available top actions at the start of the game", () =
     expect(game.availableTopActions(blackIndustrialPlayer).length).toBe(4);
 });
 
+test("Black player controls three territories at the start", () => {
+    expect(game.territories(blackIndustrialPlayer)).toEqual([Field.black, Field.m6, Field.t8]);
+});
+
+test("Black player controls three units at the start", () => {
+    const units = game.units(blackIndustrialPlayer);
+    expect(units.has(Character.CHARACTER)).toBeTruthy();
+    expect(units.has(Worker.WORKER_1)).toBeTruthy();
+    expect(units.has(Worker.WORKER_2)).toBeTruthy();
+});
+
 test("Players don't have available actions when it's not their turn", () => {
     game.bolsterPower(blackIndustrialPlayer);
     expect(game.availableTopActions(blackIndustrialPlayer).length).toBe(0);
@@ -315,6 +323,20 @@ test("Players have three available actions on their second turn", () => {
         .bolsterPower(blackIndustrialPlayer)
         .bolsterPower(greenAgriculturalPlayer);
     expect(game.availableTopActions(blackIndustrialPlayer).length).toBe(3);
+});
+
+test("Players have no bottom costs available on their first turn", () => {
+    expect(game.availableBottomActions(blackIndustrialPlayer).length).toBe(0);
+});
+
+test("Players can take all bottom actions if they have enough resources", () => {
+    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
+    expect(game.availableBottomActions(blackIndustrialPlayer).length).toBe(4);
+});
+
+test("Players can only take the bottom actions they can affort", () => {
+    addResourcesForPlayer(blackIndustrialPlayer, ResourceType.METAL, 4);
+    expect(game.availableBottomActions(blackIndustrialPlayer).pop()).toEqual(BottomAction.DEPLOY);
 });
 
 test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {
@@ -350,8 +372,16 @@ test.skip("Producing with 8 workers costs 1 popularity, 1 coins, 1 power", () =>
     expect(game.coins(blackIndustrialPlayer)).toBe(3);
 });
 
+test("Player only has resources on controlled territories", () => {
+    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, [
+        new Resource(Field.m6, ResourceType.METAL),
+        new Resource(Field.white, ResourceType.METAL),
+    ]));
+    expect(game.resources(blackIndustrialPlayer).metal).toEqual(1);
+});
+
 test.skip("Cannot deploy the same mech twice", () => {
-    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer, Field.t8);
+    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
 
     expect(() => game
         .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resourcesFrom(4, Field.t8, ResourceType.METAL))
@@ -367,10 +397,20 @@ test.skip("Buildings cannot be placed on lakes", () => fail());
 test.skip("Cannot move the same unit multiple times", () => fail());
 
 const resources = (location: Field, resourceType: ResourceType): Resource[] => {
-    return _.map(() => new Resource(location, resourceType),_.range(10));
+    let resources: Resource[] = [];
+    for (let i = 0; i < 10; ++i) {
+        resources.push(new Resource(location, resourceType));
+    }
+    return resources;
 };
 
-const mockResourcesAndCoinsForPlayer = (player: Player, location: Field) => {
+const addResourcesForPlayer = (player: Player, resourceType: ResourceType, count: number) => {
+    const location = game.unitLocation(player, Worker.WORKER_1);
+    game.addEvent(new GainResourceEvent(player.playerId, resources(location, resourceType)));
+};
+
+const mockResourcesAndCoinsForPlayer = (player: Player) => {
+    const location = game.unitLocation(player, Worker.WORKER_1);
     game
         .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.METAL)))
         .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.WOOD)))

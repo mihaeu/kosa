@@ -9,8 +9,12 @@ export class EventLog {
         return this;
     }
 
-    public filter(playerId: PlayerId, type: any): Event[] {
+    public filterBy(playerId: PlayerId, type: any): Event[] {
         return this.log.filter(event => event.playerId === playerId && event instanceof type);
+    }
+
+    public filter(type: any): Event[] {
+        return this.log.filter(event => event instanceof type);
     }
 
     public lastOf(type: any, fn: (event: Event) => boolean): Event|null {

@@ -40,6 +40,8 @@ import {RecruitReward} from "./RecruitReward";
 
 export class Game {
     private log: EventLog;
+    private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
+    private static BOTTOM_ACTIONS = [BottomAction.UPGRADE, BottomAction.DEPLOY, BottomAction.BUILD, BottomAction.ENLIST];
 
     public constructor(log: EventLog = new EventLog, private readonly players: Player[]) {
         this.log = log;
@@ -52,7 +54,6 @@ export class Game {
     }
 
     public availableTopActions(player: Player): TopAction[] {
-        const topActions: TopAction[] = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
         return _.filter((topAction: TopAction): boolean => {
             try {
                 this.assertActionCanBeTaken(player, topAction);
@@ -61,7 +62,19 @@ export class Game {
             } catch (error) {
                 return false;
             }
-        }, topActions);
+        }, Game.TOP_ACTIONS);
+    }
+
+    public availableBottomActions(player: Player): BottomAction[] {
+        return _.filter((bottomAction: BottomAction): boolean => {
+            try {
+                this.assertActionCanBeTaken(player, bottomAction);
+                const {resourceType, count} = player.playerMat.bottomActionCost(bottomAction);
+                return this.resources(player).countByType(resourceType) >= count;
+            } catch (error) {
+                return false;
+            }
+        }, Game.BOTTOM_ACTIONS);
     }
 
     public move(player: Player, unit: Unit, destination: Field) {
@@ -162,6 +175,18 @@ export class Game {
         return this;
     }
 
+    public units(player: Player): Map<Unit, Field> {
+        let unitLocations = new Map<Unit, Field>();
+        _.forEach((locationEvent: LocationEvent) => {
+            unitLocations.set(locationEvent.unit, locationEvent.destination);
+        }, this.log.filterBy(player.playerId, LocationEvent) as LocationEvent[]);
+        return unitLocations;
+    }
+
+    public territories(player: Player): Field[] {
+        return _.uniq(Array.from(this.units(player).values()));
+    }
+
     public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.DEPLOY);
         this.assertAvailableResources(player, ResourceType.METAL, player.playerMat.bottomActionCost(BottomAction.DEPLOY).count, resources);
@@ -199,7 +224,7 @@ export class Game {
 
         const availableResources = this.availableResources(player);
         if (!resources.every(resource => availableResources.indexOf(resource) !== -1)) {
-            throw new ProvidedResourcesNotAvailableError(availableResources, resources);
+            throw new ProvidedResourcesNotAvailableError(resources, availableResources);
         }
     }
 
@@ -217,19 +242,19 @@ export class Game {
     }
 
     private assertUnitDeployed(player: Player, unit: Unit): void {
-        if (_.none(event => event.unit === unit, <DeployEvent[]> this.log.filter(player.playerId, DeployEvent))) {
+        if (_.none(event => event.unit === unit, <DeployEvent[]> this.log.filterBy(player.playerId, DeployEvent))) {
             throw new UnitNotDeployedError(unit);
         }
     }
 
     private assertBuildingNotAlreadyBuilt(player: Player, building: BuildingType): void {
-        if (!_.none(event => building === (event as BuildEvent).building, this.log.filter(player.playerId, BuildEvent))) {
+        if (!_.none(event => building === (event as BuildEvent).building, this.log.filterBy(player.playerId, BuildEvent))) {
             throw new BuildingAlreadyBuildError(building);
         }
     }
 
     private assertLocationHasNoOtherBuildings(player: Player, location: Field): void {
-        if (!_.none(event => location === (event as BuildEvent).location, this.log.filter(player.playerId, BuildEvent))) {
+        if (!_.none(event => location === (event as BuildEvent).location, this.log.filterBy(player.playerId, BuildEvent))) {
             throw new LocationAlreadyHasAnotherBuildingError(location);
         }
     }
@@ -295,23 +320,23 @@ export class Game {
     }
 
     public unitLocation(player: Player, unit: Unit): Field {
-        const moves = (<LocationEvent[]> this.log.filter(player.playerId, LocationEvent)).filter(event => event.unit === unit);
+        const moves = (<LocationEvent[]> this.log.filterBy(player.playerId, LocationEvent)).filter(event => event.unit === unit);
         return moves[moves.length - 1].destination;
     }
 
     public power(player: Player): number {
         // @ts-ignore
-        return _.sum(_.pluck("power", this.log.filter(player.playerId, PowerEvent)));
+        return _.sum(_.pluck("power", this.log.filterBy(player.playerId, PowerEvent)));
     }
 
     public coins(player: Player): number {
         // @ts-ignore
-        return _.sum(_.pluck("coins", this.log.filter(player.playerId, CoinEvent)));
+        return _.sum(_.pluck("coins", this.log.filterBy(player.playerId, CoinEvent)));
     }
 
     public combatCards(player: Player): CombatCard[] {
         // @ts-ignore
-        return _.pluck("combatCard", this.log.filter(player.playerId, GainCombatCardEvent));
+        return _.pluck("combatCard", this.log.filterBy(player.playerId, GainCombatCardEvent));
     }
 
     public resources(player: Player): Resources {
@@ -333,26 +358,35 @@ export class Game {
     }
 
     public buildings(player: Player): Building[] {
-        return _.map(Building.fromEvent, <BuildEvent[]> this.log.filter(player.playerId, BuildEvent));
+        return _.map(Building.fromEvent, <BuildEvent[]> this.log.filterBy(player.playerId, BuildEvent));
     }
 
+    /**
+     * @FIXME this should simply be all gained resources x all spent resources x all territories of that player
+     *
+     * @param {Player} player
+     * @returns {Resource[]}
+     */
     public availableResources(player: Player): Resource[] {
         const extractResource = (event: ResourceEvent) => event.resources;
-        let gained = _.chain(extractResource, <GainResourceEvent[]> this.log.filter(player.playerId, GainResourceEvent));
-        let spent = _.chain(extractResource, <SpendResourceEvent[]> this.log.filter(player.playerId, SpendResourceEvent));
+        let gained = _.chain(extractResource, <GainResourceEvent[]> this.log.filter(GainResourceEvent));
+        let spent = _.chain(extractResource, <SpendResourceEvent[]> this.log.filter(SpendResourceEvent));
         for (let spentResource of spent) {
             for (let gainedResource of gained) {
-                if (spentResource.location === gainedResource.location && spentResource.type === gainedResource.type) {
+                if (spentResource.location === gainedResource.location
+                    && spentResource.type === gainedResource.type
+                ) {
                     gained.splice(gained.indexOf(gainedResource), 1);
                     break;
                 }
             }
         }
-        return gained;
+        const territories = this.territories(player);
+        return _.filter(resource => territories.indexOf(resource.location) >= 0, gained);
     }
 
     public popularity(player: Player): number {
-        return _.sum(_.map(event => event.popularity, <PopularityEvent[]> this.log.filter(player.playerId, PopularityEvent)));
+        return _.sum(_.map(event => event.popularity, <PopularityEvent[]> this.log.filterBy(player.playerId, PopularityEvent)));
     }
 
     private assertNotMoreThan20Popularity(player: Player) {
