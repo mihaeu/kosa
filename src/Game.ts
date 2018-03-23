@@ -208,13 +208,13 @@ export class Game {
     }
 
     private assertBuildingNotAlreadyBuilt(player: Player, building: BuildingType): void {
-        if (!_.none(event => building === event.building, <BuildEvent[]> this.log.filter(player.playerId, BuildEvent))) {
+        if (!_.none(event => building === (event as BuildEvent).building, this.log.filter(player.playerId, BuildEvent))) {
             throw new BuildingAlreadyBuildError(building);
         }
     }
 
     private assertLocationHasNoOtherBuildings(player: Player, location: Field): void {
-        if (!_.none(event => location === event.location, <BuildEvent[]> this.log.filter(player.playerId, BuildEvent))) {
+        if (!_.none(event => location === (event as BuildEvent).location, this.log.filter(player.playerId, BuildEvent))) {
             throw new LocationAlreadyHasAnotherBuildingError(location);
         }
     }

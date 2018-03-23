@@ -170,7 +170,7 @@ test("Cannot build on a location that already has a building", () => {
     ];
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
     game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources2));
-    const expectedError = /m6.MOUNTAIN already has another building./;
+
     expect(() => {
         game
             .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources1)
@@ -178,7 +178,7 @@ test("Cannot build on a location that already has a building", () => {
             .bolsterPower(blackIndustrialPlayer)
             .produce(greenAgriculturalPlayer)
             .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, resources2)
-    }).toThrowError(expectedError);
+    }).toThrowError(/m6.MOUNTAIN already has another building./);
 });
 
 test("Cannot build without enough wood", () => {
@@ -345,6 +345,10 @@ test.skip("Cannot deploy the same mech twice", () => {
         .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resourcesFrom(4, Field.t8, ResourceType.METAL))
     ).toThrowError("Mech already deployed.");
 });
+
+test.skip("Buildings cannot be placed on home territories", () => fail());
+test.skip("Buildings cannot be placed on lakes", () => fail());
+test.skip("Cannot move the same unit multiple times", () => fail());
 
 const resources = (location: Field, resourceType: ResourceType): Resource[] => {
     return _.map(() => new Resource(location, resourceType),_.range(10));
