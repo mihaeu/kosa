@@ -50,7 +50,20 @@ export class Game {
             player.playerMat.setupEvents.forEach(event => this.log.add(event));
         }
     }
-    
+
+    public availableTopActions(player: Player): TopAction[] {
+        const topActions: TopAction[] = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
+        return _.filter((topAction: TopAction): boolean => {
+            try {
+                this.assertActionCanBeTaken(player, topAction);
+                this.assertCoins(player, player.playerMat.topActionCost(topAction));
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }, topActions);
+    }
+
     public move(player: Player, unit: Unit, destination: Field) {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
         this.assertUnitDeployed(player, unit);
@@ -135,7 +148,9 @@ export class Game {
         this.assertActionCanBeTaken(player, BottomAction.BUILD);
         this.assertUnitDeployed(player, worker);
         this.assertBuildingNotAlreadyBuilt(player, building);
-        this.assertAvailableResources(player, ResourceType.WOOD, 3, resources);
+
+        const {resourceType, count} = player.playerMat.bottomActionCost(BottomAction.BUILD);
+        this.assertAvailableResources(player, resourceType, count, resources);
 
         const location = this.unitLocation(player, worker);
         this.assertLocationHasNoOtherBuildings(player, location);
@@ -149,7 +164,7 @@ export class Game {
 
     public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.DEPLOY);
-        this.assertAvailableResources(player, ResourceType.METAL, 4, resources);
+        this.assertAvailableResources(player, ResourceType.METAL, player.playerMat.bottomActionCost(BottomAction.DEPLOY).count, resources);
 
         const location = this.unitLocation(player, worker);
         this.log
@@ -160,7 +175,7 @@ export class Game {
 
     public enlist(player: Player, bottomAction: BottomAction, recruiter: RecruitReward, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.ENLIST);
-        this.assertAvailableResources(player, ResourceType.FOOD, 4, resources);
+        this.assertAvailableResources(player, ResourceType.FOOD, player.playerMat.bottomActionCost(BottomAction.ENLIST).count, resources);
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST));
@@ -169,7 +184,7 @@ export class Game {
 
     public upgrade(player: Player, topAction: TopAction, bottomAction: BottomAction, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.UPGRADE);
-        this.assertAvailableResources(player, ResourceType.OIL, 2, resources);
+        this.assertAvailableResources(player, ResourceType.OIL, player.playerMat.bottomActionCost(BottomAction.UPGRADE).count, resources);
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.UPGRADE));

@@ -4,13 +4,26 @@ import {Event} from "./Events/Event";
 import {TopAction} from "./TopAction";
 import {BottomAction} from "./BottomAction";
 import {PlayerId} from "./PlayerId";
+import {ResourceCost} from "./ResourceCost";
+import {ResourceType} from "./ResourceType";
 
 export class PlayerMat {
     private constructor(
         public readonly startPosition: 1|2|3|4|5|6|7, // the actual game uses 1, 2, 2a, 3, 3a, 4, 5
         public readonly setupEvents: Event[] = [],
-        private readonly actionMap: Map<TopAction, BottomAction>
+        private readonly actionMap: Map<TopAction, BottomAction>,
+        public readonly bottomActionBaseCost: Map<BottomAction, ResourceCost>,
+        public readonly topActionBaseCost: Map<TopAction, number> = PlayerMat.topActionBaseCost(),
     ) {}
+
+    private static topActionBaseCost(): Map<TopAction, number> {
+        let topActionBaseCost = new Map<TopAction, number>();
+        topActionBaseCost.set(TopAction.MOVE, 0);
+        topActionBaseCost.set(TopAction.BOLSTER, 1);
+        topActionBaseCost.set(TopAction.TRADE, 1);
+        topActionBaseCost.set(TopAction.PRODUCE, 0);
+        return topActionBaseCost;
+    }
 
     public topActionMatchesBottomAction(
         thisAction: TopAction | BottomAction,
@@ -27,12 +40,28 @@ export class PlayerMat {
         return false;
     }
 
+    public topActionCost(topAction: TopAction): number {
+        // @ts-ignore
+        return this.topActionBaseCost.get(topAction);
+    }
+
+    public bottomActionCost(bottomAction: BottomAction): ResourceCost {
+        // @ts-ignore
+        return this.bottomActionBaseCost.get(bottomAction);
+    }
+
     public static agricultural(playerId: PlayerId): PlayerMat {
         let actionMap = new Map<TopAction, BottomAction>();
-        actionMap.set(TopAction.TRADE, BottomAction.DEPLOY);
-        actionMap.set(TopAction.BOLSTER, BottomAction.ENLIST);
         actionMap.set(TopAction.MOVE, BottomAction.UPGRADE);
+        actionMap.set(TopAction.TRADE, BottomAction.DEPLOY);
         actionMap.set(TopAction.PRODUCE, BottomAction.BUILD);
+        actionMap.set(TopAction.BOLSTER, BottomAction.ENLIST);
+
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 2));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 4));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 4));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
             7,
@@ -40,16 +69,23 @@ export class PlayerMat {
                 new PopularityEvent(playerId, 4),
                 new CoinEvent(playerId, 7),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 
     public static engineering(playerId: PlayerId): PlayerMat {
         let actionMap = new Map<TopAction, BottomAction>();
+        actionMap.set(TopAction.PRODUCE, BottomAction.UPGRADE);
         actionMap.set(TopAction.TRADE, BottomAction.DEPLOY);
         actionMap.set(TopAction.BOLSTER, BottomAction.BUILD);
         actionMap.set(TopAction.MOVE, BottomAction.ENLIST);
-        actionMap.set(TopAction.PRODUCE, BottomAction.UPGRADE);
+
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 3));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 4));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 3));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
             2,
@@ -57,16 +93,23 @@ export class PlayerMat {
                 new PopularityEvent(playerId, 2),
                 new CoinEvent(playerId, 5),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 
     public static industrial(playerId: PlayerId): PlayerMat {
         let actionMap = new Map<TopAction, BottomAction>();
-        actionMap.set(TopAction.TRADE, BottomAction.ENLIST);
         actionMap.set(TopAction.BOLSTER, BottomAction.UPGRADE);
-        actionMap.set(TopAction.MOVE, BottomAction.BUILD);
         actionMap.set(TopAction.PRODUCE, BottomAction.DEPLOY);
+        actionMap.set(TopAction.MOVE, BottomAction.BUILD);
+        actionMap.set(TopAction.TRADE, BottomAction.ENLIST);
+
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 3));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 3));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 3));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 4));
 
         return new PlayerMat(
             1,
@@ -74,7 +117,8 @@ export class PlayerMat {
                 new PopularityEvent(playerId, 2),
                 new CoinEvent(playerId, 4),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 
@@ -85,22 +129,35 @@ export class PlayerMat {
         actionMap.set(TopAction.MOVE, BottomAction.BUILD);
         actionMap.set(TopAction.PRODUCE, BottomAction.ENLIST);
 
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 3));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 3));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 3));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 4));
+
         return new PlayerMat(
             6,
             [
                 new PopularityEvent(playerId, 3),
                 new CoinEvent(playerId, 6),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 
     public static patriotic(playerId: PlayerId): PlayerMat {
         let actionMap = new Map<TopAction, BottomAction>();
-        actionMap.set(TopAction.TRADE, BottomAction.BUILD);
-        actionMap.set(TopAction.BOLSTER, BottomAction.DEPLOY);
         actionMap.set(TopAction.MOVE, BottomAction.UPGRADE);
+        actionMap.set(TopAction.BOLSTER, BottomAction.DEPLOY);
+        actionMap.set(TopAction.TRADE, BottomAction.BUILD);
         actionMap.set(TopAction.PRODUCE, BottomAction.ENLIST);
+
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 2));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 4));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 4));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
             4,
@@ -108,16 +165,23 @@ export class PlayerMat {
                 new PopularityEvent(playerId, 2),
                 new CoinEvent(playerId, 6),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 
     public static innovative(playerId: PlayerId): PlayerMat {
         let actionMap = new Map<TopAction, BottomAction>();
         actionMap.set(TopAction.TRADE, BottomAction.UPGRADE);
+        actionMap.set(TopAction.PRODUCE, BottomAction.DEPLOY);
         actionMap.set(TopAction.BOLSTER, BottomAction.BUILD);
         actionMap.set(TopAction.MOVE, BottomAction.ENLIST);
-        actionMap.set(TopAction.PRODUCE, BottomAction.DEPLOY);
+
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 3));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 3));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 4));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
             5,
@@ -125,17 +189,24 @@ export class PlayerMat {
                 new PopularityEvent(playerId, 3),
                 new CoinEvent(playerId, 5),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 
     /** @TODO: check name */
     public static militant(playerId: PlayerId): PlayerMat {
         let actionMap = new Map<TopAction, BottomAction>();
-        actionMap.set(TopAction.TRADE, BottomAction.ENLIST);
         actionMap.set(TopAction.BOLSTER, BottomAction.UPGRADE);
         actionMap.set(TopAction.MOVE, BottomAction.DEPLOY);
         actionMap.set(TopAction.PRODUCE, BottomAction.BUILD);
+        actionMap.set(TopAction.TRADE, BottomAction.ENLIST);
+
+        let bottomActionBaseCosts = new Map<BottomAction, ResourceCost>();
+        bottomActionBaseCosts.set(BottomAction.UPGRADE, new ResourceCost(ResourceType.OIL, 3));
+        bottomActionBaseCosts.set(BottomAction.DEPLOY, new ResourceCost(ResourceType.METAL, 3));
+        bottomActionBaseCosts.set(BottomAction.BUILD, new ResourceCost(ResourceType.WOOD, 4));
+        bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
             3,
@@ -143,7 +214,8 @@ export class PlayerMat {
                 new PopularityEvent(playerId, 3),
                 new CoinEvent(playerId, 4),
             ],
-            actionMap
+            actionMap,
+            bottomActionBaseCosts
         );
     }
 }

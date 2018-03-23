@@ -301,6 +301,22 @@ test("Player cannot play out of order", () => {
     ).toThrowError("It is not your turn yet.");
 });
 
+test("Players can take all available top actions at the start of the game", () => {
+    expect(game.availableTopActions(blackIndustrialPlayer).length).toBe(4);
+});
+
+test("Players don't have available actions when it's not their turn", () => {
+    game.bolsterPower(blackIndustrialPlayer);
+    expect(game.availableTopActions(blackIndustrialPlayer).length).toBe(0);
+});
+
+test("Players have three available actions on their second turn", () => {
+    game
+        .bolsterPower(blackIndustrialPlayer)
+        .bolsterPower(greenAgriculturalPlayer);
+    expect(game.availableTopActions(blackIndustrialPlayer).length).toBe(3);
+});
+
 test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {
     game.produce(blackIndustrialPlayer);
     expect(game.availableResources(blackIndustrialPlayer)).toEqual([
