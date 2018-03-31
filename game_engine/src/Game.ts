@@ -37,6 +37,7 @@ import {IllegalActionError} from "./IllegalActionError";
 import {Player} from "./Player";
 import {Mech} from "./Units/Mech";
 import {RecruitReward} from "./RecruitReward";
+import {StarEvent} from "./Events/StarEvent";
 
 export class Game {
     private log: EventLog;
@@ -94,7 +95,7 @@ export class Game {
     }
 
     public stars(player: Player): 0|1|2|3|4|5|6 {
-        return 0;
+        return this.log.filterBy(player.playerId, StarEvent).length;
     }
 
     public move(player: Player, unit: Unit, destination: Field) {

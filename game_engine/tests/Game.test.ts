@@ -19,6 +19,8 @@ import {BottomAction} from "../src/BottomAction";
 import {RecruitReward} from "../src/RecruitReward";
 import {DeployEvent} from "../src/Events/DeployEvent";
 import {PopularityEvent} from "../src/Events/PopularityEvent";
+import {StarEvent} from "../src/Events/StarEvent";
+import {Star} from "../src/Star";
 import _ = require("ramda");
 
 let game: Game;
@@ -388,9 +390,12 @@ test("Calculate player score", () => {
 });
 
 test("Calculate player score with max popularity", () => {
-    game.addEvent(new PopularityEvent(blackIndustrialPlayerId, 16));
+    game
+        .addEvent(new StarEvent(blackIndustrialPlayerId, Star.FIRST_COMBAT_WIN))
+        .addEvent(new StarEvent(blackIndustrialPlayerId, Star.SECOND_COMBAT_WIN))
+        .addEvent(new PopularityEvent(blackIndustrialPlayerId, 16));
     addResourcesForPlayer(blackIndustrialPlayer, ResourceType.METAL, 11);
-    expect(game.score().get(blackIndustrialPlayer)).toBe(27);
+    expect(game.score().get(blackIndustrialPlayer)).toBe(37);
 });
 
 test.skip("Cannot deploy the same mech twice", () => {
