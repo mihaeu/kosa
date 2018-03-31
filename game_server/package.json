@@ -1,0 +1,13 @@
+{
+  "name": "kosa_game_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Michael Haeuslmann <haeuslmann@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^9.6.0",
+    "@types/socket.io": "^1.4.32",
+    "socket.io": "^1.0.0",
+    "typescript": "^2.7.2"
+  }
+}
