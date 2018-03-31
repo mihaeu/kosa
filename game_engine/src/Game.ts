@@ -14,6 +14,7 @@ import { EnlistEvent } from "./Events/EnlistEvent";
 import { Event } from "./Events/Event";
 import { EventLog } from "./Events/EventLog";
 import { GainResourceEvent } from "./Events/GainResourceEvent";
+import { GameEndEvent } from "./Events/GameEndEvent";
 import { LocationEvent } from "./Events/LocationEvent";
 import { MoveEvent } from "./Events/MoveEvent";
 import { PassEvent } from "./Events/PassEvent";
@@ -364,6 +365,10 @@ export class Game {
         );
     }
 
+    public gameOver(): boolean {
+        return this.log.lastInstanceOf(GameEndEvent) !== null;
+    }
+
     private bolster(player: Player, event: PowerEvent | GainCombatCardEvent): Game {
         this.assertActionCanBeTaken(player, TopAction.BOLSTER);
         this.assertCoins(player, 1);
@@ -456,10 +461,18 @@ export class Game {
             Star.MAX_POWER,
         ];
 
-        const missingStars = _.difference(allStars, this.stars(player));
+        const currentStars = this.stars(player);
+        let starCount = currentStars.length;
+        const missingStars = _.difference(allStars, currentStars);
         missingStars.forEach((star: Star) => {
             if (this.starCondition(player, star)) {
                 this.log.add(new StarEvent(player.playerId, star));
+                starCount += 1;
+            }
+
+            if (starCount === 6) {
+                this.log.add(new GameEndEvent(player.playerId));
+                return;
             }
         });
     }

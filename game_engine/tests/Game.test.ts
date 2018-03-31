@@ -421,10 +421,19 @@ test("Player does automatically pass after bottom action", () => {
     expect(game.log.log.pop()).toBeInstanceOf(PassEvent);
 });
 
-test("Players get a star for having maximum power", () => {
-    game.log.add(new PowerEvent(blackIndustrialPlayerId, 13));
-    game.bolsterPower(blackIndustrialPlayer);
-    expect(game.stars(blackIndustrialPlayer).pop()).toBe(Star.MAX_POWER);
+test("Game ends when a player get her 6th star", () => {
+    game.log
+        .add(new StarEvent(blackIndustrialPlayerId, Star.FIRST_COMBAT_WIN))
+        .add(new StarEvent(blackIndustrialPlayerId, Star.SECOND_COMBAT_WIN))
+        .add(new StarEvent(blackIndustrialPlayerId, Star.FIRST_OBJECTIVE))
+        .add(new StarEvent(blackIndustrialPlayerId, Star.ALL_WORKERS))
+        .add(new StarEvent(blackIndustrialPlayerId, Star.ALL_MECHS))
+        .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.COINS, BottomAction.ENLIST))
+        .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.COMBAT_CARDS, BottomAction.DEPLOY))
+        .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.POPULARITY, BottomAction.UPGRADE))
+        .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.POWER, BottomAction.BUILD));
+    game.gainCoins(blackIndustrialPlayer);
+    expect(game.gameOver()).toBeTruthy();
 });
 
 describe("Players get stars when conditions are met", () => {
