@@ -75,4 +75,8 @@ export class Field {
     public static isNotLake(field: Field): boolean {
         return field.type !== FieldType.LAKE;
     }
+
+    public static isNotHomebase(field: Field): boolean {
+        return field.type !== FieldType.HOMEBASE;
+    }
 }

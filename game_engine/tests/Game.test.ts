@@ -18,6 +18,7 @@ import {Player} from "../src/Player";
 import {BottomAction} from "../src/BottomAction";
 import {RecruitReward} from "../src/RecruitReward";
 import {DeployEvent} from "../src/Events/DeployEvent";
+import {PopularityEvent} from "../src/Events/PopularityEvent";
 import _ = require("ramda");
 
 let game: Game;
@@ -334,7 +335,7 @@ test("Players can take all bottom actions if they have enough resources", () => 
     expect(game.availableBottomActions(blackIndustrialPlayer).length).toBe(4);
 });
 
-test("Players can only take the bottom actions they can affort", () => {
+test("Players can only take the bottom actions they can afford", () => {
     addResourcesForPlayer(blackIndustrialPlayer, ResourceType.METAL, 4);
     expect(game.availableBottomActions(blackIndustrialPlayer).pop()).toEqual(BottomAction.DEPLOY);
 });
@@ -378,6 +379,18 @@ test("Player only has resources on controlled territories", () => {
         new Resource(Field.white, ResourceType.METAL),
     ]));
     expect(game.resources(blackIndustrialPlayer).metal).toEqual(1);
+});
+
+test("Calculate player score", () => {
+    const score = game.score();
+    expect(score.get(blackIndustrialPlayer)).toBe(8);
+    expect(score.get(greenAgriculturalPlayer)).toBe(11);
+});
+
+test("Calculate player score with max popularity", () => {
+    game.addEvent(new PopularityEvent(blackIndustrialPlayerId, 16));
+    addResourcesForPlayer(blackIndustrialPlayer, ResourceType.METAL, 11);
+    expect(game.score().get(blackIndustrialPlayer)).toBe(27);
 });
 
 test.skip("Cannot deploy the same mech twice", () => {

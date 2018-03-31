@@ -77,6 +77,26 @@ export class Game {
         }, Game.BOTTOM_ACTIONS);
     }
 
+    public score(): Map<Player, number> {
+        let points = new Map();
+        this.players.forEach((player: Player) => {
+            const popularity = this.popularity(player);
+            const popularityBonus = popularity > 12 ? 2 : (popularity > 6 ? 1 : 0);
+            points.set(
+                player,
+                    this.coins(player)
+                    + this.stars(player) * (3 + popularityBonus)
+                    + this.territoriesWithoutHomebase(player).length * (2 + popularityBonus)
+                    + Math.floor(this.availableResources(player).length / 2) * (1 + popularityBonus)
+            );
+        });
+        return points;
+    }
+
+    public stars(player: Player): 0|1|2|3|4|5|6 {
+        return 0;
+    }
+
     public move(player: Player, unit: Unit, destination: Field) {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
         this.assertUnitDeployed(player, unit);
@@ -185,6 +205,10 @@ export class Game {
 
     public territories(player: Player): Field[] {
         return _.uniq(Array.from(this.units(player).values()));
+    }
+
+    public territoriesWithoutHomebase(player: Player): Field[] {
+        return this.territories(player).filter(Field.isNotHomebase);
     }
 
     public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
