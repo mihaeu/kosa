@@ -10,11 +10,11 @@ import {BuildEvent} from "./Events/BuildEvent";
 import {CoinEvent} from "./Events/CoinEvent";
 import {GainCombatCardEvent} from "./Events/CombatCardEvent";
 import {DeployEvent} from "./Events/DeployEvent";
-import {Event} from "./Events/Event";
 import {EventLog} from "./Events/EventLog";
 import {GainResourceEvent} from "./Events/GainResourceEvent";
 import {LocationEvent} from "./Events/LocationEvent";
 import {MoveEvent} from "./Events/MoveEvent";
+import {PassEvent} from "./Events/PassEvent";
 import {PopularityEvent} from "./Events/PopularityEvent";
 import {PowerEvent} from "./Events/PowerEvent";
 import {ResourceEvent} from "./Events/ResourceEvent";
@@ -80,7 +80,7 @@ export class Game {
         return lastPlayer === playerOrder[playerOrder.indexOf(player)] && action in BottomAction;
     }
 
-    private log: EventLog;
+    public log: EventLog;
 
     public constructor(log: EventLog = new EventLog(), private readonly players: Player[]) {
         this.log = log;
@@ -146,14 +146,14 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, TopAction.MOVE))
             .add(new MoveEvent(player.playerId, unit, destination));
-        return this;
+        return this.passIfNoBottomActionAvailable(player);
     }
 
     public gainCoins(player: Player): Game {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
 
         this.log.add(new ActionEvent(player.playerId, TopAction.MOVE)).add(new CoinEvent(player.playerId, +1));
-        return this;
+        return this.passIfNoBottomActionAvailable(player);
     }
 
     public bolsterPower(player: Player): Game {
@@ -180,7 +180,7 @@ export class Game {
                 ]),
             );
 
-        return this;
+        return this.passIfNoBottomActionAvailable(player);
     }
 
     public tradePopularity(player: Player): Game {
@@ -193,7 +193,7 @@ export class Game {
             .add(new CoinEvent(player.playerId, -1))
             .add(new PopularityEvent(player.playerId, 1));
 
-        return this;
+        return this.passIfNoBottomActionAvailable(player);
     }
 
     public produce(player: Player): Game {
@@ -201,7 +201,7 @@ export class Game {
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
 
-        return this;
+        return this.passIfNoBottomActionAvailable(player);
     }
 
     public build(player: Player, worker: Worker, building: BuildingType, resources: Resource[]): Game {
@@ -219,7 +219,16 @@ export class Game {
             .add(new ActionEvent(player.playerId, BottomAction.BUILD))
             .add(new SpendResourceEvent(player.playerId, resources))
             .add(new BuildEvent(player.playerId, location, building));
+        return this.pass(player);
+    }
+
+    public pass(player: Player): Game {
+        this.log.add(new PassEvent(player.playerId));
         return this;
+    }
+
+    public passIfNoBottomActionAvailable(player: Player): Game {
+        return this.availableBottomActions(player).length > 0 ? this : this.pass(player);
     }
 
     public units(player: Player): Map<Unit, Field> {
@@ -254,7 +263,7 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.DEPLOY))
             .add(new DeployEvent(player.playerId, mech, location));
-        return this;
+        return this.pass(player);
     }
 
     public enlist(player: Player, bottomAction: BottomAction, recruiter: RecruitReward, resources: Resource[]) {
@@ -267,7 +276,7 @@ export class Game {
         );
 
         this.log.add(new ActionEvent(player.playerId, BottomAction.ENLIST));
-        return this;
+        return this.pass(player);
     }
 
     public upgrade(player: Player, topAction: TopAction, bottomAction: BottomAction, resources: Resource[]) {
@@ -280,7 +289,7 @@ export class Game {
         );
 
         this.log.add(new ActionEvent(player.playerId, BottomAction.UPGRADE));
-        return this;
+        return this.pass(player);
     }
 
     public unitLocation(player: Player, unit: Unit): Field {
@@ -319,12 +328,6 @@ export class Game {
         return _.map(Building.fromEvent, this.log.filterBy(player.playerId, BuildEvent) as BuildEvent[]);
     }
 
-    /**
-     * @FIXME this should simply be all gained resources x all spent resources x all territories of that player
-     *
-     * @param {Player} player
-     * @returns {Resource[]}
-     */
     public availableResources(player: Player): Resource[] {
         const extractResource = (event: ResourceEvent) => event.resources;
         const gained = _.chain(extractResource, this.log.filter(GainResourceEvent) as GainResourceEvent[]);
@@ -350,18 +353,6 @@ export class Game {
         );
     }
 
-    /**
-     * @deprecated this is only for testing purposes
-     *
-     * @param {Event} event
-     * @returns {Game}
-     */
-    public addEvent(event: Event): Game {
-        this.log.add(event);
-
-        return this;
-    }
-
     private bolster(player: Player, event: PowerEvent | GainCombatCardEvent): Game {
         this.assertActionCanBeTaken(player, TopAction.BOLSTER);
         this.assertCoins(player, 1);
@@ -370,7 +361,7 @@ export class Game {
             .add(new ActionEvent(player.playerId, TopAction.BOLSTER))
             .add(event)
             .add(new CoinEvent(player.playerId, -1));
-        return this;
+        return this.passIfNoBottomActionAvailable(player);
     }
 
     private assertAvailableResources(player: Player, type: ResourceType, required: number, resources: Resource[]) {
@@ -380,7 +371,7 @@ export class Game {
         }
 
         const availableResources = this.availableResources(player);
-        if (!resources.every((resource) => availableResources.indexOf(resource) !== -1)) {
+        if (resources.some((resource) => !_.contains(resource, availableResources))) {
             throw new ProvidedResourcesNotAvailableError(resources, availableResources);
         }
     }
@@ -434,7 +425,10 @@ export class Game {
             throw new IllegalActionError("It is not your turn yet.");
         }
 
-        if (Game.actionFromTheSameColumn(lastAction, currentAction, player)) {
+        if (
+            this.startsTurnWithBottomAction(player) &&
+            Game.actionFromTheSameColumn(lastAction, currentAction, player)
+        ) {
             throw new IllegalActionError("Cannot use actions from the same column.");
         }
 
@@ -448,12 +442,16 @@ export class Game {
         }
     }
 
+    private startsTurnWithBottomAction(player: Player): boolean {
+        return this.log.lastOfTwo(player.playerId, PassEvent, ActionEvent) instanceof PassEvent;
+    }
+
     private gameJustStarted(): boolean {
-        return this.log.lastOf(ActionEvent, () => true) === null;
+        return this.log.lastInstanceOf(ActionEvent) === null;
     }
 
     private lastActionFor(player: Player): TopAction | BottomAction | null {
-        const lastActionEvent = this.log.lastOf(ActionEvent, (event) => event.playerId === player.playerId);
+        const lastActionEvent = this.log.lastInstanceOf(ActionEvent, (event) => event.playerId === player.playerId);
         return lastActionEvent !== null ? (lastActionEvent as ActionEvent).action : null;
     }
 
@@ -477,7 +475,7 @@ export class Game {
     }
 
     private lastPlayer(): Player | null {
-        const lastActionEvent = this.log.lastOf(ActionEvent, () => true);
+        const lastActionEvent = this.log.lastInstanceOf(ActionEvent, () => true);
         if (lastActionEvent === null) {
             return null;
         }

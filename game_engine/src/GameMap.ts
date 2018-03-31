@@ -473,8 +473,8 @@ export class GameMap {
         return connections === undefined
             ? []
             : connections
-                  .filter(Connection.isReachable)
-                  .map((connection: Connection) => connection.field)
-                  .filter(Field.isNotLake);
+                .filter(Connection.isReachable)
+                .map((connection: Connection) => connection.field)
+                .filter(Field.isNotLake);
     }
 }

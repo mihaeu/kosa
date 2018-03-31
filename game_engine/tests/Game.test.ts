@@ -1,4 +1,3 @@
-import _ = require("ramda");
 import {BottomAction} from "../src/BottomAction";
 import {Building} from "../src/Building";
 import {BuildingType} from "../src/BuildingType";
@@ -23,6 +22,7 @@ import {TopAction} from "../src/TopAction";
 import {Character} from "../src/Units/Character";
 import {Mech} from "../src/Units/Mech";
 import {Worker} from "../src/Units/Worker";
+import {PassEvent} from "../src/Events/PassEvent";
 
 let game: Game;
 
@@ -57,7 +57,7 @@ test("Player pays one coin for bolster", () => {
 });
 
 test("Player cannot bolster without coins", () => {
-    game.addEvent(new CoinEvent(blackIndustrialPlayer.playerId, -4));
+    game.log.add(new CoinEvent(blackIndustrialPlayer.playerId, -4));
     expect(() => game.bolsterPower(blackIndustrialPlayer)).toThrowError(
         /1 coin\(s\) required, but only 0 coin\(s\) available./,
     );
@@ -97,8 +97,8 @@ test("Player can gain one coin", () => {
 });
 
 test("Calculate resources", () => {
-    game
-        .addEvent(
+    game.log
+        .add(
             new GainResourceEvent(blackIndustrialPlayerId, [
                 new Resource(Field.black, ResourceType.FOOD),
                 new Resource(Field.black, ResourceType.FOOD),
@@ -107,7 +107,7 @@ test("Calculate resources", () => {
                 new Resource(Field.black, ResourceType.FOOD),
             ]),
         )
-        .addEvent(
+        .add(
             new SpendResourceEvent(blackIndustrialPlayerId, [
                 new Resource(Field.black, ResourceType.FOOD),
                 new Resource(Field.black, ResourceType.FOOD),
@@ -119,10 +119,9 @@ test("Calculate resources", () => {
 
 test("Trade requires coins", () => {
     const expectedError = /1 coin.s. required, but only 0 coin.s. available./;
+    game.log.add(new CoinEvent(blackIndustrialPlayerId, -4));
     expect(() =>
-        game
-            .addEvent(new CoinEvent(blackIndustrialPlayerId, -4))
-            .tradeResources(blackIndustrialPlayer, Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD),
+        game.tradeResources(blackIndustrialPlayer, Worker.WORKER_1, ResourceType.FOOD, ResourceType.FOOD),
     ).toThrowError(expectedError);
 });
 
@@ -153,7 +152,7 @@ test("Cannot build the same building twice", () => {
         new Resource(Field.black, ResourceType.WOOD),
         new Resource(Field.black, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, res));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, res));
 
     const expectedError = /Building MILL has already been built./;
     expect(() => {
@@ -177,8 +176,8 @@ test("Cannot build on a location that already has a building", () => {
         new Resource(Field.black, ResourceType.WOOD),
         new Resource(Field.black, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources2));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, resources1));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, resources2));
 
     expect(() => {
         game
@@ -210,7 +209,7 @@ test("Player can build a mill", () => {
         new Resource(Field.black, ResourceType.WOOD),
         new Resource(Field.black, ResourceType.WOOD),
     ];
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, res));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, res));
     game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, res);
 
     expect(game.resources(blackIndustrialPlayer).countByType(ResourceType.WOOD)).toBe(0);
@@ -224,7 +223,7 @@ test("Building uses specific resources", () => {
         new Resource(Field.black, ResourceType.WOOD),
     ];
     const resources2 = [new Resource(Field.m6, ResourceType.WOOD), new Resource(Field.black, ResourceType.WOOD)];
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1.concat(resources2)));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, resources1.concat(resources2)));
     expect(game.availableResources(blackIndustrialPlayer)).toEqual(resources1.concat(resources2));
 
     game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources1);
@@ -243,7 +242,7 @@ test("Paying resources requires exact match", () => {
         new Resource(Field.t8, ResourceType.WOOD),
     ];
 
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, resources1));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, resources1));
 
     const expectedError =
         "The provided resources (t8:TUNDRA:WOOD, t8:TUNDRA:WOOD, t8:TUNDRA:WOOD) " +
@@ -282,14 +281,10 @@ test("Black cannot take top action from the same column as last turn's bottom ac
         new Resource(Field.m6, ResourceType.METAL),
         new Resource(Field.m6, ResourceType.METAL),
     ];
-    game.addEvent(new GainResourceEvent(blackIndustrialPlayerId, res));
+    game.log.add(new GainResourceEvent(blackIndustrialPlayerId, res));
 
-    expect(() =>
-        game
-            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, res)
-            .produce(greenAgriculturalPlayer)
-            .produce(blackIndustrialPlayer),
-    ).toThrowError("Cannot use actions from the same column.");
+    game.deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, res).produce(greenAgriculturalPlayer);
+    expect(() => game.produce(blackIndustrialPlayer)).toThrowError("Cannot use actions from the same column.");
 });
 
 test("Top action and bottom action have to match", () => {
@@ -356,13 +351,13 @@ test.skip("Black producing at starting position will get 1 oil and 1 metal", () 
 });
 
 test.skip("Producing with 8 workers costs 1 popularity, 1 coins, 1 power", () => {
-    game
-        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.t8))
-        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.t8))
-        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.t8))
-        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.t8))
-        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.t8))
-        .addEvent(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.t8));
+    game.log
+        .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.t8))
+        .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.t8))
+        .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.t8))
+        .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.t8))
+        .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.t8))
+        .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.t8));
 
     game.produce(blackIndustrialPlayer);
     expect(game.availableResources(blackIndustrialPlayer)).toEqual([
@@ -381,7 +376,7 @@ test.skip("Producing with 8 workers costs 1 popularity, 1 coins, 1 power", () =>
 });
 
 test("Player only has resources on controlled territories", () => {
-    game.addEvent(
+    game.log.add(
         new GainResourceEvent(blackIndustrialPlayerId, [
             new Resource(Field.m6, ResourceType.METAL),
             new Resource(Field.white, ResourceType.METAL),
@@ -397,12 +392,29 @@ test("Calculate player score", () => {
 });
 
 test("Calculate player score with max popularity", () => {
-    game
-        .addEvent(new StarEvent(blackIndustrialPlayerId, Star.FIRST_COMBAT_WIN))
-        .addEvent(new StarEvent(blackIndustrialPlayerId, Star.SECOND_COMBAT_WIN))
-        .addEvent(new PopularityEvent(blackIndustrialPlayerId, 16));
+    game.log
+        .add(new StarEvent(blackIndustrialPlayerId, Star.FIRST_COMBAT_WIN))
+        .add(new StarEvent(blackIndustrialPlayerId, Star.SECOND_COMBAT_WIN))
+        .add(new PopularityEvent(blackIndustrialPlayerId, 16));
     addResourcesForPlayer(blackIndustrialPlayer, ResourceType.METAL, 11);
     expect(game.score().get(blackIndustrialPlayer)).toBe(37);
+});
+
+test("Player automatically passes when no other option is available", () => {
+    game.bolsterPower(blackIndustrialPlayer);
+    expect(game.log.log.pop()).toBeInstanceOf(PassEvent);
+});
+
+test("Player does not pass automatically when bottom action is available", () => {
+    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
+    game.bolsterPower(blackIndustrialPlayer);
+    expect(game.log.log.pop()).not.toBeInstanceOf(PassEvent);
+});
+
+test("Player does automatically pass after bottom action", () => {
+    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
+    game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, resources(Field.m6, ResourceType.WOOD, 4));
+    expect(game.log.log.pop()).toBeInstanceOf(PassEvent);
 });
 
 test.skip("Upgrade makes a top action more powerful and a bottom action cheaper", () => {
@@ -411,7 +423,7 @@ test.skip("Upgrade makes a top action more powerful and a bottom action cheaper"
         blackIndustrialPlayer,
         TopAction.BOLSTER,
         BottomAction.BUILD,
-        resourcesFrom(4, Field.t8, ResourceType.METAL),
+        resources(Field.t8, ResourceType.METAL, 4),
     );
 });
 
@@ -420,16 +432,11 @@ test.skip("Cannot deploy the same mech twice", () => {
 
     expect(() =>
         game
-            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resourcesFrom(4, Field.t8, ResourceType.METAL))
+            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources(Field.t8, ResourceType.METAL, 4))
             .bolsterPower(greenAgriculturalPlayer)
             .bolsterPower(blackIndustrialPlayer)
             .tradePopularity(greenAgriculturalPlayer)
-            .deploy(
-                blackIndustrialPlayer,
-                Worker.WORKER_1,
-                Mech.MECH_1,
-                resourcesFrom(4, Field.t8, ResourceType.METAL),
-            ),
+            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources(Field.t8, ResourceType.METAL, 4)),
     ).toThrowError("Mech already deployed.");
 });
 
@@ -445,21 +452,18 @@ const resources = (location: Field, resourceType: ResourceType, count: number = 
     return res;
 };
 
+const workerLocation = (player: Player) => game.unitLocation(player, Worker.WORKER_1);
+
 const addResourcesForPlayer = (player: Player, resourceType: ResourceType, count: number) => {
-    const location = game.unitLocation(player, Worker.WORKER_1);
-    game.addEvent(new GainResourceEvent(player.playerId, resources(location, resourceType, count)));
+    game.log.add(new GainResourceEvent(player.playerId, resources(workerLocation(player), resourceType, count)));
 };
 
 const mockResourcesAndCoinsForPlayer = (player: Player) => {
-    const location = game.unitLocation(player, Worker.WORKER_1);
-    game
-        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.METAL)))
-        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.WOOD)))
-        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.OIL)))
-        .addEvent(new GainResourceEvent(player.playerId, resources(location, ResourceType.FOOD)))
-        .addEvent(new CoinEvent(player.playerId, 10));
-};
-
-const resourcesFrom = (amount: number, location: Field, resourceType: ResourceType): Resource[] => {
-    return _.map(() => new Resource(location, resourceType), _.range(amount));
+    const location = workerLocation(player);
+    game.log
+        .add(new GainResourceEvent(player.playerId, resources(location, ResourceType.METAL)))
+        .add(new GainResourceEvent(player.playerId, resources(location, ResourceType.WOOD)))
+        .add(new GainResourceEvent(player.playerId, resources(location, ResourceType.OIL)))
+        .add(new GainResourceEvent(player.playerId, resources(location, ResourceType.FOOD)))
+        .add(new CoinEvent(player.playerId, 10));
 };

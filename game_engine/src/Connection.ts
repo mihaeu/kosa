@@ -7,7 +7,7 @@ export class Connection {
             connection.connectionType === FieldConnection.DEFAULT ||
             connection.connectionType === FieldConnection.TUNNEL
         );
-    }
+    };
 
     constructor(public readonly field: Field, public readonly connectionType: FieldConnection) {}
 }
