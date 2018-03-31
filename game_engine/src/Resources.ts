@@ -10,10 +10,14 @@ export class Resources {
 
     public countByType(type: ResourceType): number {
         switch (type) {
-            case ResourceType.METAL: return this.metal;
-            case ResourceType.FOOD: return this.food;
-            case ResourceType.OIL: return this.oil;
-            case ResourceType.WOOD: return this.wood;
+            case ResourceType.METAL:
+                return this.metal;
+            case ResourceType.FOOD:
+                return this.food;
+            case ResourceType.OIL:
+                return this.oil;
+            case ResourceType.WOOD:
+                return this.wood;
         }
     }
 }

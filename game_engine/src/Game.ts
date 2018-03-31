@@ -1,56 +1,94 @@
 import * as _ from "ramda";
-import {GameMap} from "./GameMap";
-import {Field} from "./Field";
-import {GainCombatCardEvent} from "./Events/CombatCardEvent";
-import {CombatCard} from "./CombatCard";
-import {Event} from "./Events/Event";
-import {CoinEvent} from "./Events/CoinEvent";
-import {PowerEvent} from "./Events/PowerEvent";
-import {NotEnoughCoinsError} from "./NotEnoughCoinsError";
-import {MoveEvent} from "./Events/MoveEvent";
-import {Unit} from "./Units/Unit";
-import {UnitNotDeployedError} from "./UnitNotDeployedError";
-import {IllegalMoveError} from "./IllegalMoveError";
-import {Worker} from "./Units/Worker";
-import {ResourceType} from "./ResourceType";
-import {GainResourceEvent} from "./Events/GainResourceEvent";
-import {Resources} from "./Resources";
-import {BuildingType} from "./BuildingType";
-import {BuildEvent} from "./Events/BuildEvent";
-import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
-import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
-import {EventLog} from "./Events/EventLog";
-import {DeployEvent} from "./Events/DeployEvent";
-import {LocationEvent} from "./Events/LocationEvent";
-import {NotEnoughResourcesError} from "./NotEnoughResourcesError";
-import {Resource} from "./Resource";
-import {SpendResourceEvent} from "./Events/SpendResourceEvent";
-import {ResourceEvent} from "./Events/ResourceEvent";
-import {Building} from "./Building";
-import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
-import {PopularityEvent} from "./Events/PopularityEvent";
-import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
-import {ActionEvent} from "./Events/ActionEvent";
-import {TopAction} from "./TopAction";
 import {BottomAction} from "./BottomAction";
-import {IllegalActionError} from "./IllegalActionError";
-import {Player} from "./Player";
-import {Mech} from "./Units/Mech";
-import {RecruitReward} from "./RecruitReward";
+import {Building} from "./Building";
+import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
+import {BuildingType} from "./BuildingType";
+import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
+import {CombatCard} from "./CombatCard";
+import {ActionEvent} from "./Events/ActionEvent";
+import {BuildEvent} from "./Events/BuildEvent";
+import {CoinEvent} from "./Events/CoinEvent";
+import {GainCombatCardEvent} from "./Events/CombatCardEvent";
+import {DeployEvent} from "./Events/DeployEvent";
+import {Event} from "./Events/Event";
+import {EventLog} from "./Events/EventLog";
+import {GainResourceEvent} from "./Events/GainResourceEvent";
+import {LocationEvent} from "./Events/LocationEvent";
+import {MoveEvent} from "./Events/MoveEvent";
+import {PopularityEvent} from "./Events/PopularityEvent";
+import {PowerEvent} from "./Events/PowerEvent";
+import {ResourceEvent} from "./Events/ResourceEvent";
+import {SpendResourceEvent} from "./Events/SpendResourceEvent";
 import {StarEvent} from "./Events/StarEvent";
+import {Field} from "./Field";
+import {GameMap} from "./GameMap";
+import {IllegalActionError} from "./IllegalActionError";
+import {IllegalMoveError} from "./IllegalMoveError";
+import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
+import {NotEnoughCoinsError} from "./NotEnoughCoinsError";
+import {NotEnoughResourcesError} from "./NotEnoughResourcesError";
+import {Player} from "./Player";
+import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
+import {RecruitReward} from "./RecruitReward";
+import {Resource} from "./Resource";
+import {Resources} from "./Resources";
+import {ResourceType} from "./ResourceType";
+import {TopAction} from "./TopAction";
+import {UnitNotDeployedError} from "./UnitNotDeployedError";
+import {Mech} from "./Units/Mech";
+import {Unit} from "./Units/Unit";
+import {Worker} from "./Units/Worker";
 
 export class Game {
-    private log: EventLog;
     private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
-    private static BOTTOM_ACTIONS = [BottomAction.UPGRADE, BottomAction.DEPLOY, BottomAction.BUILD, BottomAction.ENLIST];
 
-    public constructor(log: EventLog = new EventLog, private readonly players: Player[]) {
+    private static BOTTOM_ACTIONS = [
+        BottomAction.UPGRADE,
+        BottomAction.DEPLOY,
+        BottomAction.BUILD,
+        BottomAction.ENLIST,
+    ];
+
+    private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
+        if (!GameMap.isReachable(currentLocation, destination)) {
+            throw new IllegalMoveError(unit, currentLocation, destination);
+        }
+    }
+
+    private static actionFromTheSameColumn(
+        currentAction: TopAction | BottomAction,
+        lastAction: TopAction | BottomAction,
+        player: Player,
+    ) {
+        return (
+            currentAction === lastAction ||
+            (lastAction in TopAction &&
+                currentAction in BottomAction &&
+                player.playerMat.topActionMatchesBottomAction(lastAction, currentAction)) ||
+            (lastAction in BottomAction &&
+                currentAction in TopAction &&
+                player.playerMat.topActionMatchesBottomAction(currentAction, lastAction))
+        );
+    }
+
+    private static playerPlaysBottomActionAfterTopAction(
+        lastPlayer: Player,
+        playerOrder: Player[],
+        player: Player,
+        action: TopAction | BottomAction,
+    ): boolean {
+        return lastPlayer === playerOrder[playerOrder.indexOf(player)] && action in BottomAction;
+    }
+
+    private log: EventLog;
+
+    public constructor(log: EventLog = new EventLog(), private readonly players: Player[]) {
         this.log = log;
         this.players = players;
 
         for (const player of this.players) {
-            player.setupEvents.forEach(event => this.log.add(event));
-            player.playerMat.setupEvents.forEach(event => this.log.add(event));
+            player.setupEvents.forEach((event) => this.log.add(event));
+            player.playerMat.setupEvents.forEach((event) => this.log.add(event));
         }
     }
 
@@ -70,7 +108,7 @@ export class Game {
         return _.filter((bottomAction: BottomAction): boolean => {
             try {
                 this.assertActionCanBeTaken(player, bottomAction);
-                const {resourceType, count} = player.playerMat.bottomActionCost(bottomAction);
+                const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
                 return this.resources(player).countByType(resourceType) >= count;
             } catch (error) {
                 return false;
@@ -79,22 +117,22 @@ export class Game {
     }
 
     public score(): Map<Player, number> {
-        let points = new Map();
+        const points = new Map();
         this.players.forEach((player: Player) => {
             const popularity = this.popularity(player);
-            const popularityBonus = popularity > 12 ? 2 : (popularity > 6 ? 1 : 0);
+            const popularityBonus = popularity > 12 ? 2 : popularity > 6 ? 1 : 0;
             points.set(
                 player,
-                    this.coins(player)
-                    + this.stars(player) * (3 + popularityBonus)
-                    + this.territoriesWithoutHomebase(player).length * (2 + popularityBonus)
-                    + Math.floor(this.availableResources(player).length / 2) * (1 + popularityBonus)
+                this.coins(player) +
+                    this.stars(player) * (3 + popularityBonus) +
+                    this.territoriesWithoutHomebase(player).length * (2 + popularityBonus) +
+                    Math.floor(this.availableResources(player).length / 2) * (1 + popularityBonus),
             );
         });
         return points;
     }
 
-    public stars(player: Player): 0|1|2|3|4|5|6 {
+    public stars(player: Player): number {
         return this.log.filterBy(player.playerId, StarEvent).length;
     }
 
@@ -102,7 +140,7 @@ export class Game {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
         this.assertUnitDeployed(player, unit);
 
-        let currentLocation = this.unitLocation(player, unit);
+        const currentLocation = this.unitLocation(player, unit);
         Game.assertLegalMove(currentLocation, destination, unit);
 
         this.log
@@ -114,9 +152,7 @@ export class Game {
     public gainCoins(player: Player): Game {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
 
-        this.log
-            .add(new ActionEvent(player.playerId, TopAction.MOVE))
-            .add(new CoinEvent(player.playerId, +1));
+        this.log.add(new ActionEvent(player.playerId, TopAction.MOVE)).add(new CoinEvent(player.playerId, +1));
         return this;
     }
 
@@ -128,17 +164,6 @@ export class Game {
         return this.bolster(player, new GainCombatCardEvent(player.playerId, new CombatCard(2)));
     }
 
-    private bolster(player: Player, event: PowerEvent|GainCombatCardEvent): Game {
-        this.assertActionCanBeTaken(player, TopAction.BOLSTER);
-        this.assertCoins(player, 1);
-
-        this.log
-            .add(new ActionEvent(player.playerId, TopAction.BOLSTER))
-            .add(event)
-            .add(new CoinEvent(player.playerId, -1));
-        return this;
-    }
-
     public tradeResources(player: Player, worker: Worker, resource1: ResourceType, resource2: ResourceType): Game {
         this.assertActionCanBeTaken(player, TopAction.TRADE);
         this.assertCoins(player, 1);
@@ -148,10 +173,12 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, TopAction.TRADE))
             .add(new CoinEvent(player.playerId, -1))
-            .add(new GainResourceEvent(player.playerId, [
-                new Resource(workerLocation, resource1),
-                new Resource(workerLocation, resource2),
-            ]));
+            .add(
+                new GainResourceEvent(player.playerId, [
+                    new Resource(workerLocation, resource1),
+                    new Resource(workerLocation, resource2),
+                ]),
+            );
 
         return this;
     }
@@ -172,8 +199,7 @@ export class Game {
     public produce(player: Player): Game {
         this.assertActionCanBeTaken(player, TopAction.PRODUCE);
 
-        this.log
-            .add(new ActionEvent(player.playerId, TopAction.PRODUCE));
+        this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
 
         return this;
     }
@@ -183,7 +209,7 @@ export class Game {
         this.assertUnitDeployed(player, worker);
         this.assertBuildingNotAlreadyBuilt(player, building);
 
-        const {resourceType, count} = player.playerMat.bottomActionCost(BottomAction.BUILD);
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction.BUILD);
         this.assertAvailableResources(player, resourceType, count, resources);
 
         const location = this.unitLocation(player, worker);
@@ -197,10 +223,13 @@ export class Game {
     }
 
     public units(player: Player): Map<Unit, Field> {
-        let unitLocations = new Map<Unit, Field>();
-        _.forEach((locationEvent: LocationEvent) => {
-            unitLocations.set(locationEvent.unit, locationEvent.destination);
-        }, this.log.filterBy(player.playerId, LocationEvent) as LocationEvent[]);
+        const unitLocations = new Map<Unit, Field>();
+        _.forEach(
+            (locationEvent: LocationEvent) => {
+                unitLocations.set(locationEvent.unit, locationEvent.destination);
+            },
+            this.log.filterBy(player.playerId, LocationEvent) as LocationEvent[],
+        );
         return unitLocations;
     }
 
@@ -214,7 +243,12 @@ export class Game {
 
     public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.DEPLOY);
-        this.assertAvailableResources(player, ResourceType.METAL, player.playerMat.bottomActionCost(BottomAction.DEPLOY).count, resources);
+        this.assertAvailableResources(
+            player,
+            ResourceType.METAL,
+            player.playerMat.bottomActionCost(BottomAction.DEPLOY).count,
+            resources,
+        );
 
         const location = this.unitLocation(player, worker);
         this.log
@@ -225,127 +259,34 @@ export class Game {
 
     public enlist(player: Player, bottomAction: BottomAction, recruiter: RecruitReward, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.ENLIST);
-        this.assertAvailableResources(player, ResourceType.FOOD, player.playerMat.bottomActionCost(BottomAction.ENLIST).count, resources);
+        this.assertAvailableResources(
+            player,
+            ResourceType.FOOD,
+            player.playerMat.bottomActionCost(BottomAction.ENLIST).count,
+            resources,
+        );
 
-        this.log
-            .add(new ActionEvent(player.playerId, BottomAction.ENLIST));
+        this.log.add(new ActionEvent(player.playerId, BottomAction.ENLIST));
         return this;
     }
 
     public upgrade(player: Player, topAction: TopAction, bottomAction: BottomAction, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.UPGRADE);
-        this.assertAvailableResources(player, ResourceType.OIL, player.playerMat.bottomActionCost(BottomAction.UPGRADE).count, resources);
+        this.assertAvailableResources(
+            player,
+            ResourceType.OIL,
+            player.playerMat.bottomActionCost(BottomAction.UPGRADE).count,
+            resources,
+        );
 
-        this.log
-            .add(new ActionEvent(player.playerId, BottomAction.UPGRADE));
+        this.log.add(new ActionEvent(player.playerId, BottomAction.UPGRADE));
         return this;
     }
 
-    private assertAvailableResources(player: Player, type: ResourceType, required: number, resources: Resource[]) {
-        const availableResourcesCount = this.resources(player).countByType(type);
-        if (availableResourcesCount < required) {
-            throw new NotEnoughResourcesError(type, required, availableResourcesCount);
-        }
-
-        const availableResources = this.availableResources(player);
-        if (!resources.every(resource => availableResources.indexOf(resource) !== -1)) {
-            throw new ProvidedResourcesNotAvailableError(resources, availableResources);
-        }
-    }
-
-    private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
-        if (!GameMap.isReachable(currentLocation, destination)) {
-            throw new IllegalMoveError(unit, currentLocation, destination);
-        }
-    }
-
-    private assertCoins(player: Player, required: number): void {
-        let coins = this.coins(player);
-        if (coins < required) {
-            throw new NotEnoughCoinsError(1, coins);
-        }
-    }
-
-    private assertUnitDeployed(player: Player, unit: Unit): void {
-        if (_.none(event => event.unit === unit, <DeployEvent[]> this.log.filterBy(player.playerId, DeployEvent))) {
-            throw new UnitNotDeployedError(unit);
-        }
-    }
-
-    private assertBuildingNotAlreadyBuilt(player: Player, building: BuildingType): void {
-        if (!_.none(event => building === (event as BuildEvent).building, this.log.filterBy(player.playerId, BuildEvent))) {
-            throw new BuildingAlreadyBuildError(building);
-        }
-    }
-
-    private assertLocationHasNoOtherBuildings(player: Player, location: Field): void {
-        if (!_.none(event => location === (event as BuildEvent).location, this.log.filterBy(player.playerId, BuildEvent))) {
-            throw new LocationAlreadyHasAnotherBuildingError(location);
-        }
-    }
-
-    private static actionFromTheSameColumn(
-        currentAction: TopAction | BottomAction,
-        lastAction: TopAction | BottomAction,
-        player: Player,
-    ) {
-        return currentAction === lastAction
-            || (lastAction in TopAction
-                && currentAction in BottomAction
-                && player.playerMat.topActionMatchesBottomAction(lastAction, currentAction))
-            || (lastAction in BottomAction
-                && currentAction in TopAction
-                && player.playerMat.topActionMatchesBottomAction(currentAction, lastAction));
-    }
-
-    private assertActionCanBeTaken(player: Player, currentAction: TopAction | BottomAction): void {
-        if (this.gameJustStarted() && !this.playerIsFirstPlayer(player)) {
-            throw new IllegalActionError("You are not the starting player.")
-        }
-
-        const lastAction = this.lastActionFor(player);
-        if (lastAction === null) {
-            return;
-        }
-
-        if (!this.playerIsNext(player, currentAction)) {
-            throw new IllegalActionError("It is not your turn yet.")
-        }
-
-        if (Game.actionFromTheSameColumn(lastAction, currentAction, player)) {
-            throw new IllegalActionError("Cannot use actions from the same column.");
-        }
-
-        if (currentAction in BottomAction
-            && lastAction in TopAction
-            && this.lastPlayer() === player
-            && !player.playerMat.topActionMatchesBottomAction(lastAction, currentAction)) {
-            throw new IllegalActionError("Cannot use this bottom action with the last top action.");
-        }
-    }
-
-    private gameJustStarted(): boolean {
-        return this.log.lastOf(ActionEvent, () => true) === null;
-    }
-
-    private lastActionFor(player: Player): TopAction|BottomAction|null {
-        const lastActionEvent = this.log.lastOf(ActionEvent, event => event.playerId === player.playerId);
-        return lastActionEvent !== null
-            ? (lastActionEvent as ActionEvent).action
-            : null;
-    }
-
-    private playerIsFirstPlayer(currentPlayer: Player): boolean {
-        for (const otherPlayer of this.players) {
-            if (otherPlayer.playerMat.startPosition < currentPlayer.playerMat.startPosition) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public unitLocation(player: Player, unit: Unit): Field {
-        const moves = (<LocationEvent[]> this.log.filterBy(player.playerId, LocationEvent)).filter(event => event.unit === unit);
+        const moves = (this.log.filterBy(player.playerId, LocationEvent) as LocationEvent[]).filter(
+            (event) => event.unit === unit,
+        );
         return moves[moves.length - 1].destination;
     }
 
@@ -374,16 +315,8 @@ export class Game {
         );
     }
 
-    private resourceByType(type: ResourceType, resources: Resource[]): number {
-        return _.reduce(
-            (sum, resource: Resource) => resource.type === type ? sum + 1 : sum,
-            0,
-            resources
-        );
-    }
-
     public buildings(player: Player): Building[] {
-        return _.map(Building.fromEvent, <BuildEvent[]> this.log.filterBy(player.playerId, BuildEvent));
+        return _.map(Building.fromEvent, this.log.filterBy(player.playerId, BuildEvent) as BuildEvent[]);
     }
 
     /**
@@ -394,30 +327,27 @@ export class Game {
      */
     public availableResources(player: Player): Resource[] {
         const extractResource = (event: ResourceEvent) => event.resources;
-        let gained = _.chain(extractResource, <GainResourceEvent[]> this.log.filter(GainResourceEvent));
-        let spent = _.chain(extractResource, <SpendResourceEvent[]> this.log.filter(SpendResourceEvent));
-        for (let spentResource of spent) {
-            for (let gainedResource of gained) {
-                if (spentResource.location === gainedResource.location
-                    && spentResource.type === gainedResource.type
-                ) {
+        const gained = _.chain(extractResource, this.log.filter(GainResourceEvent) as GainResourceEvent[]);
+        const spent = _.chain(extractResource, this.log.filter(SpendResourceEvent) as SpendResourceEvent[]);
+        for (const spentResource of spent) {
+            for (const gainedResource of gained) {
+                if (spentResource.location === gainedResource.location && spentResource.type === gainedResource.type) {
                     gained.splice(gained.indexOf(gainedResource), 1);
                     break;
                 }
             }
         }
         const territories = this.territories(player);
-        return _.filter(resource => territories.indexOf(resource.location) >= 0, gained);
+        return _.filter((resource) => territories.indexOf(resource.location) >= 0, gained);
     }
 
     public popularity(player: Player): number {
-        return _.sum(_.map(event => event.popularity, <PopularityEvent[]> this.log.filterBy(player.playerId, PopularityEvent)));
-    }
-
-    private assertNotMoreThan20Popularity(player: Player) {
-        if (this.popularity(player) > 20) {
-            throw new CannotHaveMoreThan20PopularityError();
-        }
+        return _.sum(
+            _.map((event) => event.popularity, this.log.filterBy(
+                player.playerId,
+                PopularityEvent,
+            ) as PopularityEvent[]),
+        );
     }
 
     /**
@@ -432,7 +362,121 @@ export class Game {
         return this;
     }
 
-    private lastPlayer(): Player|null {
+    private bolster(player: Player, event: PowerEvent | GainCombatCardEvent): Game {
+        this.assertActionCanBeTaken(player, TopAction.BOLSTER);
+        this.assertCoins(player, 1);
+
+        this.log
+            .add(new ActionEvent(player.playerId, TopAction.BOLSTER))
+            .add(event)
+            .add(new CoinEvent(player.playerId, -1));
+        return this;
+    }
+
+    private assertAvailableResources(player: Player, type: ResourceType, required: number, resources: Resource[]) {
+        const availableResourcesCount = this.resources(player).countByType(type);
+        if (availableResourcesCount < required) {
+            throw new NotEnoughResourcesError(type, required, availableResourcesCount);
+        }
+
+        const availableResources = this.availableResources(player);
+        if (!resources.every((resource) => availableResources.indexOf(resource) !== -1)) {
+            throw new ProvidedResourcesNotAvailableError(resources, availableResources);
+        }
+    }
+
+    private assertCoins(player: Player, required: number): void {
+        const coins = this.coins(player);
+        if (coins < required) {
+            throw new NotEnoughCoinsError(1, coins);
+        }
+    }
+
+    private assertUnitDeployed(player: Player, unit: Unit): void {
+        if (_.none((event) => event.unit === unit, this.log.filterBy(player.playerId, DeployEvent) as DeployEvent[])) {
+            throw new UnitNotDeployedError(unit);
+        }
+    }
+
+    private assertBuildingNotAlreadyBuilt(player: Player, building: BuildingType): void {
+        if (
+            !_.none(
+                (event) => building === (event as BuildEvent).building,
+                this.log.filterBy(player.playerId, BuildEvent),
+            )
+        ) {
+            throw new BuildingAlreadyBuildError(building);
+        }
+    }
+
+    private assertLocationHasNoOtherBuildings(player: Player, location: Field): void {
+        if (
+            !_.none(
+                (event) => location === (event as BuildEvent).location,
+                this.log.filterBy(player.playerId, BuildEvent),
+            )
+        ) {
+            throw new LocationAlreadyHasAnotherBuildingError(location);
+        }
+    }
+
+    private assertActionCanBeTaken(player: Player, currentAction: TopAction | BottomAction): void {
+        if (this.gameJustStarted() && !this.playerIsFirstPlayer(player)) {
+            throw new IllegalActionError("You are not the starting player.");
+        }
+
+        const lastAction = this.lastActionFor(player);
+        if (lastAction === null) {
+            return;
+        }
+
+        if (!this.playerIsNext(player, currentAction)) {
+            throw new IllegalActionError("It is not your turn yet.");
+        }
+
+        if (Game.actionFromTheSameColumn(lastAction, currentAction, player)) {
+            throw new IllegalActionError("Cannot use actions from the same column.");
+        }
+
+        if (
+            currentAction in BottomAction &&
+            lastAction in TopAction &&
+            this.lastPlayer() === player &&
+            !player.playerMat.topActionMatchesBottomAction(lastAction, currentAction)
+        ) {
+            throw new IllegalActionError("Cannot use this bottom action with the last top action.");
+        }
+    }
+
+    private gameJustStarted(): boolean {
+        return this.log.lastOf(ActionEvent, () => true) === null;
+    }
+
+    private lastActionFor(player: Player): TopAction | BottomAction | null {
+        const lastActionEvent = this.log.lastOf(ActionEvent, (event) => event.playerId === player.playerId);
+        return lastActionEvent !== null ? (lastActionEvent as ActionEvent).action : null;
+    }
+
+    private playerIsFirstPlayer(currentPlayer: Player): boolean {
+        for (const otherPlayer of this.players) {
+            if (otherPlayer.playerMat.startPosition < currentPlayer.playerMat.startPosition) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private resourceByType(type: ResourceType, resources: Resource[]): number {
+        return _.reduce((sum, resource: Resource) => (resource.type === type ? sum + 1 : sum), 0, resources);
+    }
+
+    private assertNotMoreThan20Popularity(player: Player) {
+        if (this.popularity(player) > 20) {
+            throw new CannotHaveMoreThan20PopularityError();
+        }
+    }
+
+    private lastPlayer(): Player | null {
         const lastActionEvent = this.log.lastOf(ActionEvent, () => true);
         if (lastActionEvent === null) {
             return null;
@@ -444,13 +488,18 @@ export class Game {
             }
         }
         return null;
-
     }
 
     private playerOrder(): Player[] {
-        return _.sort(_.comparator((player1: Player, player2: Player) => {
-            return Player.FACTION_TURN_ORDER.indexOf(player1.faction) < Player.FACTION_TURN_ORDER.indexOf(player2.faction);
-        }), this.players);
+        return _.sort(
+            _.comparator((player1: Player, player2: Player) => {
+                return (
+                    Player.FACTION_TURN_ORDER.indexOf(player1.faction) <
+                    Player.FACTION_TURN_ORDER.indexOf(player2.faction)
+                );
+            }),
+            this.players,
+        );
     }
 
     private playerIsNext(player: Player, action: TopAction | BottomAction): boolean {
@@ -464,16 +513,9 @@ export class Game {
             return true;
         }
 
-        return Game.playerPlaysBottomActionAfterTopAction(lastPlayer, playerOrder, player, action)
-            || lastPlayer === playerOrder[playerOrder.indexOf(player) - 1];
-    }
-
-    private static playerPlaysBottomActionAfterTopAction(
-        lastPlayer: Player,
-        playerOrder: Player[],
-        player: Player,
-        action: TopAction | BottomAction
-    ): boolean {
-        return lastPlayer === playerOrder[playerOrder.indexOf(player)] && action in BottomAction;
+        return (
+            Game.playerPlaysBottomActionAfterTopAction(lastPlayer, playerOrder, player, action) ||
+            lastPlayer === playerOrder[playerOrder.indexOf(player) - 1]
+        );
     }
 }

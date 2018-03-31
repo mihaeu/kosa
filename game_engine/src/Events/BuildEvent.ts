@@ -1,7 +1,7 @@
 import {BuildingType} from "../BuildingType";
 import {Field} from "../Field";
-import {Event} from "./Event";
 import {PlayerId} from "../PlayerId";
+import {Event} from "./Event";
 
 export class BuildEvent implements Event {
     constructor(

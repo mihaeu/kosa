@@ -3,6 +3,26 @@ import {Field} from "./Field";
 import {FieldConnection} from "./FieldConnection";
 
 export class GameMap {
+    public static isReachable(start: Field, end: Field, distance: number = 1): boolean {
+        if (this.fields === undefined) {
+            this.init();
+        }
+
+        if (distance === 0) {
+            return false;
+        }
+
+        const options = this.options(start);
+        if (options.length === 0) {
+            return false;
+        }
+
+        if (options.some((field: Field) => field === end)) {
+            return true;
+        }
+
+        return options.some((field: Field) => GameMap.isReachable(field, end, distance - 1));
+    }
 
     private static fields: Map<Field, Connection[]>;
 
@@ -448,34 +468,13 @@ export class GameMap {
         ]);
     }
 
-    public static isReachable(start: Field, end: Field, distance: number = 1): boolean {
-        if (this.fields === undefined) {
-            this.init();
-        }
-
-        if (distance === 0) {
-            return false;
-        }
-
-        const options = this.options(start);
-        if (options.length === 0) {
-            return false;
-        }
-
-        if (options.some((field: Field) => field === end)) {
-            return true;
-        }
-
-        return options.some((field: Field) => GameMap.isReachable(field, end, distance - 1));
-    }
-
     private static options(field: Field): Field[] {
         const connections = this.fields.get(field);
         return connections === undefined
             ? []
             : connections
-                .filter(Connection.isReachable)
-                .map((connection: Connection) => connection.field)
-                .filter(Field.isNotLake);
+                  .filter(Connection.isReachable)
+                  .map((connection: Connection) => connection.field)
+                  .filter(Field.isNotLake);
     }
 }

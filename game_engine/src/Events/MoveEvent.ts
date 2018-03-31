@@ -1,8 +1,8 @@
 import {Field} from "../Field";
+import {PlayerId} from "../PlayerId";
 import {ResourceType} from "../ResourceType";
 import {Unit} from "../Units/Unit";
 import {LocationEvent} from "./LocationEvent";
-import {PlayerId} from "../PlayerId";
 
 export class MoveEvent extends LocationEvent {
     constructor(

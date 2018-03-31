@@ -1,5 +1,5 @@
-import {Event} from "./Event";
 import {PlayerId} from "../PlayerId";
+import {Event} from "./Event";
 
 export class EventLog {
     private log: Event[] = [];
@@ -10,14 +10,14 @@ export class EventLog {
     }
 
     public filterBy(playerId: PlayerId, type: any): Event[] {
-        return this.log.filter(event => event.playerId === playerId && event instanceof type);
+        return this.log.filter((event) => event.playerId === playerId && event instanceof type);
     }
 
     public filter(type: any): Event[] {
-        return this.log.filter(event => event instanceof type);
+        return this.log.filter((event) => event instanceof type);
     }
 
-    public lastOf(type: any, fn: (event: Event) => boolean): Event|null {
+    public lastOf(type: any, fn: (event: Event) => boolean): Event | null {
         for (let i = this.log.length - 1; i >= 0; --i) {
             if (this.log[i] instanceof type && fn(this.log[i])) {
                 return this.log[i];
