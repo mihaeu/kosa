@@ -1,4 +1,4 @@
-import {BuildingType} from "./BuildingType";
+import { BuildingType } from "./BuildingType";
 
 export class BuildingAlreadyBuildError extends Error {
     constructor(building: BuildingType) {

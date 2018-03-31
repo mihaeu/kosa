@@ -1,7 +1,7 @@
-import {Event} from "./Events/Event";
-import {Faction} from "./Faction";
-import {PlayerId} from "./PlayerId";
-import {PlayerMat} from "./PlayerMat";
+import { Event } from "./Events/Event";
+import { Faction } from "./Faction";
+import { PlayerId } from "./PlayerId";
+import { PlayerMat } from "./PlayerMat";
 
 export class Player {
     public static readonly FACTION_TURN_ORDER = [

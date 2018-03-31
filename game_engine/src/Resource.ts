@@ -1,5 +1,5 @@
-import {Field} from "./Field";
-import {ResourceType} from "./ResourceType";
+import { Field } from "./Field";
+import { ResourceType } from "./ResourceType";
 
 export class Resource {
     constructor(public readonly location: Field, public readonly type: ResourceType) {}

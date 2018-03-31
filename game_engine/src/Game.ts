@@ -1,43 +1,47 @@
 import * as _ from "ramda";
-import {BottomAction} from "./BottomAction";
-import {Building} from "./Building";
-import {BuildingAlreadyBuildError} from "./BuildingAlreadyBuiltError";
-import {BuildingType} from "./BuildingType";
-import {CannotHaveMoreThan20PopularityError} from "./CannotHaveMoreThan20PopularityError";
-import {CombatCard} from "./CombatCard";
-import {ActionEvent} from "./Events/ActionEvent";
-import {BuildEvent} from "./Events/BuildEvent";
-import {CoinEvent} from "./Events/CoinEvent";
-import {GainCombatCardEvent} from "./Events/CombatCardEvent";
-import {DeployEvent} from "./Events/DeployEvent";
-import {EventLog} from "./Events/EventLog";
-import {GainResourceEvent} from "./Events/GainResourceEvent";
-import {LocationEvent} from "./Events/LocationEvent";
-import {MoveEvent} from "./Events/MoveEvent";
-import {PassEvent} from "./Events/PassEvent";
-import {PopularityEvent} from "./Events/PopularityEvent";
-import {PowerEvent} from "./Events/PowerEvent";
-import {ResourceEvent} from "./Events/ResourceEvent";
-import {SpendResourceEvent} from "./Events/SpendResourceEvent";
-import {StarEvent} from "./Events/StarEvent";
-import {Field} from "./Field";
-import {GameMap} from "./GameMap";
-import {IllegalActionError} from "./IllegalActionError";
-import {IllegalMoveError} from "./IllegalMoveError";
-import {LocationAlreadyHasAnotherBuildingError} from "./LocationAlreadyHasAnotherBuildingError";
-import {NotEnoughCoinsError} from "./NotEnoughCoinsError";
-import {NotEnoughResourcesError} from "./NotEnoughResourcesError";
-import {Player} from "./Player";
-import {ProvidedResourcesNotAvailableError} from "./ProvidedResourcesNotAvailableError";
-import {RecruitReward} from "./RecruitReward";
-import {Resource} from "./Resource";
-import {Resources} from "./Resources";
-import {ResourceType} from "./ResourceType";
-import {TopAction} from "./TopAction";
-import {UnitNotDeployedError} from "./UnitNotDeployedError";
-import {Mech} from "./Units/Mech";
-import {Unit} from "./Units/Unit";
-import {Worker} from "./Units/Worker";
+import { BottomAction } from "./BottomAction";
+import { Building } from "./Building";
+import { BuildingAlreadyBuildError } from "./BuildingAlreadyBuiltError";
+import { BuildingType } from "./BuildingType";
+import { CannotHaveMoreThan20PopularityError } from "./CannotHaveMoreThan20PopularityError";
+import { CombatCard } from "./CombatCard";
+import { ActionEvent } from "./Events/ActionEvent";
+import { BuildEvent } from "./Events/BuildEvent";
+import { CoinEvent } from "./Events/CoinEvent";
+import { GainCombatCardEvent } from "./Events/CombatCardEvent";
+import { DeployEvent } from "./Events/DeployEvent";
+import { EnlistEvent } from "./Events/EnlistEvent";
+import { Event } from "./Events/Event";
+import { EventLog } from "./Events/EventLog";
+import { GainResourceEvent } from "./Events/GainResourceEvent";
+import { LocationEvent } from "./Events/LocationEvent";
+import { MoveEvent } from "./Events/MoveEvent";
+import { PassEvent } from "./Events/PassEvent";
+import { PopularityEvent } from "./Events/PopularityEvent";
+import { PowerEvent } from "./Events/PowerEvent";
+import { ResourceEvent } from "./Events/ResourceEvent";
+import { SpendResourceEvent } from "./Events/SpendResourceEvent";
+import { StarEvent } from "./Events/StarEvent";
+import { UpgradeEvent } from "./Events/UpgradeEvent";
+import { Field } from "./Field";
+import { GameMap } from "./GameMap";
+import { IllegalActionError } from "./IllegalActionError";
+import { IllegalMoveError } from "./IllegalMoveError";
+import { LocationAlreadyHasAnotherBuildingError } from "./LocationAlreadyHasAnotherBuildingError";
+import { NotEnoughCoinsError } from "./NotEnoughCoinsError";
+import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
+import { Player } from "./Player";
+import { ProvidedResourcesNotAvailableError } from "./ProvidedResourcesNotAvailableError";
+import { RecruitReward } from "./RecruitReward";
+import { Resource } from "./Resource";
+import { Resources } from "./Resources";
+import { ResourceType } from "./ResourceType";
+import { Star } from "./Star";
+import { TopAction } from "./TopAction";
+import { UnitNotDeployedError } from "./UnitNotDeployedError";
+import { Mech } from "./Units/Mech";
+import { Unit } from "./Units/Unit";
+import { Worker } from "./Units/Worker";
 
 export class Game {
     private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
@@ -124,16 +128,17 @@ export class Game {
             points.set(
                 player,
                 this.coins(player) +
-                    this.stars(player) * (3 + popularityBonus) +
-                    this.territoriesWithoutHomebase(player).length * (2 + popularityBonus) +
+                    this.stars(player).length * (3 + popularityBonus) +
+                    this.territoriesWithoutHomeBase(player).length * (2 + popularityBonus) +
                     Math.floor(this.availableResources(player).length / 2) * (1 + popularityBonus),
             );
         });
         return points;
     }
 
-    public stars(player: Player): number {
-        return this.log.filterBy(player.playerId, StarEvent).length;
+    public stars(player: Player): Star[] {
+        // @ts-ignore
+        return _.pluck("star", this.log.filterBy(player.playerId, StarEvent));
     }
 
     public move(player: Player, unit: Unit, destination: Field) {
@@ -146,14 +151,14 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, TopAction.MOVE))
             .add(new MoveEvent(player.playerId, unit, destination));
-        return this.passIfNoBottomActionAvailable(player);
+        return this.pass(player, true);
     }
 
     public gainCoins(player: Player): Game {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
 
         this.log.add(new ActionEvent(player.playerId, TopAction.MOVE)).add(new CoinEvent(player.playerId, +1));
-        return this.passIfNoBottomActionAvailable(player);
+        return this.pass(player, true);
     }
 
     public bolsterPower(player: Player): Game {
@@ -180,7 +185,7 @@ export class Game {
                 ]),
             );
 
-        return this.passIfNoBottomActionAvailable(player);
+        return this.pass(player, true);
     }
 
     public tradePopularity(player: Player): Game {
@@ -193,7 +198,7 @@ export class Game {
             .add(new CoinEvent(player.playerId, -1))
             .add(new PopularityEvent(player.playerId, 1));
 
-        return this.passIfNoBottomActionAvailable(player);
+        return this.pass(player, true);
     }
 
     public produce(player: Player): Game {
@@ -201,7 +206,7 @@ export class Game {
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
 
-        return this.passIfNoBottomActionAvailable(player);
+        return this.pass(player, true);
     }
 
     public build(player: Player, worker: Worker, building: BuildingType, resources: Resource[]): Game {
@@ -222,13 +227,15 @@ export class Game {
         return this.pass(player);
     }
 
-    public pass(player: Player): Game {
+    public pass(player: Player, wasTopAction: boolean = false): Game {
+        this.handOutStars(player);
+
+        if (wasTopAction && this.availableBottomActions(player).length > 0) {
+            return this;
+        }
+
         this.log.add(new PassEvent(player.playerId));
         return this;
-    }
-
-    public passIfNoBottomActionAvailable(player: Player): Game {
-        return this.availableBottomActions(player).length > 0 ? this : this.pass(player);
     }
 
     public units(player: Player): Map<Unit, Field> {
@@ -246,8 +253,8 @@ export class Game {
         return _.uniq(Array.from(this.units(player).values()));
     }
 
-    public territoriesWithoutHomebase(player: Player): Field[] {
-        return this.territories(player).filter(Field.isNotHomebase);
+    public territoriesWithoutHomeBase(player: Player): Field[] {
+        return this.territories(player).filter(Field.isNotHomeBase);
     }
 
     public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
@@ -266,7 +273,7 @@ export class Game {
         return this.pass(player);
     }
 
-    public enlist(player: Player, bottomAction: BottomAction, recruiter: RecruitReward, resources: Resource[]) {
+    public enlist(player: Player, bottomAction: BottomAction, recruitReward: RecruitReward, resources: Resource[]) {
         this.assertActionCanBeTaken(player, BottomAction.ENLIST);
         this.assertAvailableResources(
             player,
@@ -275,7 +282,9 @@ export class Game {
             resources,
         );
 
-        this.log.add(new ActionEvent(player.playerId, BottomAction.ENLIST));
+        this.log
+            .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
+            .add(new EnlistEvent(player.playerId, recruitReward, bottomAction));
         return this.pass(player);
     }
 
@@ -288,7 +297,9 @@ export class Game {
             resources,
         );
 
-        this.log.add(new ActionEvent(player.playerId, BottomAction.UPGRADE));
+        this.log
+            .add(new ActionEvent(player.playerId, BottomAction.UPGRADE))
+            .add(new UpgradeEvent(player.playerId, topAction, bottomAction));
         return this.pass(player);
     }
 
@@ -361,7 +372,96 @@ export class Game {
             .add(new ActionEvent(player.playerId, TopAction.BOLSTER))
             .add(event)
             .add(new CoinEvent(player.playerId, -1));
-        return this.passIfNoBottomActionAvailable(player);
+        return this.pass(player, true);
+    }
+
+    private maxPopularity(player: Player): boolean {
+        return this.popularity(player) === 18;
+    }
+
+    private maxPower(player: Player): boolean {
+        return this.power(player) === 16;
+    }
+
+    private allUpgrades(player: Player): boolean {
+        return this.log.filterBy(player.playerId, UpgradeEvent).length === 6;
+    }
+
+    private allMechs(player: Player): boolean {
+        return (
+            this.log.filterBy(
+                player.playerId,
+                DeployEvent,
+                (event: Event) => (event as DeployEvent).unit instanceof Mech,
+            ).length === 4
+        );
+    }
+
+    private allBuildings(player: Player): boolean {
+        return this.log.filterBy(player.playerId, BuildEvent).length === 4;
+    }
+
+    private allRecruits(player: Player): boolean {
+        return this.log.filterBy(player.playerId, EnlistEvent).length === 4;
+    }
+
+    private allWorkers(player: Player): boolean {
+        let workerCount = 0;
+        for (const unit of this.units(player).keys()) {
+            if (unit instanceof Worker) {
+                ++workerCount;
+            }
+        }
+        return workerCount === 8;
+    }
+
+    private starCondition(player: Player, star: Star): boolean {
+        switch (star) {
+            case Star.ALL_UPGRADES:
+                return this.allUpgrades(player);
+            case Star.ALL_MECHS:
+                return this.allMechs(player);
+            case Star.ALL_BUILDINGS:
+                return this.allBuildings(player);
+            case Star.ALL_RECRUITS:
+                return this.allRecruits(player);
+            case Star.ALL_WORKERS:
+                return this.allWorkers(player);
+            case Star.FIRST_OBJECTIVE:
+                return false;
+            case Star.FIRST_COMBAT_WIN:
+                return false;
+            case Star.SECOND_COMBAT_WIN:
+                return false;
+            case Star.MAX_POPULARITY:
+                return this.maxPopularity(player);
+            case Star.MAX_POWER:
+                return this.maxPower(player);
+            default:
+                return false;
+        }
+    }
+
+    private handOutStars(player: Player): void {
+        const allStars = [
+            Star.ALL_UPGRADES,
+            Star.ALL_MECHS,
+            Star.ALL_BUILDINGS,
+            Star.ALL_RECRUITS,
+            Star.ALL_WORKERS,
+            Star.FIRST_OBJECTIVE,
+            Star.FIRST_COMBAT_WIN,
+            Star.SECOND_COMBAT_WIN,
+            Star.MAX_POPULARITY,
+            Star.MAX_POWER,
+        ];
+
+        const missingStars = _.difference(allStars, this.stars(player));
+        missingStars.forEach((star: Star) => {
+            if (this.starCondition(player, star)) {
+                this.log.add(new StarEvent(player.playerId, star));
+            }
+        });
     }
 
     private assertAvailableResources(player: Player, type: ResourceType, required: number, resources: Resource[]) {

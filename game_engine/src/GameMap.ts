@@ -1,6 +1,6 @@
-import {Connection} from "./Connection";
-import {Field} from "./Field";
-import {FieldConnection} from "./FieldConnection";
+import { Connection } from "./Connection";
+import { Field } from "./Field";
+import { FieldConnection } from "./FieldConnection";
 
 export class GameMap {
     public static isReachable(start: Field, end: Field, distance: number = 1): boolean {
@@ -473,8 +473,8 @@ export class GameMap {
         return connections === undefined
             ? []
             : connections
-                .filter(Connection.isReachable)
-                .map((connection: Connection) => connection.field)
-                .filter(Field.isNotLake);
+                  .filter(Connection.isReachable)
+                  .map((connection: Connection) => connection.field)
+                  .filter(Field.isNotLake);
     }
 }

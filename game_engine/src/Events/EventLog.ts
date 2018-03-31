@@ -1,5 +1,5 @@
-import {PlayerId} from "../PlayerId";
-import {Event} from "./Event";
+import { PlayerId } from "../PlayerId";
+import { Event } from "./Event";
 
 export class EventLog {
     public log: Event[] = [];
@@ -9,8 +9,8 @@ export class EventLog {
         return this;
     }
 
-    public filterBy(playerId: PlayerId, type: any): Event[] {
-        return this.log.filter((event) => event.playerId === playerId && event instanceof type);
+    public filterBy(playerId: PlayerId, type: any, fn: (event: Event) => boolean = () => true): Event[] {
+        return this.log.filter((event) => event.playerId === playerId && event instanceof type && fn(event));
     }
 
     public filter(type: any): Event[] {

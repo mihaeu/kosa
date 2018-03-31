@@ -1,5 +1,5 @@
-import {FieldName} from "./FieldName";
-import {FieldType} from "./FieldType";
+import { FieldName } from "./FieldName";
+import { FieldType } from "./FieldType";
 
 export class Field {
     public static readonly black = new Field(FieldName.black, FieldType.HOMEBASE);
@@ -67,7 +67,7 @@ export class Field {
         return field.type !== FieldType.LAKE;
     }
 
-    public static isNotHomebase(field: Field): boolean {
+    public static isNotHomeBase(field: Field): boolean {
         return field.type !== FieldType.HOMEBASE;
     }
 

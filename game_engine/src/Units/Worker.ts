@@ -1,4 +1,4 @@
-import {Unit} from "./Unit";
+import { Unit } from "./Unit";
 
 export class Worker extends Unit {
     public static readonly WORKER_1 = new Worker("WORKER_1");

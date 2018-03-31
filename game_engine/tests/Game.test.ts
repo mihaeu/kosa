@@ -1,28 +1,32 @@
-import {BottomAction} from "../src/BottomAction";
-import {Building} from "../src/Building";
-import {BuildingType} from "../src/BuildingType";
-import {CoinEvent} from "../src/Events/CoinEvent";
-import {DeployEvent} from "../src/Events/DeployEvent";
-import {EventLog} from "../src/Events/EventLog";
-import {GainResourceEvent} from "../src/Events/GainResourceEvent";
-import {PopularityEvent} from "../src/Events/PopularityEvent";
-import {SpendResourceEvent} from "../src/Events/SpendResourceEvent";
-import {StarEvent} from "../src/Events/StarEvent";
-import {Field} from "../src/Field";
-import {Game} from "../src/Game";
-import {Player} from "../src/Player";
-import {PlayerFactory} from "../src/PlayerFactory";
-import {PlayerId} from "../src/PlayerId";
-import {PlayerMat} from "../src/PlayerMat";
-import {RecruitReward} from "../src/RecruitReward";
-import {Resource} from "../src/Resource";
-import {ResourceType} from "../src/ResourceType";
-import {Star} from "../src/Star";
-import {TopAction} from "../src/TopAction";
-import {Character} from "../src/Units/Character";
-import {Mech} from "../src/Units/Mech";
-import {Worker} from "../src/Units/Worker";
-import {PassEvent} from "../src/Events/PassEvent";
+import { BottomAction } from "../src/BottomAction";
+import { Building } from "../src/Building";
+import { BuildingType } from "../src/BuildingType";
+import { BuildEvent } from "../src/Events/BuildEvent";
+import { CoinEvent } from "../src/Events/CoinEvent";
+import { DeployEvent } from "../src/Events/DeployEvent";
+import { EnlistEvent } from "../src/Events/EnlistEvent";
+import { EventLog } from "../src/Events/EventLog";
+import { GainResourceEvent } from "../src/Events/GainResourceEvent";
+import { PassEvent } from "../src/Events/PassEvent";
+import { PopularityEvent } from "../src/Events/PopularityEvent";
+import { PowerEvent } from "../src/Events/PowerEvent";
+import { SpendResourceEvent } from "../src/Events/SpendResourceEvent";
+import { StarEvent } from "../src/Events/StarEvent";
+import { UpgradeEvent } from "../src/Events/UpgradeEvent";
+import { Field } from "../src/Field";
+import { Game } from "../src/Game";
+import { Player } from "../src/Player";
+import { PlayerFactory } from "../src/PlayerFactory";
+import { PlayerId } from "../src/PlayerId";
+import { PlayerMat } from "../src/PlayerMat";
+import { RecruitReward } from "../src/RecruitReward";
+import { Resource } from "../src/Resource";
+import { ResourceType } from "../src/ResourceType";
+import { Star } from "../src/Star";
+import { TopAction } from "../src/TopAction";
+import { Character } from "../src/Units/Character";
+import { Mech } from "../src/Units/Mech";
+import { Worker } from "../src/Units/Worker";
 
 let game: Game;
 
@@ -415,6 +419,97 @@ test("Player does automatically pass after bottom action", () => {
     mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
     game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, resources(Field.m6, ResourceType.WOOD, 4));
     expect(game.log.log.pop()).toBeInstanceOf(PassEvent);
+});
+
+test("Players get a star for having maximum power", () => {
+    game.log.add(new PowerEvent(blackIndustrialPlayerId, 13));
+    game.bolsterPower(blackIndustrialPlayer);
+    expect(game.stars(blackIndustrialPlayer).pop()).toBe(Star.MAX_POWER);
+});
+
+describe("Players get stars when conditions are met", () => {
+    test("Players get a star for having maximum power", () => {
+        game.log.add(new PowerEvent(blackIndustrialPlayerId, 13));
+        game.bolsterPower(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.MAX_POWER);
+    });
+
+    test("Players get a star for having maximum popularity", () => {
+        game.log.add(new PopularityEvent(blackIndustrialPlayerId, 15));
+        game.tradePopularity(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.MAX_POPULARITY);
+    });
+
+    test("Players get a star for deploying all workers", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.black));
+        game.tradePopularity(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.ALL_WORKERS);
+    });
+
+    test("Players get a star for deploying all mechs", () => {
+        mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Mech.MECH_1, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Mech.MECH_2, Field.black))
+            .add(new DeployEvent(blackIndustrialPlayerId, Mech.MECH_3, Field.black));
+        game.gainCoins(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toEqual([]);
+
+        game.log.add(new DeployEvent(blackIndustrialPlayerId, Mech.MECH_4, Field.black));
+        game.build(
+            blackIndustrialPlayer,
+            Worker.WORKER_1,
+            BuildingType.MINE,
+            resources(Field.m6, ResourceType.WOOD, 4),
+        );
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.ALL_MECHS);
+    });
+
+    test("Players get a star for enlisting all recruiters", () => {
+        game.log
+            .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.COINS, BottomAction.ENLIST))
+            .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.COMBAT_CARDS, BottomAction.DEPLOY))
+            .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.POPULARITY, BottomAction.UPGRADE))
+            .add(new EnlistEvent(blackIndustrialPlayerId, RecruitReward.POWER, BottomAction.BUILD));
+        game.gainCoins(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.ALL_RECRUITS);
+    });
+
+    test("Players get a star for building all buildings", () => {
+        game.log
+            .add(new BuildEvent(blackIndustrialPlayerId, workerLocation(blackIndustrialPlayer), BuildingType.ARMORY))
+            .add(new BuildEvent(blackIndustrialPlayerId, workerLocation(blackIndustrialPlayer), BuildingType.MILL))
+            .add(new BuildEvent(blackIndustrialPlayerId, workerLocation(blackIndustrialPlayer), BuildingType.MINE))
+            .add(new BuildEvent(blackIndustrialPlayerId, workerLocation(blackIndustrialPlayer), BuildingType.MONUMENT));
+        game.gainCoins(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.ALL_BUILDINGS);
+    });
+
+    test("Players get a star for unlocking all upgrades", () => {
+        game.log
+            .add(new UpgradeEvent(blackIndustrialPlayerId, TopAction.BOLSTER, BottomAction.ENLIST))
+            .add(new UpgradeEvent(blackIndustrialPlayerId, TopAction.BOLSTER, BottomAction.ENLIST))
+            .add(new UpgradeEvent(blackIndustrialPlayerId, TopAction.BOLSTER, BottomAction.ENLIST))
+            .add(new UpgradeEvent(blackIndustrialPlayerId, TopAction.BOLSTER, BottomAction.ENLIST))
+            .add(new UpgradeEvent(blackIndustrialPlayerId, TopAction.BOLSTER, BottomAction.ENLIST))
+            .add(new UpgradeEvent(blackIndustrialPlayerId, TopAction.BOLSTER, BottomAction.ENLIST));
+        game.gainCoins(blackIndustrialPlayer);
+        expect(game.stars(blackIndustrialPlayer)).toContain(Star.ALL_UPGRADES);
+    });
+
+    test.skip("Players get stars for the first two combat wins", () => {
+        expect(game.stars(blackIndustrialPlayer)).toEqual([Star.FIRST_COMBAT_WIN, Star.SECOND_COMBAT_WIN]);
+    });
+
+    test.skip("Players get a star for completing an objective", () => {
+        expect(game.stars(blackIndustrialPlayer)).toEqual([Star.FIRST_COMBAT_WIN, Star.SECOND_COMBAT_WIN]);
+    });
 });
 
 test.skip("Upgrade makes a top action more powerful and a bottom action cheaper", () => {

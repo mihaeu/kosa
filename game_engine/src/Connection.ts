@@ -1,5 +1,5 @@
-import {Field} from "./Field";
-import {FieldConnection} from "./FieldConnection";
+import { Field } from "./Field";
+import { FieldConnection } from "./FieldConnection";
 
 export class Connection {
     public static readonly isReachable = (connection: Connection) => {

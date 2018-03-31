@@ -1,4 +1,4 @@
-import {Unit} from "./Units/Unit";
+import { Unit } from "./Units/Unit";
 
 export class UnitNotDeployedError extends Error {
     constructor(private readonly unit: Unit) {

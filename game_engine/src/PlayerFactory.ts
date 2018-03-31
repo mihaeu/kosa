@@ -1,14 +1,14 @@
-import {CombatCard} from "./CombatCard";
-import {GainCombatCardEvent} from "./Events/CombatCardEvent";
-import {DeployEvent} from "./Events/DeployEvent";
-import {PowerEvent} from "./Events/PowerEvent";
-import {Faction} from "./Faction";
-import {Field} from "./Field";
-import {Player} from "./Player";
-import {PlayerId} from "./PlayerId";
-import {PlayerMat} from "./PlayerMat";
-import {Character} from "./Units/Character";
-import {Worker} from "./Units/Worker";
+import { CombatCard } from "./CombatCard";
+import { GainCombatCardEvent } from "./Events/CombatCardEvent";
+import { DeployEvent } from "./Events/DeployEvent";
+import { PowerEvent } from "./Events/PowerEvent";
+import { Faction } from "./Faction";
+import { Field } from "./Field";
+import { Player } from "./Player";
+import { PlayerId } from "./PlayerId";
+import { PlayerMat } from "./PlayerMat";
+import { Character } from "./Units/Character";
+import { Worker } from "./Units/Worker";
 
 export class PlayerFactory {
     public static black(playerId: PlayerId, playerMat: PlayerMat): Player {

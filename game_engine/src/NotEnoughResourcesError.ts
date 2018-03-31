@@ -1,4 +1,4 @@
-import {ResourceType} from "./ResourceType";
+import { ResourceType } from "./ResourceType";
 
 export class NotEnoughResourcesError extends Error {
     constructor(type: ResourceType, count: number, availableResources: number) {

@@ -1,5 +1,5 @@
-import {Field} from "../src/Field";
-import {GameMap} from "../src/GameMap";
+import { Field } from "../src/Field";
+import { GameMap } from "../src/GameMap";
 
 test("Factory is connected to three non-lake fields", () => {
     expect(GameMap.isReachable(Field.F, Field.w3)).toBeTruthy();

@@ -1,11 +1,11 @@
-import {BottomAction} from "./BottomAction";
-import {CoinEvent} from "./Events/CoinEvent";
-import {Event} from "./Events/Event";
-import {PopularityEvent} from "./Events/PopularityEvent";
-import {PlayerId} from "./PlayerId";
-import {ResourceCost} from "./ResourceCost";
-import {ResourceType} from "./ResourceType";
-import {TopAction} from "./TopAction";
+import { BottomAction } from "./BottomAction";
+import { CoinEvent } from "./Events/CoinEvent";
+import { Event } from "./Events/Event";
+import { PopularityEvent } from "./Events/PopularityEvent";
+import { PlayerId } from "./PlayerId";
+import { ResourceCost } from "./ResourceCost";
+import { ResourceType } from "./ResourceType";
+import { TopAction } from "./TopAction";
 
 export class PlayerMat {
     public static engineering(playerId: PlayerId): PlayerMat {

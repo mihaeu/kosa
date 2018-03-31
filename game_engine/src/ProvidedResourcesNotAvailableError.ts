@@ -1,4 +1,4 @@
-import {Resource} from "./Resource";
+import { Resource } from "./Resource";
 
 export class ProvidedResourcesNotAvailableError extends Error {
     constructor(providedResources: Resource[], availableResources: Resource[]) {
