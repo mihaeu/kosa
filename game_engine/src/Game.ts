@@ -24,6 +24,7 @@ import { ResourceEvent } from "./Events/ResourceEvent";
 import { SpendResourceEvent } from "./Events/SpendResourceEvent";
 import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
+import { Faction } from "./Faction";
 import { Field } from "./Field";
 import { GameMap } from "./GameMap";
 import { IllegalActionError } from "./IllegalActionError";
@@ -52,6 +53,16 @@ export class Game {
         BottomAction.DEPLOY,
         BottomAction.BUILD,
         BottomAction.ENLIST,
+    ];
+
+    private static PLAY_ORDER = [
+        Faction.GREEN,
+        Faction.BLUE,
+        Faction.RED,
+        Faction.PURPLE,
+        Faction.YELLOW,
+        Faction.BLACK,
+        Faction.WHITE,
     ];
 
     private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
@@ -87,9 +98,9 @@ export class Game {
 
     public log: EventLog;
 
-    public constructor(log: EventLog = new EventLog(), private readonly players: Player[]) {
-        this.log = log;
+    public constructor(private readonly players: Player[], log: EventLog = new EventLog()) {
         this.players = players;
+        this.log = log;
 
         for (const player of this.players) {
             player.setupEvents.forEach((event) => this.log.add(event));
@@ -378,6 +389,37 @@ export class Game {
             .add(event)
             .add(new CoinEvent(player.playerId, -1));
         return this.pass(player, true);
+    }
+
+    private neighbors(player: Player): Player[] {
+        if (this.players.length === 1) {
+            return [];
+        }
+
+        const otherPlayers = this.players.filter((otherPlayer: Player) => player.playerId !== otherPlayer.playerId);
+
+        if (otherPlayers.length < 3) {
+            return otherPlayers;
+        }
+
+        const playersInPlayOrder = this.playersInPlayOrder();
+        const playPosition = playersInPlayOrder.indexOf(player);
+        if (playPosition === 0) {
+            return [playersInPlayOrder[1], playersInPlayOrder[playersInPlayOrder.length - 1]];
+        }
+
+        if (playPosition === playersInPlayOrder.length - 1) {
+            return [playersInPlayOrder[0], playersInPlayOrder[playersInPlayOrder.length - 2]];
+        }
+
+        return [playersInPlayOrder[playPosition - 1], playersInPlayOrder[playPosition + 1]];
+    }
+
+    private playersInPlayOrder(): Player[] {
+        return this.players.sort(
+            (playerA: Player, playerB: Player) =>
+                Game.PLAY_ORDER.indexOf(playerA.faction) < Game.PLAY_ORDER.indexOf(playerB.faction) ? -1 : 1,
+        );
     }
 
     private maxPopularity(player: Player): boolean {

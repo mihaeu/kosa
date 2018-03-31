@@ -5,7 +5,6 @@ import { BuildEvent } from "../src/Events/BuildEvent";
 import { CoinEvent } from "../src/Events/CoinEvent";
 import { DeployEvent } from "../src/Events/DeployEvent";
 import { EnlistEvent } from "../src/Events/EnlistEvent";
-import { EventLog } from "../src/Events/EventLog";
 import { GainResourceEvent } from "../src/Events/GainResourceEvent";
 import { PassEvent } from "../src/Events/PassEvent";
 import { PopularityEvent } from "../src/Events/PopularityEvent";
@@ -37,13 +36,35 @@ const blackIndustrialPlayer = PlayerFactory.black(
     blackIndustrialPlayerId,
     PlayerMat.industrial(blackIndustrialPlayerId),
 );
+
 const greenAgriculturalPlayer = PlayerFactory.green(
     greenAgriculturalPlayerId,
     PlayerMat.agricultural(greenAgriculturalPlayerId),
 );
 
+const blueInnovativePlayerId = new PlayerId(3);
+const blueInnovativePlayer = PlayerFactory.blue(blueInnovativePlayerId, PlayerMat.innovative(blueInnovativePlayerId));
+
+const redPatrioticPlayerId = new PlayerId(4);
+const redPatrioticPlayer = PlayerFactory.red(redPatrioticPlayerId, PlayerMat.patriotic(redPatrioticPlayerId));
+
+const yellowEngineeringPlayerId = new PlayerId(5);
+const yellowEngineeringPlayer = PlayerFactory.yellow(
+    yellowEngineeringPlayerId,
+    PlayerMat.engineering(yellowEngineeringPlayerId),
+);
+
+const whiteMechanicalPlayerId = new PlayerId(6);
+const whiteMechanicalPlayer = PlayerFactory.white(
+    whiteMechanicalPlayerId,
+    PlayerMat.mechanical(whiteMechanicalPlayerId),
+);
+
+const purpleMilitantPlayerId = new PlayerId(7);
+const purpleMilitantPlayer = PlayerFactory.purple(purpleMilitantPlayerId, PlayerMat.militant(purpleMilitantPlayerId));
+
 beforeEach(() => {
-    game = new Game(new EventLog(), [blackIndustrialPlayer, greenAgriculturalPlayer]);
+    game = new Game([blackIndustrialPlayer, greenAgriculturalPlayer]);
 });
 
 test("Black player has two more power after bolstering power", () => {
@@ -436,7 +457,7 @@ test("Game ends when a player get her 6th star", () => {
     expect(game.gameOver()).toBeTruthy();
 });
 
-describe("Players get stars when conditions are met", () => {
+describe("Stars", () => {
     test("Players get a star for having maximum power", () => {
         game.log.add(new PowerEvent(blackIndustrialPlayerId, 13));
         game.bolsterPower(blackIndustrialPlayer);
@@ -518,6 +539,53 @@ describe("Players get stars when conditions are met", () => {
 
     test.skip("Players get a star for completing an objective", () => {
         expect(game.stars(blackIndustrialPlayer)).toEqual([Star.FIRST_COMBAT_WIN, Star.SECOND_COMBAT_WIN]);
+    });
+});
+
+describe("Play order", () => {
+    test("In a one player game there are no neighbors", () => {
+        // @ts-ignore
+        expect(new Game([blackIndustrialPlayer]).neighbors(blackIndustrialPlayer)).toEqual([]);
+    });
+
+    test("In a two player game there are is only one neighbor", () => {
+        // @ts-ignore
+        expect(game.neighbors(blackIndustrialPlayer)).toEqual([greenAgriculturalPlayer]);
+    });
+
+    test("In a three player game all other players are neighbors", () => {
+        const threePlayerGame = new Game([blackIndustrialPlayer, greenAgriculturalPlayer, blueInnovativePlayer]);
+        // @ts-ignore
+        expect(threePlayerGame.neighbors(blueInnovativePlayer)).toEqual([
+            blackIndustrialPlayer,
+            greenAgriculturalPlayer,
+        ]);
+    });
+
+    test("In a seven player game there are only two neighbors", () => {
+        const sevenPlayerGame = new Game([
+            blackIndustrialPlayer,
+            greenAgriculturalPlayer,
+            blueInnovativePlayer,
+            purpleMilitantPlayer,
+            yellowEngineeringPlayer,
+            redPatrioticPlayer,
+            whiteMechanicalPlayer,
+        ]);
+        // @ts-ignore
+        expect(sevenPlayerGame.neighbors(purpleMilitantPlayer)).toEqual([redPatrioticPlayer, yellowEngineeringPlayer]);
+
+        // @ts-ignore
+        expect(sevenPlayerGame.neighbors(greenAgriculturalPlayer)).toEqual([
+            blueInnovativePlayer,
+            whiteMechanicalPlayer,
+        ]);
+
+        // @ts-ignore
+        expect(sevenPlayerGame.neighbors(whiteMechanicalPlayer)).toEqual([
+            greenAgriculturalPlayer,
+            blackIndustrialPlayer,
+        ]);
     });
 });
 
