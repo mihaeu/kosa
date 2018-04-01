@@ -308,7 +308,8 @@ test("Black cannot take top action from the same column as last turn's bottom ac
     ];
     game.log.add(new GainResourceEvent(blackIndustrialPlayerId, res));
 
-    game.deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, res).produce(greenAgriculturalPlayer);
+    game.deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, res);
+    game.produce(greenAgriculturalPlayer);
     expect(() => game.produce(blackIndustrialPlayer)).toThrowError("Cannot use actions from the same column.");
 });
 
@@ -599,17 +600,17 @@ test.skip("Upgrade makes a top action more powerful and a bottom action cheaper"
     );
 });
 
-test.skip("Cannot deploy the same mech twice", () => {
+test("Cannot deploy the same mech twice", () => {
     mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
 
     expect(() =>
         game
-            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources(Field.t8, ResourceType.METAL, 4))
+            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources(Field.m6, ResourceType.METAL, 4))
             .bolsterPower(greenAgriculturalPlayer)
             .bolsterPower(blackIndustrialPlayer)
             .tradePopularity(greenAgriculturalPlayer)
-            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources(Field.t8, ResourceType.METAL, 4)),
-    ).toThrowError("Mech already deployed.");
+            .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, resources(Field.m6, ResourceType.METAL, 4)),
+    ).toThrowError("MECH_1 has already been deployed.");
 });
 
 test.skip("Buildings cannot be placed on home territories", () => fail());

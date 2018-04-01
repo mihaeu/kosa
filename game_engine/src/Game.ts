@@ -40,6 +40,7 @@ import { Resources } from "./Resources";
 import { ResourceType } from "./ResourceType";
 import { Star } from "./Star";
 import { TopAction } from "./TopAction";
+import { UnitAlreadyDeployedError } from "./UnitAlreadyDeployedError";
 import { UnitNotDeployedError } from "./UnitNotDeployedError";
 import { Mech } from "./Units/Mech";
 import { Unit } from "./Units/Unit";
@@ -163,14 +164,14 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, TopAction.MOVE))
             .add(new MoveEvent(player.playerId, unit, destination));
-        return this.pass(player, true);
+        return this.pass(player, TopAction.MOVE);
     }
 
     public gainCoins(player: Player): Game {
         this.assertActionCanBeTaken(player, TopAction.MOVE);
 
         this.log.add(new ActionEvent(player.playerId, TopAction.MOVE)).add(new CoinEvent(player.playerId, +1));
-        return this.pass(player, true);
+        return this.pass(player, TopAction.MOVE);
     }
 
     public bolsterPower(player: Player): Game {
@@ -197,7 +198,7 @@ export class Game {
                 ]),
             );
 
-        return this.pass(player, true);
+        return this.pass(player, TopAction.TRADE);
     }
 
     public tradePopularity(player: Player): Game {
@@ -210,7 +211,7 @@ export class Game {
             .add(new CoinEvent(player.playerId, -1))
             .add(new PopularityEvent(player.playerId, 1));
 
-        return this.pass(player, true);
+        return this.pass(player, TopAction.TRADE);
     }
 
     public produce(player: Player): Game {
@@ -218,7 +219,7 @@ export class Game {
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
 
-        return this.pass(player, true);
+        return this.pass(player, TopAction.PRODUCE);
     }
 
     public build(player: Player, worker: Worker, building: BuildingType, resources: Resource[]): Game {
@@ -236,13 +237,13 @@ export class Game {
             .add(new ActionEvent(player.playerId, BottomAction.BUILD))
             .add(new SpendResourceEvent(player.playerId, resources))
             .add(new BuildEvent(player.playerId, location, building));
-        return this.pass(player);
+        return this.pass(player, BottomAction.BUILD);
     }
 
-    public pass(player: Player, wasTopAction: boolean = false): Game {
+    public pass(player: Player, action: TopAction | BottomAction): Game {
         this.handOutStars(player);
 
-        if (wasTopAction && this.availableBottomActions(player).length > 0) {
+        if (action in TopAction && this.availableBottomActions(player).length > 0) {
             return this;
         }
 
@@ -277,12 +278,13 @@ export class Game {
             player.playerMat.bottomActionCost(BottomAction.DEPLOY).count,
             resources,
         );
+        this.assertUnitNotDeployed(player, mech);
 
         const location = this.unitLocation(player, worker);
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.DEPLOY))
             .add(new DeployEvent(player.playerId, mech, location));
-        return this.pass(player);
+        return this.pass(player, BottomAction.DEPLOY);
     }
 
     public enlist(player: Player, bottomAction: BottomAction, recruitReward: RecruitReward, resources: Resource[]) {
@@ -297,7 +299,7 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
             .add(new EnlistEvent(player.playerId, recruitReward, bottomAction));
-        return this.pass(player);
+        return this.pass(player, BottomAction.ENLIST);
     }
 
     public upgrade(player: Player, topAction: TopAction, bottomAction: BottomAction, resources: Resource[]) {
@@ -312,7 +314,7 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.UPGRADE))
             .add(new UpgradeEvent(player.playerId, topAction, bottomAction));
-        return this.pass(player);
+        return this.pass(player, BottomAction.UPGRADE);
     }
 
     public unitLocation(player: Player, unit: Unit): Field {
@@ -388,7 +390,7 @@ export class Game {
             .add(new ActionEvent(player.playerId, TopAction.BOLSTER))
             .add(event)
             .add(new CoinEvent(player.playerId, -1));
-        return this.pass(player, true);
+        return this.pass(player, TopAction.BOLSTER);
     }
 
     private neighbors(player: Player): Player[] {
@@ -402,7 +404,7 @@ export class Game {
             return otherPlayers;
         }
 
-        const playersInPlayOrder = this.playersInPlayOrder();
+        const playersInPlayOrder = this.playerOrder();
         const playPosition = playersInPlayOrder.indexOf(player);
         if (playPosition === 0) {
             return [playersInPlayOrder[1], playersInPlayOrder[playersInPlayOrder.length - 1]];
@@ -413,13 +415,6 @@ export class Game {
         }
 
         return [playersInPlayOrder[playPosition - 1], playersInPlayOrder[playPosition + 1]];
-    }
-
-    private playersInPlayOrder(): Player[] {
-        return this.players.sort(
-            (playerA: Player, playerB: Player) =>
-                Game.PLAY_ORDER.indexOf(playerA.faction) < Game.PLAY_ORDER.indexOf(playerB.faction) ? -1 : 1,
-        );
     }
 
     private maxPopularity(player: Player): boolean {
@@ -544,6 +539,12 @@ export class Game {
         }
     }
 
+    private assertUnitNotDeployed(player: Player, unit: Unit): void {
+        if (_.any((event) => event.unit === unit, this.log.filterBy(player.playerId, DeployEvent) as DeployEvent[])) {
+            throw new UnitAlreadyDeployedError(unit);
+        }
+    }
+
     private assertBuildingNotAlreadyBuilt(player: Player, building: BuildingType): void {
         if (
             !_.none(
@@ -580,10 +581,7 @@ export class Game {
             throw new IllegalActionError("It is not your turn yet.");
         }
 
-        if (
-            this.startsTurnWithBottomAction(player) &&
-            Game.actionFromTheSameColumn(lastAction, currentAction, player)
-        ) {
+        if (this.isFirstActionThisTurn(player) && Game.actionFromTheSameColumn(lastAction, currentAction, player)) {
             throw new IllegalActionError("Cannot use actions from the same column.");
         }
 
@@ -597,8 +595,8 @@ export class Game {
         }
     }
 
-    private startsTurnWithBottomAction(player: Player): boolean {
-        return this.log.lastOfTwo(player.playerId, PassEvent, ActionEvent) instanceof PassEvent;
+    private isFirstActionThisTurn(player: Player): boolean {
+        return this.log.lastOfTwo(player.playerId, ActionEvent, PassEvent) instanceof PassEvent;
     }
 
     private gameJustStarted(): boolean {
