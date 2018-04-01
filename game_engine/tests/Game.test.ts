@@ -590,16 +590,6 @@ describe("Play order", () => {
     });
 });
 
-test.skip("Upgrade makes a top action more powerful and a bottom action cheaper", () => {
-    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
-    game.upgrade(
-        blackIndustrialPlayer,
-        TopAction.BOLSTER,
-        BottomAction.BUILD,
-        resources(Field.t8, ResourceType.METAL, 4),
-    );
-});
-
 test("Cannot deploy the same mech twice", () => {
     mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
 
@@ -613,9 +603,32 @@ test("Cannot deploy the same mech twice", () => {
     ).toThrowError("MECH_1 has already been deployed.");
 });
 
-test.skip("Buildings cannot be placed on home territories", () => fail());
-test.skip("Buildings cannot be placed on lakes", () => fail());
-test.skip("Cannot move the same unit multiple times", () => fail());
+test.skip("Upgrade makes a top action more powerful and a bottom action cheaper", () => {
+    mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
+    game.upgrade(
+        blackIndustrialPlayer,
+        TopAction.BOLSTER,
+        BottomAction.BUILD,
+        resources(Field.t8, ResourceType.METAL, 4),
+    );
+});
+
+test("Player cannot gain more than 16 power", () => {
+    game.log.add(new PowerEvent(blackIndustrialPlayerId, 15)); // total now 16
+    game.bolsterPower(blackIndustrialPlayer);
+    expect(game.power(blackIndustrialPlayer)).toBe(16);
+});
+
+test("Player cannot gain more than 18 popularity", () => {
+    game.log.add(new PopularityEvent(blackIndustrialPlayerId, 16)); // total now 18
+    game.tradePopularity(blackIndustrialPlayer);
+    expect(game.popularity(blackIndustrialPlayer)).toBe(18);
+});
+
+test.skip("Buildings cannot be placed on home territories", fail);
+test.skip("Mechs cannot be placed on home territories", fail);
+test.skip("Buildings cannot be placed on lakes", fail);
+test.skip("Cannot move the same unit multiple times", fail);
 
 const resources = (location: Field, resourceType: ResourceType, count: number = 10): Resource[] => {
     const res: Resource[] = [];

@@ -1,3 +1,4 @@
+import * as _ from "ramda";
 import { PlayerId } from "../PlayerId";
 import { Event } from "./Event";
 
@@ -7,6 +8,13 @@ export class EventLog {
     public add(event: Event): this {
         this.log.push(event);
         return this;
+    }
+
+    public addIfNew(event: Event): this {
+        if (_.contains(event, this.log)) {
+            return this;
+        }
+        return this.add(event);
     }
 
     public filterBy(playerId: PlayerId, type: any, fn: (event: Event) => boolean = () => true): Event[] {

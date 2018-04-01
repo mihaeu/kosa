@@ -47,6 +47,9 @@ import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
 
 export class Game {
+    private static MAX_POWER = 16;
+    private static MAX_POPULARITY = 18;
+
     private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
 
     private static BOTTOM_ACTIONS = [
@@ -175,7 +178,9 @@ export class Game {
     }
 
     public bolsterPower(player: Player): Game {
-        return this.bolster(player, new PowerEvent(player.playerId, +2));
+        const currentPower = this.power(player);
+        const gainedPower = currentPower + 2 > Game.MAX_POWER ? Game.MAX_POWER - currentPower : 2;
+        return this.bolster(player, new PowerEvent(player.playerId, gainedPower));
     }
 
     public bolsterCombatCards(player: Player): Game {
@@ -206,10 +211,11 @@ export class Game {
         this.assertCoins(player, 1);
         this.assertNotMoreThan20Popularity(player);
 
+        const gainedPopularity = this.popularity(player) === Game.MAX_POPULARITY ? 0 : 1;
         this.log
             .add(new ActionEvent(player.playerId, TopAction.TRADE))
             .add(new CoinEvent(player.playerId, -1))
-            .add(new PopularityEvent(player.playerId, 1));
+            .add(new PopularityEvent(player.playerId, gainedPopularity));
 
         return this.pass(player, TopAction.TRADE);
     }
@@ -298,7 +304,7 @@ export class Game {
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
-            .add(new EnlistEvent(player.playerId, recruitReward, bottomAction));
+            .addIfNew(new EnlistEvent(player.playerId, recruitReward, bottomAction));
         return this.pass(player, BottomAction.ENLIST);
     }
 
