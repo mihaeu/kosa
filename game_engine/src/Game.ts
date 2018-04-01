@@ -26,10 +26,12 @@ import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
 import { Faction } from "./Faction";
 import { Field } from "./Field";
+import { FieldType } from "./FieldType";
 import { GameMap } from "./GameMap";
 import { IllegalActionError } from "./IllegalActionError";
 import { IllegalMoveError } from "./IllegalMoveError";
 import { LocationAlreadyHasAnotherBuildingError } from "./LocationAlreadyHasAnotherBuildingError";
+import { LocationNotInTerritoryError } from "./LocationNotInTerritoryError";
 import { NotEnoughCoinsError } from "./NotEnoughCoinsError";
 import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { Player } from "./Player";
@@ -49,6 +51,7 @@ import { Worker } from "./Units/Worker";
 export class Game {
     private static MAX_POWER = 16;
     private static MAX_POPULARITY = 18;
+    private static MAX_WORKERS = 8;
 
     private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
 
@@ -57,16 +60,6 @@ export class Game {
         BottomAction.DEPLOY,
         BottomAction.BUILD,
         BottomAction.ENLIST,
-    ];
-
-    private static PLAY_ORDER = [
-        Faction.GREEN,
-        Faction.BLUE,
-        Faction.RED,
-        Faction.PURPLE,
-        Faction.YELLOW,
-        Faction.BLACK,
-        Faction.WHITE,
     ];
 
     private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
@@ -220,11 +213,17 @@ export class Game {
         return this.pass(player, TopAction.TRADE);
     }
 
-    public produce(player: Player): Game {
+    public produce(player: Player, field1: Field, field2: Field): Game {
         this.assertActionCanBeTaken(player, TopAction.PRODUCE);
+        this.assertLocationControlledByPlayer(player, field1);
+        this.assertLocationControlledByPlayer(player, field2);
+        if (field1 === field2) {
+            throw new IllegalActionError(`Field 1 (${field1}) and Field 2 (${field2}) are the same`);
+        }
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
-
+        this.produceOnField(player, field1);
+        this.produceOnField(player, field2);
         return this.pass(player, TopAction.PRODUCE);
     }
 
@@ -388,6 +387,10 @@ export class Game {
         return this.log.lastInstanceOf(GameEndEvent) !== null;
     }
 
+    public allWorkers(player: Player): Worker[] {
+        return Array.from(this.units(player).keys()).filter((unit: Unit) => unit instanceof Worker);
+    }
+
     private bolster(player: Player, event: PowerEvent | GainCombatCardEvent): Game {
         this.assertActionCanBeTaken(player, TopAction.BOLSTER);
         this.assertCoins(player, 1);
@@ -397,6 +400,64 @@ export class Game {
             .add(event)
             .add(new CoinEvent(player.playerId, -1));
         return this.pass(player, TopAction.BOLSTER);
+    }
+
+    private workersOnLocation(player: Player, location: Field): number {
+        let workerCount = 0;
+        for (const [unit, field] of this.units(player).entries()) {
+            if (field === location && unit instanceof Worker) {
+                workerCount += 1;
+            }
+        }
+        return workerCount;
+    }
+
+    private produceOnField(player: Player, location: Field): void {
+        const workers = this.workersOnLocation(player, location);
+        if (workers === 0) {
+            return;
+        }
+
+        const allWorkers = this.allWorkers(player);
+        const currentWorkerCount = allWorkers.length;
+        if (location.type === FieldType.VILLAGE && currentWorkerCount !== Game.MAX_WORKERS) {
+            const workersToDeploy =
+                workers + currentWorkerCount > Game.MAX_WORKERS ? Game.MAX_WORKERS - currentWorkerCount : workers;
+            for (let i = 1; i <= workersToDeploy; i += 1) {
+                this.log.add(new DeployEvent(player.playerId, Worker[`WORKER_${currentWorkerCount + i}`], location));
+            }
+            return;
+        }
+
+        let typeToProduce: ResourceType = ResourceType.METAL;
+        switch (location.type) {
+            case FieldType.TUNDRA:
+                typeToProduce = ResourceType.OIL;
+                break;
+            case FieldType.FOREST:
+                typeToProduce = ResourceType.WOOD;
+                break;
+            case FieldType.FARM:
+                typeToProduce = ResourceType.FOOD;
+                break;
+            case FieldType.MOUNTAIN:
+                typeToProduce = ResourceType.METAL;
+                break;
+            default:
+                return;
+        }
+        const resources: Resource[] = [];
+        for (let i = 0; i < workers; i += 1) {
+            resources.push(new Resource(location, typeToProduce));
+        }
+        this.log.add(new GainResourceEvent(player.playerId, resources));
+    }
+
+    private assertLocationControlledByPlayer(player: Player, location: Field) {
+        const territory = this.territories(player);
+        if (!_.contains(location, territory)) {
+            throw new LocationNotInTerritoryError(location, territory);
+        }
     }
 
     private neighbors(player: Player): Player[] {
@@ -423,19 +484,19 @@ export class Game {
         return [playersInPlayOrder[playPosition - 1], playersInPlayOrder[playPosition + 1]];
     }
 
-    private maxPopularity(player: Player): boolean {
+    private hasMaxPopularity(player: Player): boolean {
         return this.popularity(player) === 18;
     }
 
-    private maxPower(player: Player): boolean {
+    private hasMaxPower(player: Player): boolean {
         return this.power(player) === 16;
     }
 
-    private allUpgrades(player: Player): boolean {
+    private hasAllUpgrades(player: Player): boolean {
         return this.log.filterBy(player.playerId, UpgradeEvent).length === 6;
     }
 
-    private allMechs(player: Player): boolean {
+    private hasAllMechs(player: Player): boolean {
         return (
             this.log.filterBy(
                 player.playerId,
@@ -445,36 +506,30 @@ export class Game {
         );
     }
 
-    private allBuildings(player: Player): boolean {
+    private hasAllBuildings(player: Player): boolean {
         return this.log.filterBy(player.playerId, BuildEvent).length === 4;
     }
 
-    private allRecruits(player: Player): boolean {
+    private hasAllRecruits(player: Player): boolean {
         return this.log.filterBy(player.playerId, EnlistEvent).length === 4;
     }
 
-    private allWorkers(player: Player): boolean {
-        let workerCount = 0;
-        for (const unit of this.units(player).keys()) {
-            if (unit instanceof Worker) {
-                ++workerCount;
-            }
-        }
-        return workerCount === 8;
+    private hasAllWorkers(player: Player): boolean {
+        return this.allWorkers(player).length === 8;
     }
 
     private starCondition(player: Player, star: Star): boolean {
         switch (star) {
             case Star.ALL_UPGRADES:
-                return this.allUpgrades(player);
+                return this.hasAllUpgrades(player);
             case Star.ALL_MECHS:
-                return this.allMechs(player);
+                return this.hasAllMechs(player);
             case Star.ALL_BUILDINGS:
-                return this.allBuildings(player);
+                return this.hasAllBuildings(player);
             case Star.ALL_RECRUITS:
-                return this.allRecruits(player);
+                return this.hasAllRecruits(player);
             case Star.ALL_WORKERS:
-                return this.allWorkers(player);
+                return this.hasAllWorkers(player);
             case Star.FIRST_OBJECTIVE:
                 return false;
             case Star.FIRST_COMBAT_WIN:
@@ -482,9 +537,9 @@ export class Game {
             case Star.SECOND_COMBAT_WIN:
                 return false;
             case Star.MAX_POPULARITY:
-                return this.maxPopularity(player);
+                return this.hasMaxPopularity(player);
             case Star.MAX_POWER:
-                return this.maxPower(player);
+                return this.hasMaxPower(player);
             default:
                 return false;
         }

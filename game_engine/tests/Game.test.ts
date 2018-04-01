@@ -67,6 +67,31 @@ beforeEach(() => {
     game = new Game([blackIndustrialPlayer, greenAgriculturalPlayer]);
 });
 
+describe("Produce", () => {
+    test("Black produces 1 iron and 1 food for first produce", () => {
+        game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        expect(game.resources(blackIndustrialPlayer).oil).toBe(1);
+        expect(game.resources(blackIndustrialPlayer).metal).toBe(1);
+    });
+
+    test("Yellow produces 1 food and 1 worker for first produce and then 1 food and 2 workers for 2nd", () => {
+        const game = new Game([yellowEngineeringPlayer]);
+        game.produce(yellowEngineeringPlayer, Field.f6, Field.v9);
+        expect(game.resources(yellowEngineeringPlayer).food).toBe(1);
+        expect(game.allWorkers(yellowEngineeringPlayer)).toEqual([Worker.WORKER_1, Worker.WORKER_2, Worker.WORKER_3]);
+        game.gainCoins(yellowEngineeringPlayer);
+        game.produce(yellowEngineeringPlayer, Field.f6, Field.v9);
+        expect(game.resources(yellowEngineeringPlayer).food).toBe(2);
+        expect(game.allWorkers(yellowEngineeringPlayer)).toEqual([
+            Worker.WORKER_1,
+            Worker.WORKER_2,
+            Worker.WORKER_3,
+            Worker.WORKER_4,
+            Worker.WORKER_5,
+        ]);
+    });
+});
+
 test("Black player has two more power after bolstering power", () => {
     expect(game.bolsterPower(blackIndustrialPlayer).power(blackIndustrialPlayer)).toBe(3);
 });
@@ -97,9 +122,9 @@ test("Black character starts on black with two adjacent workers", () => {
 test("Black character can move from base to encounter on v6 in 2 moves (3 turns)", () => {
     game.move(blackIndustrialPlayer, Character.CHARACTER, Field.m6);
     expect(game.unitLocation(blackIndustrialPlayer, Character.CHARACTER)).toBe(Field.m6);
-    game.produce(greenAgriculturalPlayer);
+    game.produce(greenAgriculturalPlayer, Field.m1, Field.f1);
 
-    game.produce(blackIndustrialPlayer);
+    game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
     game.bolsterPower(greenAgriculturalPlayer);
 
     game.move(blackIndustrialPlayer, Character.CHARACTER, Field.v6);
@@ -184,7 +209,7 @@ test("Cannot build the same building twice", () => {
         game
             .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, res)
             .bolsterPower(greenAgriculturalPlayer)
-            .produce(blackIndustrialPlayer)
+            .produce(blackIndustrialPlayer, Field.m6, Field.t8)
             .gainCoins(greenAgriculturalPlayer)
             .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, res);
     }).toThrowError(expectedError);
@@ -209,7 +234,7 @@ test("Cannot build on a location that already has a building", () => {
             .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, resources1)
             .bolsterPower(greenAgriculturalPlayer)
             .bolsterPower(blackIndustrialPlayer)
-            .produce(greenAgriculturalPlayer)
+            .produce(greenAgriculturalPlayer, Field.m1, Field.f1)
             .build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.ARMORY, resources2);
     }).toThrowError(/m6.MOUNTAIN already has another building./);
 });
@@ -284,17 +309,17 @@ test("Can trade for popularity", () => {
 test("Black cannot take the same top action twice", () => {
     expect(() =>
         game
-            .produce(blackIndustrialPlayer)
-            .produce(greenAgriculturalPlayer)
-            .produce(blackIndustrialPlayer),
+            .produce(blackIndustrialPlayer, Field.m6, Field.t8)
+            .produce(greenAgriculturalPlayer, Field.m1, Field.f1)
+            .produce(blackIndustrialPlayer, Field.m6, Field.t8),
     ).toThrowError("Cannot use actions from the same column.");
 });
 
 test("Black cannot take bottom action from the same column as last turn's top action", () => {
     expect(() =>
         game
-            .produce(blackIndustrialPlayer)
-            .produce(greenAgriculturalPlayer)
+            .produce(blackIndustrialPlayer, Field.m6, Field.t8)
+            .produce(greenAgriculturalPlayer, Field.m1, Field.f1)
             .deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, []),
     ).toThrowError("Cannot use actions from the same column.");
 });
@@ -309,18 +334,24 @@ test("Black cannot take top action from the same column as last turn's bottom ac
     game.log.add(new GainResourceEvent(blackIndustrialPlayerId, res));
 
     game.deploy(blackIndustrialPlayer, Worker.WORKER_1, Mech.MECH_1, res);
-    game.produce(greenAgriculturalPlayer);
-    expect(() => game.produce(blackIndustrialPlayer)).toThrowError("Cannot use actions from the same column.");
+    game.produce(greenAgriculturalPlayer, Field.m1, Field.f1);
+    expect(() => game.produce(blackIndustrialPlayer, Field.m6, Field.t8)).toThrowError(
+        "Cannot use actions from the same column.",
+    );
 });
 
 test("Top action and bottom action have to match", () => {
     expect(() =>
-        game.produce(blackIndustrialPlayer).enlist(blackIndustrialPlayer, BottomAction.BUILD, RecruitReward.COINS, []),
+        game
+            .produce(blackIndustrialPlayer, Field.m6, Field.t8)
+            .enlist(blackIndustrialPlayer, BottomAction.BUILD, RecruitReward.COINS, []),
     ).toThrowError("Cannot use this bottom action with the last top action.");
 });
 
 test("Player with industrial (1) map starts before agricultural (7)", () => {
-    expect(() => game.produce(greenAgriculturalPlayer)).toThrowError("You are not the starting player.");
+    expect(() => game.produce(greenAgriculturalPlayer, Field.m1, Field.f1)).toThrowError(
+        "You are not the starting player.",
+    );
 });
 
 test("Player cannot play out of order", () => {
@@ -369,7 +400,7 @@ test("Players can only take the bottom actions they can afford", () => {
 });
 
 test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {
-    game.produce(blackIndustrialPlayer);
+    game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
     expect(game.availableResources(blackIndustrialPlayer)).toEqual([
         new Resource(Field.m6, ResourceType.METAL),
         new Resource(Field.t8, ResourceType.OIL),
@@ -385,7 +416,7 @@ test.skip("Producing with 8 workers costs 1 popularity, 1 coins, 1 power", () =>
         .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.t8))
         .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.t8));
 
-    game.produce(blackIndustrialPlayer);
+    game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
     expect(game.availableResources(blackIndustrialPlayer)).toEqual([
         new Resource(Field.m6, ResourceType.METAL),
         new Resource(Field.t8, ResourceType.OIL),

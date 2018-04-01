@@ -71,7 +71,7 @@ export class Field {
         return field.type !== FieldType.HOMEBASE;
     }
 
-    private constructor(private readonly name: FieldName, private readonly type: FieldType) {
+    private constructor(private readonly name: FieldName, public readonly type: FieldType) {
         this.name = name;
         this.type = type;
     }
