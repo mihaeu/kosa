@@ -90,6 +90,81 @@ describe("Produce", () => {
             Worker.WORKER_5,
         ]);
     });
+
+    test("Produce with more than 3 workers costs 1 power", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.m6));
+        expect(game.power(blackIndustrialPlayer)).toBe(1);
+        game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        expect(game.power(blackIndustrialPlayer)).toBe(0);
+    });
+
+    test("Produce with more than 3 workers not possible with 0 power", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.m6))
+            .add(new PowerEvent(blackIndustrialPlayerId, -1)); // now 0 power
+        expect(() => {
+            game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        }).toThrow(/1 power required, but only 0 power available./);
+    });
+
+    test("Produce with more than 5 workers costs 1 power and 1 popularity", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.m6));
+        expect(game.power(blackIndustrialPlayer)).toBe(1);
+        expect(game.popularity(blackIndustrialPlayer)).toBe(2);
+        game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        expect(game.power(blackIndustrialPlayer)).toBe(0);
+        expect(game.popularity(blackIndustrialPlayer)).toBe(1);
+    });
+
+    test("Produce with more than 5 workers not possible with 1 power and 0 popularity", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.m6))
+            .add(new PopularityEvent(blackIndustrialPlayerId, -2));
+        expect(() => {
+            game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        }).toThrow(/1 popularity required, but only 0 popularity available./);
+    });
+
+    test("Produce with 8 workers costs 1 power and 1 popularity and 1 coin", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.m6));
+        expect(game.power(blackIndustrialPlayer)).toBe(1);
+        expect(game.popularity(blackIndustrialPlayer)).toBe(2);
+        expect(game.coins(blackIndustrialPlayer)).toBe(4);
+        game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        expect(game.power(blackIndustrialPlayer)).toBe(0);
+        expect(game.popularity(blackIndustrialPlayer)).toBe(1);
+        expect(game.coins(blackIndustrialPlayer)).toBe(3);
+    });
+
+    test("Produce with 8 workers not possible with 1 power and 1 popularity and 0 coins", () => {
+        game.log
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_5, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_6, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_7, Field.m6))
+            .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_8, Field.m6))
+            .add(new CoinEvent(blackIndustrialPlayerId, -4));
+        expect(() => {
+            game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
+        }).toThrow("1 coin(s) required, but only 0 coin(s) available.");
+    });
 });
 
 test("Black player has two more power after bolstering power", () => {

@@ -33,6 +33,8 @@ import { IllegalMoveError } from "./IllegalMoveError";
 import { LocationAlreadyHasAnotherBuildingError } from "./LocationAlreadyHasAnotherBuildingError";
 import { LocationNotInTerritoryError } from "./LocationNotInTerritoryError";
 import { NotEnoughCoinsError } from "./NotEnoughCoinsError";
+import { NotEnoughPopularityError } from "./NotEnoughPopularityError";
+import { NotEnoughPowerError } from "./NotEnoughPowerError";
 import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { Player } from "./Player";
 import { ProvidedResourcesNotAvailableError } from "./ProvidedResourcesNotAvailableError";
@@ -52,6 +54,10 @@ export class Game {
     private static MAX_POWER = 16;
     private static MAX_POPULARITY = 18;
     private static MAX_WORKERS = 8;
+
+    private static PRODUCE_POWER_THRESHOLD = 4;
+    private static PRODUCE_POPULARITY_THRESHOLD = 6;
+    private static PRODUCE_COINS_THRESHOLD = 8;
 
     private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
 
@@ -220,8 +226,33 @@ export class Game {
         if (field1 === field2) {
             throw new IllegalActionError(`Field 1 (${field1}) and Field 2 (${field2}) are the same`);
         }
+        const allWorkersCount = this.allWorkers(player).length;
+        if (allWorkersCount >= Game.PRODUCE_POWER_THRESHOLD) {
+            this.assertPower(player, 1);
+        }
+
+        if (allWorkersCount >= Game.PRODUCE_POPULARITY_THRESHOLD) {
+            this.assertPopularity(player, 1);
+        }
+
+        if (allWorkersCount >= Game.PRODUCE_COINS_THRESHOLD) {
+            this.assertCoins(player, 1);
+        }
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
+
+        if (allWorkersCount >= Game.PRODUCE_POWER_THRESHOLD) {
+            this.log.add(new PowerEvent(player.playerId, -1));
+        }
+
+        if (allWorkersCount >= Game.PRODUCE_POPULARITY_THRESHOLD) {
+            this.log.add(new PopularityEvent(player.playerId, -1));
+        }
+
+        if (allWorkersCount >= Game.PRODUCE_COINS_THRESHOLD) {
+            this.log.add(new CoinEvent(player.playerId, -1));
+        }
+
         this.produceOnField(player, field1);
         this.produceOnField(player, field2);
         return this.pass(player, TopAction.PRODUCE);
@@ -591,6 +622,20 @@ export class Game {
         const coins = this.coins(player);
         if (coins < required) {
             throw new NotEnoughCoinsError(1, coins);
+        }
+    }
+
+    private assertPopularity(player: Player, required: number): void {
+        const popularity = this.popularity(player);
+        if (popularity < required) {
+            throw new NotEnoughPopularityError(1, popularity);
+        }
+    }
+
+    private assertPower(player: Player, required: number): void {
+        const power = this.power(player);
+        if (power < required) {
+            throw new NotEnoughPowerError(1, power);
         }
     }
 
