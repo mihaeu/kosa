@@ -415,14 +415,6 @@ test("Black cannot take top action from the same column as last turn's bottom ac
     );
 });
 
-test("Top action and bottom action have to match", () => {
-    expect(() =>
-        game
-            .produce(blackIndustrialPlayer, Field.m6, Field.t8)
-            .enlist(blackIndustrialPlayer, BottomAction.BUILD, RecruitReward.COINS, []),
-    ).toThrowError("Cannot use this bottom action with the last top action.");
-});
-
 test("Player with industrial (1) map starts before agricultural (7)", () => {
     expect(() => game.produce(greenAgriculturalPlayer, Field.m1, Field.f1)).toThrowError(
         "You are not the starting player.",

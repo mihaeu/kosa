@@ -334,7 +334,8 @@ export class Game {
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
-            .addIfNew(new EnlistEvent(player.playerId, recruitReward, bottomAction));
+            .addIfNew(new EnlistEvent(player.playerId, recruitReward, bottomAction))
+            .add(new SpendResourceEvent(player.playerId, resources));
         return this.pass(player, BottomAction.ENLIST);
     }
 
@@ -455,7 +456,9 @@ export class Game {
             const workersToDeploy =
                 workers + currentWorkerCount > Game.MAX_WORKERS ? Game.MAX_WORKERS - currentWorkerCount : workers;
             for (let i = 1; i <= workersToDeploy; i += 1) {
-                this.log.add(new DeployEvent(player.playerId, Worker[`WORKER_${currentWorkerCount + i}`], location));
+                // @ts-ignore
+                const newWorker = Worker[`WORKER_${currentWorkerCount + i}`];
+                this.log.add(new DeployEvent(player.playerId, newWorker, location));
             }
             return;
         }
@@ -692,6 +695,7 @@ export class Game {
         }
 
         if (
+            !this.isFirstActionThisTurn(player) &&
             currentAction in BottomAction &&
             lastAction in TopAction &&
             this.lastPlayer() === player &&
