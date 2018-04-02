@@ -15,6 +15,9 @@ import { NotEnoughCoinsError } from "./NotEnoughCoinsError";
 import { NotEnoughPopularityError } from "./NotEnoughPopularityError";
 import { NotEnoughPowerError } from "./NotEnoughPowerError";
 import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
+import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
+import { BolsterPowerOption } from "./Options/BolsterPowerOption";
+import { Option } from "./Options/Option";
 import { Player } from "./Player";
 import { ProvidedResourcesNotAvailableError } from "./ProvidedResourcesNotAvailableError";
 import { Resource } from "./Resource";
@@ -23,6 +26,44 @@ import { TopAction } from "./TopAction";
 import { UnitAlreadyDeployedError } from "./UnitAlreadyDeployedError";
 import { UnitNotDeployedError } from "./UnitNotDeployedError";
 import { Unit } from "./Units/Unit";
+
+function isTopActionAvailable(log: EventLog, players: Player[], player: Player) {
+    return (topAction: TopAction): boolean => {
+        try {
+            assertActionCanBeTaken(log, players, player, topAction);
+            assertCoins(log, player, player.playerMat.topActionCost(topAction));
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+}
+
+export function availableTopActions(log: EventLog, players: Player[], player: Player): TopAction[] {
+    return _.filter(isTopActionAvailable(log, players, player), Object.keys(TopAction) as TopAction[]);
+}
+
+export function availableBottomActions(log: EventLog, players: Player[], player: Player): BottomAction[] {
+    return _.filter(
+        (bottomAction: BottomAction): boolean => {
+            try {
+                assertActionCanBeTaken(log, players, player, bottomAction);
+                const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
+                return GameInfo.resources(log, player).countByType(resourceType) >= count;
+            } catch (error) {
+                return false;
+            }
+        },
+        Object.keys(BottomAction) as BottomAction[],
+    );
+}
+
+export function availableBolsterOptions(log: EventLog, player: Player): Option[] {
+    if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.BOLSTER)) {
+        return [];
+    }
+    return [new BolsterPowerOption(), new BolsterCombatCardsOption()];
+}
 
 export function assertLocationControlledByPlayer(log: EventLog, player: Player, location: Field) {
     const territory = GameInfo.territories(log, player);
@@ -118,9 +159,9 @@ export function assertActionCanBeTaken(
     }
 
     if (
-        (lastAction === currentAction) ||
-        GameInfo.isFirstActionThisTurn(log, player) &&
-        GameInfo.actionFromTheSameColumn(lastAction, currentAction, player)
+        lastAction === currentAction ||
+        (GameInfo.isFirstActionThisTurn(log, player) &&
+            GameInfo.actionFromTheSameColumn(lastAction, currentAction, player))
     ) {
         throw new IllegalActionError("Cannot use actions from the same column.");
     }

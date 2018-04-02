@@ -11,6 +11,7 @@ import {
     assertPower,
     assertUnitDeployed,
     assertUnitNotDeployed,
+    availableBottomActions,
 } from "./Availability";
 import { BottomAction } from "./BottomAction";
 import { BuildingType } from "./BuildingType";
@@ -198,7 +199,7 @@ export class Game {
     public pass(player: Player, action: TopAction | BottomAction): Game {
         this.handOutStars(player);
 
-        if (action in TopAction && GameInfo.availableBottomActions(this.log, this.players, player).length > 0) {
+        if (action in TopAction && availableBottomActions(this.log, this.players, player).length > 0) {
             return this;
         }
 

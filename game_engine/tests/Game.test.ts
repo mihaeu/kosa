@@ -1,3 +1,4 @@
+import { availableBottomActions, availableTopActions } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
 import { Building } from "../src/Building";
 import { BuildingType } from "../src/BuildingType";
@@ -442,7 +443,7 @@ test("Player cannot play out of order", () => {
 });
 
 test("Players can take all available top actions at the start of the game", () => {
-    expect(GameInfo.availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(4);
+    expect(availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(4);
 });
 
 test("Black player controls three territories at the start", () => {
@@ -458,26 +459,26 @@ test("Black player controls three units at the start", () => {
 
 test("Players don't have available actions when it's not their turn", () => {
     game.bolsterPower(blackIndustrialPlayer);
-    expect(GameInfo.availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(0);
+    expect(availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(0);
 });
 
 test("Players have three available actions on their second turn", () => {
     game.bolsterPower(blackIndustrialPlayer).bolsterPower(greenAgriculturalPlayer);
-    expect(GameInfo.availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(3);
+    expect(availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(3);
 });
 
 test("Players have no bottom costs available on their first turn", () => {
-    expect(GameInfo.availableBottomActions(log, testPlayers, blackIndustrialPlayer).length).toBe(0);
+    expect(availableBottomActions(log, testPlayers, blackIndustrialPlayer).length).toBe(0);
 });
 
 test("Players can take all bottom actions if they have enough resources", () => {
     mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
-    expect(GameInfo.availableBottomActions(log, testPlayers, blackIndustrialPlayer).length).toBe(4);
+    expect(availableBottomActions(log, testPlayers, blackIndustrialPlayer).length).toBe(4);
 });
 
 test("Players can only take the bottom actions they can afford", () => {
     addResourcesForPlayer(blackIndustrialPlayer, ResourceType.METAL, 4);
-    expect(GameInfo.availableBottomActions(log, testPlayers, blackIndustrialPlayer).pop()).toEqual(BottomAction.DEPLOY);
+    expect(availableBottomActions(log, testPlayers, blackIndustrialPlayer).pop()).toEqual(BottomAction.DEPLOY);
 });
 
 test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {

@@ -1,5 +1,4 @@
 import * as _ from "ramda";
-import { assertActionCanBeTaken, assertCoins } from "./Availability";
 import { BottomAction } from "./BottomAction";
 import { Building } from "./Building";
 import { CombatCard } from "./CombatCard";
@@ -14,6 +13,7 @@ import { EventLog } from "./Events/EventLog";
 import { GainResourceEvent } from "./Events/GainResourceEvent";
 import { GameEndEvent } from "./Events/GameEndEvent";
 import { LocationEvent } from "./Events/LocationEvent";
+import { NewPlayerEvent } from "./Events/NewPlayerEvent";
 import { PassEvent } from "./Events/PassEvent";
 import { PopularityEvent } from "./Events/PopularityEvent";
 import { PowerEvent } from "./Events/PowerEvent";
@@ -22,7 +22,6 @@ import { SpendResourceEvent } from "./Events/SpendResourceEvent";
 import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
 import { Field } from "./Field";
-import { Game } from "./Game";
 import { Player } from "./Player";
 import { Resource } from "./Resource";
 import { Resources } from "./Resources";
@@ -34,28 +33,15 @@ import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
 
 export class GameInfo {
-    public static availableTopActions(log: EventLog, players: Player[], player: Player): TopAction[] {
-        return _.filter((topAction: TopAction): boolean => {
-            try {
-                assertActionCanBeTaken(log, players, player, topAction);
-                assertCoins(log, player, player.playerMat.topActionCost(topAction));
-                return true;
-            } catch (error) {
-                return false;
+    public static players(log: EventLog): Player[] {
+        const players = [];
+        for (const event of log.log) {
+            if (!(event instanceof NewPlayerEvent)) {
+                break;
             }
-        }, Object.keys(TopAction) as TopAction[]);
-    }
-
-    public static availableBottomActions(log: EventLog, players: Player[], player: Player): BottomAction[] {
-        return _.filter((bottomAction: BottomAction): boolean => {
-            try {
-                assertActionCanBeTaken(log, players, player, bottomAction);
-                const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
-                return GameInfo.resources(log, player).countByType(resourceType) >= count;
-            } catch (error) {
-                return false;
-            }
-        }, Object.keys(BottomAction) as BottomAction[]);
+            players.push((event as NewPlayerEvent).player);
+        }
+        return players;
     }
 
     public static score(log: EventLog, players: Player[]): Map<Player, number> {
