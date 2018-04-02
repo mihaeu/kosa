@@ -1,4 +1,4 @@
-import { availableBolsterOptions } from "../src/Availability";
+import { availableBolsterOptions, availableTradeOptions } from "../src/Availability";
 import { EventLog } from "../src/Events/EventLog";
 import { Game } from "../src/Game";
 import { PlayerFactory } from "../src/PlayerFactory";
@@ -36,5 +36,14 @@ describe("Options", () => {
     test("If player cannot bolster there no options", () => {
         game.bolsterPower(blackIndustrialPlayer);
         expect(availableBolsterOptions(log, blackIndustrialPlayer).length).toBe(0);
+    });
+
+    test("If player can bolster there are two options", () => {
+        expect(availableTradeOptions(log, blackIndustrialPlayer).length).toBe(17);
+    });
+
+    test("If player cannot bolster there no options", () => {
+        game.tradePopularity(blackIndustrialPlayer);
+        expect(availableTradeOptions(log, blackIndustrialPlayer).length).toBe(0);
     });
 });

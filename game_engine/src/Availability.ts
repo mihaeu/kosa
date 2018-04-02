@@ -18,6 +18,7 @@ import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
 import { Option } from "./Options/Option";
+import { TradePopularityOption } from "./Options/TradePopularityOption";
 import { Player } from "./Player";
 import { ProvidedResourcesNotAvailableError } from "./ProvidedResourcesNotAvailableError";
 import { Resource } from "./Resource";
@@ -63,6 +64,30 @@ export function availableBolsterOptions(log: EventLog, player: Player): Option[]
         return [];
     }
     return [new BolsterPowerOption(), new BolsterCombatCardsOption()];
+}
+
+function getCombinations<T>(array: T[], size: number, start: number, initialStuff: T[], output: T[][]) {
+    if (initialStuff.length >= size) {
+        output.push(initialStuff);
+    } else {
+        for (let i = start; i < array.length; ++i) {
+            getCombinations(array, size, i + 1, initialStuff.concat(array[i]), output);
+        }
+    }
+}
+
+function getAllPossibleCombinations<T>(array: T[], size: number, output: T[][]) {
+    getCombinations(array, size, 0, [], output);
+}
+
+export function availableTradeOptions(log: EventLog, player: Player): Option[] {
+    if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.TRADE)) {
+        return [];
+    }
+    const resourceCombinations: ResourceType[][] = [];
+    const resources = (Object.keys(ResourceType)).concat(Object.keys(ResourceType)) as ResourceType[];
+    getAllPossibleCombinations(resources, 2, resourceCombinations);
+    return [new TradePopularityOption()].concat(_.uniq(resourceCombinations));
 }
 
 export function assertLocationControlledByPlayer(log: EventLog, player: Player, location: Field) {
