@@ -57,15 +57,6 @@ export class Game {
 
     private static PRODUCE_COINS_THRESHOLD = 8;
 
-    private static TOP_ACTIONS = [TopAction.MOVE, TopAction.TRADE, TopAction.PRODUCE, TopAction.BOLSTER];
-
-    private static BOTTOM_ACTIONS = [
-        BottomAction.UPGRADE,
-        BottomAction.DEPLOY,
-        BottomAction.BUILD,
-        BottomAction.ENLIST,
-    ];
-
     private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
         if (!GameMap.isReachable(currentLocation, destination)) {
             throw new IllegalMoveError(unit, currentLocation, destination);
@@ -82,30 +73,6 @@ export class Game {
             player.setupEvents.forEach((event) => this.log.add(event));
             player.playerMat.setupEvents.forEach((event) => this.log.add(event));
         }
-    }
-
-    public availableTopActions(player: Player): TopAction[] {
-        return _.filter((topAction: TopAction): boolean => {
-            try {
-                assertActionCanBeTaken(this.log, this.players, player, topAction);
-                assertCoins(this.log, player, player.playerMat.topActionCost(topAction));
-                return true;
-            } catch (error) {
-                return false;
-            }
-        }, Game.TOP_ACTIONS);
-    }
-
-    public availableBottomActions(player: Player): BottomAction[] {
-        return _.filter((bottomAction: BottomAction): boolean => {
-            try {
-                assertActionCanBeTaken(this.log, this.players, player, bottomAction);
-                const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
-                return GameInfo.resources(this.log, player).countByType(resourceType) >= count;
-            } catch (error) {
-                return false;
-            }
-        }, Game.BOTTOM_ACTIONS);
     }
 
     public move(player: Player, unit: Unit, destination: Field) {
@@ -231,7 +198,7 @@ export class Game {
     public pass(player: Player, action: TopAction | BottomAction): Game {
         this.handOutStars(player);
 
-        if (action in TopAction && this.availableBottomActions(player).length > 0) {
+        if (action in TopAction && GameInfo.availableBottomActions(this.log, this.players, player).length > 0) {
             return this;
         }
 

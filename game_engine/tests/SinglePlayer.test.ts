@@ -18,7 +18,8 @@ test("Single player game finishes eventually", () => {
     const playerId = new PlayerId(1);
     const player = PlayerFactory.green(playerId, PlayerMat.industrial(playerId));
     const log = new EventLog();
-    const game = new Game([player], log);
+    const players = [player];
+    const game = new Game(players, log);
 
     for (let i = 0; i < 16; i += 1) {
         game.gainCoins(player);

@@ -118,6 +118,7 @@ export function assertActionCanBeTaken(
     }
 
     if (
+        (lastAction === currentAction) ||
         GameInfo.isFirstActionThisTurn(log, player) &&
         GameInfo.actionFromTheSameColumn(lastAction, currentAction, player)
     ) {
