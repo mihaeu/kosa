@@ -8,15 +8,19 @@ import { DeployEvent } from "./Events/DeployEvent";
 import { EventLog } from "./Events/EventLog";
 import { Field } from "./Field";
 import { GameInfo } from "./GameInfo";
+import { GameMap } from "./GameMap";
 import { IllegalActionError } from "./IllegalActionError";
 import { LocationAlreadyHasAnotherBuildingError } from "./LocationAlreadyHasAnotherBuildingError";
 import { LocationNotInTerritoryError } from "./LocationNotInTerritoryError";
+import { Move } from "./Move";
 import { NotEnoughCoinsError } from "./NotEnoughCoinsError";
 import { NotEnoughPopularityError } from "./NotEnoughPopularityError";
 import { NotEnoughPowerError } from "./NotEnoughPowerError";
 import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
+import { GainCoinOption } from "./Options/GainCoinOption";
+import { MoveOption } from "./Options/MoveOption";
 import { Option } from "./Options/Option";
 import { ProduceOption } from "./Options/ProduceOption";
 import { TradePopularityOption } from "./Options/TradePopularityOption";
@@ -115,6 +119,21 @@ export function availableProduceOptions(log: EventLog, player: Player): Option[]
     }
 
     return _.map((locations: Field[]) => new ProduceOption(locations), _.uniq(fieldCombinations));
+}
+
+export function availableMoveOptions(log: EventLog, player: Player): Option[] {
+    if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.MOVE)) {
+        return [];
+    }
+
+    const moveOptions: Move[] = [];
+    for (const [unit, location] of GameInfo.units(log, player).entries()) {
+        _.forEach((destination: Field) => moveOptions.push(new Move(unit, destination)), GameMap.options(location));
+    }
+
+    const moveCombinations: Move[][] = [];
+    getAllPossibleCombinations(moveOptions, 2, moveCombinations);
+    return [new GainCoinOption()].concat(_.map((moves: Move[]) => new MoveOption(moves), moveCombinations));
 }
 
 export function assertLocationControlledByPlayer(log: EventLog, player: Player, location: Field) {

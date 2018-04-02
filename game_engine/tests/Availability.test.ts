@@ -1,4 +1,9 @@
-import { availableBolsterOptions, availableProduceOptions, availableTradeOptions } from "../src/Availability";
+import {
+    availableBolsterOptions,
+    availableMoveOptions,
+    availableProduceOptions,
+    availableTradeOptions,
+} from "../src/Availability";
 import { DeployEvent } from "../src/Events/DeployEvent";
 import { EventLog } from "../src/Events/EventLog";
 import { MoveEvent } from "../src/Events/MoveEvent";
@@ -8,6 +13,8 @@ import { ProduceOption } from "../src/Options/ProduceOption";
 import { PlayerFactory } from "../src/PlayerFactory";
 import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
+import { TopAction } from "../src/TopAction";
+import { Mech } from "../src/Units/Mech";
 import { Worker } from "../src/Units/Worker";
 
 let game: Game;
@@ -34,7 +41,7 @@ beforeEach(() => {
 });
 
 describe("Options", () => {
-    describe("Bolster", () => {
+    describe(TopAction.BOLSTER, () => {
         test("If player can bolster there are two options", () => {
             expect(availableBolsterOptions(log, blackIndustrialPlayer).length).toBe(2);
         });
@@ -45,7 +52,7 @@ describe("Options", () => {
         });
     });
 
-    describe("Trade", () => {
+    describe(TopAction.TRADE, () => {
         test("If player can bolster there are two options", () => {
             expect(availableTradeOptions(log, blackIndustrialPlayer).length).toBe(17);
         });
@@ -56,7 +63,7 @@ describe("Options", () => {
         });
     });
 
-    describe("Produce", () => {
+    describe(TopAction.PRODUCE, () => {
         test("If player has workers on one field there is only 1 option with one field", () => {
             game.log.add(new MoveEvent(blackIndustrialPlayerId, Worker.WORKER_1, Field.t8));
             expect(availableProduceOptions(log, blackIndustrialPlayer).pop()).toEqual(new ProduceOption([Field.t8]));
@@ -86,6 +93,22 @@ describe("Options", () => {
         test("If player cannot produce there no options", () => {
             game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
             expect(availableProduceOptions(log, blackIndustrialPlayer).length).toBe(0);
+        });
+    });
+
+    describe(TopAction.MOVE, () => {
+        test("Players on their starting position have 6 move options", () => {
+            expect(availableMoveOptions(log, blackIndustrialPlayer).length).toBe(16);
+        });
+
+        test("Player with starting position and one mech on factory has 37 moves", () => {
+            game.log.add(new DeployEvent(blackIndustrialPlayerId, Mech.MECH_1, Field.F));
+            expect(availableMoveOptions(log, blackIndustrialPlayer).length).toBe(37);
+        });
+
+        test("If player cannot produce there no options", () => {
+            game.gainCoins(blackIndustrialPlayer);
+            expect(availableMoveOptions(log, blackIndustrialPlayer)).toEqual([]);
         });
     });
 });
