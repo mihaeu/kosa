@@ -1,5 +1,17 @@
 import * as _ from "ramda";
-import { Availability } from "./Availability";
+import {
+    assertActionCanBeTaken,
+    assertAvailableResources,
+    assertBuildingNotAlreadyBuilt,
+    assertCoins,
+    assertLocationControlledByPlayer,
+    assertLocationHasNoOtherBuildings,
+    assertNotMoreThan20Popularity,
+    assertPopularity,
+    assertPower,
+    assertUnitDeployed,
+    assertUnitNotDeployed,
+} from "./Availability";
 import { BottomAction } from "./BottomAction";
 import { BuildingType } from "./BuildingType";
 import { CombatCard } from "./CombatCard";
@@ -75,8 +87,8 @@ export class Game {
     public availableTopActions(player: Player): TopAction[] {
         return _.filter((topAction: TopAction): boolean => {
             try {
-                Availability.assertActionCanBeTaken(this.log, this.players, player, topAction);
-                Availability.assertCoins(this.log, player, player.playerMat.topActionCost(topAction));
+                assertActionCanBeTaken(this.log, this.players, player, topAction);
+                assertCoins(this.log, player, player.playerMat.topActionCost(topAction));
                 return true;
             } catch (error) {
                 return false;
@@ -87,7 +99,7 @@ export class Game {
     public availableBottomActions(player: Player): BottomAction[] {
         return _.filter((bottomAction: BottomAction): boolean => {
             try {
-                Availability.assertActionCanBeTaken(this.log, this.players, player, bottomAction);
+                assertActionCanBeTaken(this.log, this.players, player, bottomAction);
                 const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
                 return GameInfo.resources(this.log, player).countByType(resourceType) >= count;
             } catch (error) {
@@ -97,8 +109,8 @@ export class Game {
     }
 
     public move(player: Player, unit: Unit, destination: Field) {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, TopAction.MOVE);
-        Availability.assertUnitDeployed(this.log, player, unit);
+        assertActionCanBeTaken(this.log, this.players, player, TopAction.MOVE);
+        assertUnitDeployed(this.log, player, unit);
 
         const currentLocation = GameInfo.unitLocation(this.log, player, unit);
         Game.assertLegalMove(currentLocation, destination, unit);
@@ -110,7 +122,7 @@ export class Game {
     }
 
     public gainCoins(player: Player): Game {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, TopAction.MOVE);
+        assertActionCanBeTaken(this.log, this.players, player, TopAction.MOVE);
 
         this.log.add(new ActionEvent(player.playerId, TopAction.MOVE)).add(new CoinEvent(player.playerId, +1));
         return this.pass(player, TopAction.MOVE);
@@ -127,9 +139,9 @@ export class Game {
     }
 
     public tradeResources(player: Player, worker: Worker, resource1: ResourceType, resource2: ResourceType): Game {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, TopAction.TRADE);
-        Availability.assertCoins(this.log, player, 1);
-        Availability.assertUnitDeployed(this.log, player, worker);
+        assertActionCanBeTaken(this.log, this.players, player, TopAction.TRADE);
+        assertCoins(this.log, player, 1);
+        assertUnitDeployed(this.log, player, worker);
 
         const workerLocation = GameInfo.unitLocation(this.log, player, worker);
         this.log
@@ -146,9 +158,9 @@ export class Game {
     }
 
     public tradePopularity(player: Player): Game {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, TopAction.TRADE);
-        Availability.assertCoins(this.log, player, 1);
-        Availability.assertNotMoreThan20Popularity(this.log, player);
+        assertActionCanBeTaken(this.log, this.players, player, TopAction.TRADE);
+        assertCoins(this.log, player, 1);
+        assertNotMoreThan20Popularity(this.log, player);
 
         const gainedPopularity = GameInfo.popularity(this.log, player) === Game.MAX_POPULARITY ? 0 : 1;
         this.log
@@ -160,23 +172,23 @@ export class Game {
     }
 
     public produce(player: Player, field1: Field, field2: Field): Game {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, TopAction.PRODUCE);
-        Availability.assertLocationControlledByPlayer(this.log, player, field1);
-        Availability.assertLocationControlledByPlayer(this.log, player, field2);
+        assertActionCanBeTaken(this.log, this.players, player, TopAction.PRODUCE);
+        assertLocationControlledByPlayer(this.log, player, field1);
+        assertLocationControlledByPlayer(this.log, player, field2);
         if (field1 === field2) {
             throw new IllegalActionError(`Field 1 (${field1}) and Field 2 (${field2}) are the same`);
         }
         const allWorkersCount = GameInfo.allWorkers(this.log, player).length;
         if (allWorkersCount >= Game.PRODUCE_POWER_THRESHOLD) {
-            Availability.assertPower(this.log, player, 1);
+            assertPower(this.log, player, 1);
         }
 
         if (allWorkersCount >= Game.PRODUCE_POPULARITY_THRESHOLD) {
-            Availability.assertPopularity(this.log, player, 1);
+            assertPopularity(this.log, player, 1);
         }
 
         if (allWorkersCount >= Game.PRODUCE_COINS_THRESHOLD) {
-            Availability.assertCoins(this.log, player, 1);
+            assertCoins(this.log, player, 1);
         }
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
@@ -199,15 +211,15 @@ export class Game {
     }
 
     public build(player: Player, worker: Worker, building: BuildingType, resources: Resource[]): Game {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, BottomAction.BUILD);
-        Availability.assertUnitDeployed(this.log, player, worker);
-        Availability.assertBuildingNotAlreadyBuilt(this.log, player, building);
+        assertActionCanBeTaken(this.log, this.players, player, BottomAction.BUILD);
+        assertUnitDeployed(this.log, player, worker);
+        assertBuildingNotAlreadyBuilt(this.log, player, building);
 
         const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction.BUILD);
-        Availability.assertAvailableResources(this.log, player, resourceType, count, resources);
+        assertAvailableResources(this.log, player, resourceType, count, resources);
 
         const location = GameInfo.unitLocation(this.log, player, worker);
-        Availability.assertLocationHasNoOtherBuildings(this.log, player, location);
+        assertLocationHasNoOtherBuildings(this.log, player, location);
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.BUILD))
@@ -228,15 +240,15 @@ export class Game {
     }
 
     public deploy(player: Player, worker: Worker, mech: Mech, resources: Resource[]) {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, BottomAction.DEPLOY);
-        Availability.assertAvailableResources(
+        assertActionCanBeTaken(this.log, this.players, player, BottomAction.DEPLOY);
+        assertAvailableResources(
             this.log,
             player,
             ResourceType.METAL,
             player.playerMat.bottomActionCost(BottomAction.DEPLOY).count,
             resources,
         );
-        Availability.assertUnitNotDeployed(this.log, player, mech);
+        assertUnitNotDeployed(this.log, player, mech);
 
         const location = GameInfo.unitLocation(this.log, player, worker);
         this.log
@@ -246,8 +258,8 @@ export class Game {
     }
 
     public enlist(player: Player, bottomAction: BottomAction, recruitReward: RecruitReward, resources: Resource[]) {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, BottomAction.ENLIST);
-        Availability.assertAvailableResources(
+        assertActionCanBeTaken(this.log, this.players, player, BottomAction.ENLIST);
+        assertAvailableResources(
             this.log,
             player,
             ResourceType.FOOD,
@@ -263,8 +275,8 @@ export class Game {
     }
 
     public upgrade(player: Player, topAction: TopAction, bottomAction: BottomAction, resources: Resource[]) {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, BottomAction.UPGRADE);
-        Availability.assertAvailableResources(
+        assertActionCanBeTaken(this.log, this.players, player, BottomAction.UPGRADE);
+        assertAvailableResources(
             this.log,
             player,
             ResourceType.OIL,
@@ -279,8 +291,8 @@ export class Game {
     }
 
     private bolster(player: Player, event: PowerEvent | GainCombatCardEvent): Game {
-        Availability.assertActionCanBeTaken(this.log, this.players, player, TopAction.BOLSTER);
-        Availability.assertCoins(this.log, player, 1);
+        assertActionCanBeTaken(this.log, this.players, player, TopAction.BOLSTER);
+        assertCoins(this.log, player, 1);
 
         this.log
             .add(new ActionEvent(player.playerId, TopAction.BOLSTER))
@@ -333,32 +345,20 @@ export class Game {
     }
 
     private handOutStars(player: Player): void {
-        const allStars = [
-            Star.ALL_UPGRADES,
-            Star.ALL_MECHS,
-            Star.ALL_BUILDINGS,
-            Star.ALL_RECRUITS,
-            Star.ALL_WORKERS,
-            Star.FIRST_OBJECTIVE,
-            Star.FIRST_COMBAT_WIN,
-            Star.SECOND_COMBAT_WIN,
-            Star.MAX_POPULARITY,
-            Star.MAX_POWER,
-        ];
-
+        const allStars = Object.keys(Star) as Star[];
         const currentStars = GameInfo.stars(this.log, player);
-        let starCount = currentStars.length;
         const missingStars = _.difference(allStars, currentStars);
-        missingStars.forEach((star: Star) => {
-            if (GameInfo.starCondition(this.log, player, star)) {
+
+        let starCount = currentStars.length;
+        _.forEach((star: Star) => {
+            if (GameInfo.starCondition(this.log, player, star) && starCount <= 6) {
                 this.log.add(new StarEvent(player.playerId, star));
                 starCount += 1;
             }
 
             if (starCount === 6) {
                 this.log.add(new GameEndEvent(player.playerId));
-                return;
             }
-        });
+        }, missingStars);
     }
 }
