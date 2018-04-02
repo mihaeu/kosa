@@ -740,7 +740,7 @@ test.skip("Mechs cannot be placed on home territories", fail);
 test.skip("Buildings cannot be placed on lakes", fail);
 test.skip("Cannot move the same unit multiple times", fail);
 
-const resources = (location: Field, resourceType: ResourceType, count: number = 10): Resource[] => {
+export const resources = (location: Field, resourceType: ResourceType, count: number = 10): Resource[] => {
     const res: Resource[] = [];
     for (let i = 0; i < count; ++i) {
         res.push(new Resource(location, resourceType));

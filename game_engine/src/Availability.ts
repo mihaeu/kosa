@@ -1,5 +1,6 @@
 import * as _ from "ramda";
 import { BottomAction } from "./BottomAction";
+import { Building } from "./Building";
 import { BuildingAlreadyBuildError } from "./BuildingAlreadyBuiltError";
 import { BuildingType } from "./BuildingType";
 import { CannotHaveMoreThan20PopularityError } from "./CannotHaveMoreThan20PopularityError";
@@ -19,10 +20,12 @@ import { NotEnoughPowerError } from "./NotEnoughPowerError";
 import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
+import { BuildOption } from "./Options/BuildOption";
 import { GainCoinOption } from "./Options/GainCoinOption";
 import { MoveOption } from "./Options/MoveOption";
 import { Option } from "./Options/Option";
 import { ProduceOption } from "./Options/ProduceOption";
+import { RewardOnlyOption } from "./Options/RewardOnlyOption";
 import { TradePopularityOption } from "./Options/TradePopularityOption";
 import { TradeResourcesOption } from "./Options/TradeResourcesOption";
 import { Player } from "./Player";
@@ -51,19 +54,20 @@ export function availableTopActions(log: EventLog, players: Player[], player: Pl
     return _.filter(isTopActionAvailable(log, players, player), Object.keys(TopAction) as TopAction[]);
 }
 
+function isBottomActionAvailable(log: EventLog, players: Player[], player: Player) {
+    return (bottomAction: BottomAction): boolean => {
+        try {
+            assertActionCanBeTaken(log, players, player, bottomAction);
+            const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
+            return GameInfo.resources(log, player).countByType(resourceType) >= count;
+        } catch (error) {
+            return false;
+        }
+    };
+}
+
 export function availableBottomActions(log: EventLog, players: Player[], player: Player): BottomAction[] {
-    return _.filter(
-        (bottomAction: BottomAction): boolean => {
-            try {
-                assertActionCanBeTaken(log, players, player, bottomAction);
-                const { resourceType, count } = player.playerMat.bottomActionCost(bottomAction);
-                return GameInfo.resources(log, player).countByType(resourceType) >= count;
-            } catch (error) {
-                return false;
-            }
-        },
-        Object.keys(BottomAction) as BottomAction[],
-    );
+    return _.filter(isBottomActionAvailable(log, players, player), Object.keys(BottomAction) as BottomAction[]);
 }
 
 function getCombinations<T>(array: T[], size: number, start: number, initialStuff: T[], output: T[][]) {
@@ -94,28 +98,34 @@ export function availableTradeOptions(log: EventLog, player: Player): Option[] {
     const resources = Object.keys(ResourceType).concat(Object.keys(ResourceType)) as ResourceType[];
     getAllPossibleCombinations(resources, 2, resourceCombinations);
     resourceCombinations = _.map(
+        // @ts-ignore
         (resourceTypes: ResourceType[]) => new TradeResourcesOption(resourceTypes.pop(), resourceTypes.pop()),
         _.uniq(resourceCombinations),
     );
     return [new TradePopularityOption()].concat(resourceCombinations);
 }
 
+function fieldsWithWorkers(log: EventLog, player: Player): Field[] {
+    const fields: Field[] = [];
+    for (const [unit, field] of GameInfo.units(log, player)) {
+        if (_.contains(field, fields) || !(unit instanceof Worker)) {
+            continue;
+        }
+        fields.push(field);
+    }
+    return fields;
+}
+
 export function availableProduceOptions(log: EventLog, player: Player): Option[] {
     if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.PRODUCE)) {
         return [];
     }
-    const fieldsWithWorkers: Field[] = [];
-    for (const [unit, field] of GameInfo.units(log, player)) {
-        if (_.contains(field, fieldsWithWorkers) || !(unit instanceof Worker)) {
-            continue;
-        }
-        fieldsWithWorkers.push(field);
-    }
+    const fields: Field[] = fieldsWithWorkers(log, player);
 
     const fieldCombinations: Field[][] = [];
-    getAllPossibleCombinations(fieldsWithWorkers, 2, fieldCombinations);
+    getAllPossibleCombinations(fields, 2, fieldCombinations);
     if (fieldCombinations.length === 0) {
-        fieldCombinations.push(fieldsWithWorkers);
+        fieldCombinations.push(fields);
     }
 
     return _.map((locations: Field[]) => new ProduceOption(locations), _.uniq(fieldCombinations));
@@ -133,7 +143,58 @@ export function availableMoveOptions(log: EventLog, player: Player): Option[] {
 
     const moveCombinations: Move[][] = [];
     getAllPossibleCombinations(moveOptions, 2, moveCombinations);
-    return [new GainCoinOption()].concat(_.map((moves: Move[]) => new MoveOption(moves), moveCombinations));
+    return [new GainCoinOption()]
+        .concat(_.map((move: Move) => new MoveOption([move]), moveOptions))
+        .concat(_.map((moves: Move[]) => new MoveOption(moves), moveCombinations));
+}
+
+export function availableBuildOptions(log: EventLog, player: Player): Option[] {
+    if (!isBottomActionAvailable(log, GameInfo.players(log), player)(BottomAction.BUILD)) {
+        return [];
+    }
+
+    const fields: Field[] = fieldsWithWorkers(log, player);
+    const blockedFields: Field[] = [];
+
+    const allBuildingTypes: BuildingType[] = Object.keys(BuildingType) as BuildingType[];
+    const blockedBuildingTypes: BuildingType[] = [];
+
+    for (const building of GameInfo.buildings(log, player)) {
+        blockedBuildingTypes.push(building.building);
+        blockedFields.push(building.location);
+    }
+
+    const buildOptions: Option[] = [new RewardOnlyOption()];
+    for (const field of _.difference(fields, blockedFields)) {
+        for (const buildingType of _.difference(allBuildingTypes, blockedBuildingTypes)) {
+            buildOptions.push(new BuildOption(new Building(buildingType, field)));
+        }
+    }
+    return buildOptions;
+}
+
+export function availableDeployOptions(log: EventLog, player: Player): Option[] {
+    if (!isBottomActionAvailable(log, GameInfo.players(log), player)(BottomAction.DEPLOY)) {
+        return [];
+    }
+
+    return [new RewardOnlyOption()];
+}
+
+export function availableEnlistOptions(log: EventLog, player: Player): Option[] {
+    if (!isBottomActionAvailable(log, GameInfo.players(log), player)(BottomAction.ENLIST)) {
+        return [];
+    }
+
+    return [new RewardOnlyOption()];
+}
+
+export function availableUpgradeOptions(log: EventLog, player: Player): Option[] {
+    if (!isBottomActionAvailable(log, GameInfo.players(log), player)(BottomAction.UPGRADE)) {
+        return [];
+    }
+
+    return [new RewardOnlyOption()];
 }
 
 export function assertLocationControlledByPlayer(log: EventLog, player: Player, location: Field) {
