@@ -21,6 +21,7 @@ import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
 import { BuildOption } from "./Options/BuildOption";
+import { DeployOption } from "./Options/DeployOption";
 import { GainCoinOption } from "./Options/GainCoinOption";
 import { MoveOption } from "./Options/MoveOption";
 import { Option } from "./Options/Option";
@@ -35,6 +36,7 @@ import { ResourceType } from "./ResourceType";
 import { TopAction } from "./TopAction";
 import { UnitAlreadyDeployedError } from "./UnitAlreadyDeployedError";
 import { UnitNotDeployedError } from "./UnitNotDeployedError";
+import { Mech } from "./Units/Mech";
 import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
 
@@ -178,7 +180,22 @@ export function availableDeployOptions(log: EventLog, player: Player): Option[] 
         return [];
     }
 
-    return [new RewardOnlyOption()];
+    const allMechs = [Mech.MECH_1, Mech.MECH_2, Mech.MECH_3, Mech.MECH_4];
+    const blockedMechs: Mech[] = [];
+    for (const unit of GameInfo.units(log, player).keys()) {
+        if (unit instanceof Mech) {
+            blockedMechs.push(unit);
+        }
+    }
+
+    const fields: Field[] = fieldsWithWorkers(log, player);
+    const deployOptions: Option[] = [new RewardOnlyOption()];
+    for (const mech of _.difference(allMechs, blockedMechs)) {
+        for (const field of fields) {
+            deployOptions.push(new DeployOption(field, mech));
+        }
+    }
+    return deployOptions;
 }
 
 export function availableEnlistOptions(log: EventLog, player: Player): Option[] {

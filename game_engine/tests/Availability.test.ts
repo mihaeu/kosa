@@ -18,6 +18,7 @@ import { MoveEvent } from "../src/Events/MoveEvent";
 import { Field } from "../src/Field";
 import { Game } from "../src/Game";
 import { BuildOption } from "../src/Options/BuildOption";
+import { DeployOption } from "../src/Options/DeployOption";
 import { ProduceOption } from "../src/Options/ProduceOption";
 import { RewardOnlyOption } from "../src/Options/RewardOnlyOption";
 import { PlayerFactory } from "../src/PlayerFactory";
@@ -28,7 +29,7 @@ import { ResourceType } from "../src/ResourceType";
 import { TopAction } from "../src/TopAction";
 import { Mech } from "../src/Units/Mech";
 import { Worker } from "../src/Units/Worker";
-import { resources, mockResourcesAndCoinsForPlayer } from "./Game.test";
+import { resources } from "./Game.test";
 
 let game: Game;
 
@@ -44,8 +45,6 @@ const greenAgriculturalPlayer = PlayerFactory.green(
     greenAgriculturalPlayerId,
     PlayerMat.agricultural(greenAgriculturalPlayerId),
 );
-const testPlayers = [blackIndustrialPlayer, greenAgriculturalPlayer];
-
 let log: EventLog;
 
 beforeEach(() => {
@@ -163,13 +162,6 @@ describe("Options", () => {
         });
 
         test("If player cannot build there are no options", () => {
-            game.log.add(
-                new GainResourceEvent(blackIndustrialPlayerId, [
-                    new Resource(Field.m6, ResourceType.WOOD),
-                    new Resource(Field.m6, ResourceType.WOOD),
-                    new Resource(Field.m6, ResourceType.WOOD),
-                ]),
-            );
             game.build(
                 blackIndustrialPlayer,
                 Worker.WORKER_1,
@@ -181,9 +173,7 @@ describe("Options", () => {
     });
 
     describe(BottomAction.DEPLOY, () => {
-        test.skip("Implement me", fail);
-
-        test("If player cannot deploy there are no options", () => {
+        beforeEach(() =>
             game.log.add(
                 new GainResourceEvent(blackIndustrialPlayerId, [
                     new Resource(Field.m6, ResourceType.METAL),
@@ -191,7 +181,24 @@ describe("Options", () => {
                     new Resource(Field.m6, ResourceType.METAL),
                     new Resource(Field.m6, ResourceType.METAL),
                 ]),
-            );
+            ),
+        );
+
+        test("Players can deploy for mechs in two positions for starting position", () => {
+            expect(availableDeployOptions(log, blackIndustrialPlayer)).toEqual([
+                new RewardOnlyOption(),
+                new DeployOption(Field.m6, Mech.MECH_1),
+                new DeployOption(Field.t8, Mech.MECH_1),
+                new DeployOption(Field.m6, Mech.MECH_2),
+                new DeployOption(Field.t8, Mech.MECH_2),
+                new DeployOption(Field.m6, Mech.MECH_3),
+                new DeployOption(Field.t8, Mech.MECH_3),
+                new DeployOption(Field.m6, Mech.MECH_4),
+                new DeployOption(Field.t8, Mech.MECH_4),
+            ]);
+        });
+
+        test("If player cannot deploy there are no options", () => {
             game.deploy(
                 blackIndustrialPlayer,
                 Worker.WORKER_1,
