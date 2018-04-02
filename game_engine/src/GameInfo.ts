@@ -1,6 +1,8 @@
 import * as _ from "ramda";
+import { BottomAction } from "./BottomAction";
 import { Building } from "./Building";
 import { CombatCard } from "./CombatCard";
+import { ActionEvent } from "./Events/ActionEvent";
 import { BuildEvent } from "./Events/BuildEvent";
 import { CoinEvent } from "./Events/CoinEvent";
 import { GainCombatCardEvent } from "./Events/CombatCardEvent";
@@ -11,6 +13,7 @@ import { EventLog } from "./Events/EventLog";
 import { GainResourceEvent } from "./Events/GainResourceEvent";
 import { GameEndEvent } from "./Events/GameEndEvent";
 import { LocationEvent } from "./Events/LocationEvent";
+import { PassEvent } from "./Events/PassEvent";
 import { PopularityEvent } from "./Events/PopularityEvent";
 import { PowerEvent } from "./Events/PowerEvent";
 import { ResourceEvent } from "./Events/ResourceEvent";
@@ -24,6 +27,7 @@ import { Resource } from "./Resource";
 import { Resources } from "./Resources";
 import { ResourceType } from "./ResourceType";
 import { Star } from "./Star";
+import { TopAction } from "./TopAction";
 import { Mech } from "./Units/Mech";
 import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
@@ -208,6 +212,80 @@ export class GameInfo {
         return log.lastInstanceOf(GameEndEvent) !== null;
     }
 
+    public static isFirstActionThisTurn(log: EventLog, player: Player): boolean {
+        return log.lastOfTwo(player.playerId, ActionEvent, PassEvent) instanceof PassEvent;
+    }
+
+    public static gameJustStarted(log: EventLog): boolean {
+        return log.lastInstanceOf(ActionEvent) === null;
+    }
+
+    public static lastActionFor(log: EventLog, player: Player): TopAction | BottomAction | null {
+        const lastActionEvent = log.lastInstanceOf(ActionEvent, (event) => event.playerId === player.playerId);
+        return lastActionEvent !== null ? (lastActionEvent as ActionEvent).action : null;
+    }
+
+    public static playerIsFirstPlayer(players: Player[], currentPlayer: Player): boolean {
+        for (const otherPlayer of players) {
+            if (otherPlayer.playerMat.startPosition < currentPlayer.playerMat.startPosition) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static lastPlayer(log: EventLog, players: Player[]): Player | null {
+        const lastActionEvent = log.lastInstanceOf(ActionEvent, () => true);
+        if (lastActionEvent === null) {
+            return null;
+        }
+
+        for (const player of players) {
+            if (player.playerId === lastActionEvent.playerId) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    public static playerIsNext(
+        log: EventLog,
+        players: Player[],
+        player: Player,
+        action: TopAction | BottomAction,
+    ): boolean {
+        const lastPlayer = GameInfo.lastPlayer(log, players);
+        if (lastPlayer === null) {
+            return true;
+        }
+
+        const playerOrder = GameInfo.playerOrder(players);
+        if (playerOrder.lastIndexOf(lastPlayer) === playerOrder.length - 1 && playerOrder.indexOf(player) === 0) {
+            return true;
+        }
+
+        return (
+            GameInfo.playerPlaysBottomActionAfterTopAction(lastPlayer, playerOrder, player, action) ||
+            lastPlayer === playerOrder[playerOrder.indexOf(player) - 1]
+        );
+    }
+
+    public static actionFromTheSameColumn(
+        currentAction: TopAction | BottomAction,
+        lastAction: TopAction | BottomAction,
+        player: Player,
+    ) {
+        return (
+            currentAction === lastAction ||
+            (lastAction in TopAction &&
+                currentAction in BottomAction &&
+                player.playerMat.topActionMatchesBottomAction(lastAction, currentAction)) ||
+            (lastAction in BottomAction &&
+                currentAction in TopAction &&
+                player.playerMat.topActionMatchesBottomAction(currentAction, lastAction))
+        );
+    }
+
     private static hasMaxPopularity(log: EventLog, player: Player): boolean {
         return GameInfo.popularity(log, player) === 18;
     }
@@ -241,5 +319,14 @@ export class GameInfo {
 
     private static resourceByType(type: ResourceType, resources: Resource[]): number {
         return _.reduce((sum, resource: Resource) => (resource.type === type ? sum + 1 : sum), 0, resources);
+    }
+
+    private static playerPlaysBottomActionAfterTopAction(
+        lastPlayer: Player,
+        playerOrder: Player[],
+        player: Player,
+        action: TopAction | BottomAction,
+    ): boolean {
+        return lastPlayer === playerOrder[playerOrder.indexOf(player)] && action in BottomAction;
     }
 }
