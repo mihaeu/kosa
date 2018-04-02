@@ -1,7 +1,9 @@
 import { BottomAction } from "../src/BottomAction";
 import { BuildingType } from "../src/BuildingType";
+import { EventLog } from "../src/Events/EventLog";
 import { Field } from "../src/Field";
 import { Game } from "../src/Game";
+import { GameInfo } from "../src/GameInfo";
 import { PlayerFactory } from "../src/PlayerFactory";
 import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
@@ -15,7 +17,8 @@ import { Worker } from "../src/Units/Worker";
 test("Single player game finishes eventually", () => {
     const playerId = new PlayerId(1);
     const player = PlayerFactory.green(playerId, PlayerMat.industrial(playerId));
-    const game = new Game([player]);
+    const log = new EventLog();
+    const game = new Game([player], log);
 
     for (let i = 0; i < 16; i += 1) {
         game.gainCoins(player);
@@ -30,8 +33,8 @@ test("Single player game finishes eventually", () => {
     game.gainCoins(player);
     game.tradePopularity(player);
 
-    expect(game.stars(player)).toContain(Star.MAX_POPULARITY);
-    expect(game.stars(player)).toContain(Star.MAX_POWER);
+    expect(GameInfo.stars(log, player)).toContain(Star.MAX_POPULARITY);
+    expect(GameInfo.stars(log, player)).toContain(Star.MAX_POWER);
 
     game.enlist(player, BottomAction.UPGRADE, RecruitReward.POPULARITY, [
         new Resource(Field.f1, ResourceType.FOOD),
@@ -61,7 +64,7 @@ test("Single player game finishes eventually", () => {
         new Resource(Field.f1, ResourceType.FOOD),
     ]);
 
-    expect(game.stars(player)).toContain(Star.ALL_RECRUITS);
+    expect(GameInfo.stars(log, player)).toContain(Star.ALL_RECRUITS);
 
     game.move(player, Worker.WORKER_2, Field.v1);
     game.produce(player, Field.m1, Field.v1);
@@ -71,7 +74,7 @@ test("Single player game finishes eventually", () => {
     game.gainCoins(player);
     game.produce(player, Field.m1, Field.v1);
 
-    expect(game.stars(player)).toContain(Star.ALL_WORKERS);
+    expect(GameInfo.stars(log, player)).toContain(Star.ALL_WORKERS);
 
     game.move(player, Worker.WORKER_3, Field.f1);
     game.tradeResources(player, Worker.WORKER_1, ResourceType.WOOD, ResourceType.WOOD);
@@ -108,7 +111,7 @@ test("Single player game finishes eventually", () => {
         new Resource(Field.m1, ResourceType.METAL),
     ]);
 
-    expect(game.stars(player)).toContain(Star.ALL_MECHS);
+    expect(GameInfo.stars(log, player)).toContain(Star.ALL_MECHS);
 
     game.build(player, Worker.WORKER_2, BuildingType.MILL, [
         new Resource(Field.m1, ResourceType.WOOD),
@@ -128,6 +131,6 @@ test("Single player game finishes eventually", () => {
         new Resource(Field.m1, ResourceType.WOOD),
     ]);
 
-    expect(game.stars(player)).toContain(Star.ALL_MECHS);
-    expect(game.gameOver()).toBeTruthy();
+    expect(GameInfo.stars(log, player)).toContain(Star.ALL_MECHS);
+    expect(GameInfo.gameOver(log)).toBeTruthy();
 });
