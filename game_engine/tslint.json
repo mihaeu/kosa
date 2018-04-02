@@ -5,7 +5,10 @@
     ],
     "jsRules": {},
     "rules": {
-        "semicolon": [false]
+        "semicolon": [
+            false
+        ],
+        "no-unused-variable": true
     },
     "rulesDirectory": []
 }

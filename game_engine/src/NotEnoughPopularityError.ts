@@ -1,5 +1,5 @@
 export class NotEnoughPopularityError extends Error {
-    constructor(private readonly requiredPopularity: number, private readonly actualPopularity: number) {
+    constructor(requiredPopularity: number, actualPopularity: number) {
         super(`${requiredPopularity} popularity required, but only ${actualPopularity} popularity available.`);
     }
 }

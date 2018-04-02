@@ -1,5 +1,5 @@
 export class NotEnoughPowerError extends Error {
-    constructor(private readonly requiredPower: number, private readonly actualPower: number) {
+    constructor(requiredPower: number, actualPower: number) {
         super(`${requiredPower} power required, but only ${actualPower} power available.`);
     }
 }

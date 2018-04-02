@@ -18,19 +18,23 @@ export class EventLog {
     }
 
     public filterBy(playerId: PlayerId, type: any, fn: (event: Event) => boolean = () => true): Event[] {
+        // console.log(`Events processed by filterBy ${this.log.length}`);
         return this.log.filter((event) => event.playerId === playerId && event instanceof type && fn(event));
     }
 
     public filter(type: any): Event[] {
+        // console.log(`Events processed by filterBy ${this.log.length}`);
         return this.log.filter((event) => event instanceof type);
     }
 
     public lastOf(fn: (event: Event) => boolean): Event | null {
         for (let i = this.log.length - 1; i >= 0; --i) {
             if (fn(this.log[i])) {
+                // console.log(`Events processed by lastOf ${i}`)
                 return this.log[i];
             }
         }
+        // console.log(`Events processed by lastOf ${this.log.length}`)
         return null;
     }
 

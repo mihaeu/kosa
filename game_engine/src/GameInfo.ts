@@ -21,7 +21,6 @@ import { SpendResourceEvent } from "./Events/SpendResourceEvent";
 import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
 import { Field } from "./Field";
-import { Game } from "./Game";
 import { Player } from "./Player";
 import { Resource } from "./Resource";
 import { Resources } from "./Resources";
