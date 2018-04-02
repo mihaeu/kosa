@@ -18,7 +18,9 @@ import { NotEnoughResourcesError } from "./NotEnoughResourcesError";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
 import { Option } from "./Options/Option";
+import { ProduceOption } from "./Options/ProduceOption";
 import { TradePopularityOption } from "./Options/TradePopularityOption";
+import { TradeResourcesOption } from "./Options/TradeResourcesOption";
 import { Player } from "./Player";
 import { ProvidedResourcesNotAvailableError } from "./ProvidedResourcesNotAvailableError";
 import { Resource } from "./Resource";
@@ -27,6 +29,7 @@ import { TopAction } from "./TopAction";
 import { UnitAlreadyDeployedError } from "./UnitAlreadyDeployedError";
 import { UnitNotDeployedError } from "./UnitNotDeployedError";
 import { Unit } from "./Units/Unit";
+import { Worker } from "./Units/Worker";
 
 function isTopActionAvailable(log: EventLog, players: Player[], player: Player) {
     return (topAction: TopAction): boolean => {
@@ -59,13 +62,6 @@ export function availableBottomActions(log: EventLog, players: Player[], player:
     );
 }
 
-export function availableBolsterOptions(log: EventLog, player: Player): Option[] {
-    if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.BOLSTER)) {
-        return [];
-    }
-    return [new BolsterPowerOption(), new BolsterCombatCardsOption()];
-}
-
 function getCombinations<T>(array: T[], size: number, start: number, initialStuff: T[], output: T[][]) {
     if (initialStuff.length >= size) {
         output.push(initialStuff);
@@ -79,15 +75,46 @@ function getCombinations<T>(array: T[], size: number, start: number, initialStuf
 function getAllPossibleCombinations<T>(array: T[], size: number, output: T[][]) {
     getCombinations(array, size, 0, [], output);
 }
+export function availableBolsterOptions(log: EventLog, player: Player): Option[] {
+    if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.BOLSTER)) {
+        return [];
+    }
+    return [new BolsterPowerOption(), new BolsterCombatCardsOption()];
+}
 
 export function availableTradeOptions(log: EventLog, player: Player): Option[] {
     if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.TRADE)) {
         return [];
     }
-    const resourceCombinations: ResourceType[][] = [];
-    const resources = (Object.keys(ResourceType)).concat(Object.keys(ResourceType)) as ResourceType[];
+    let resourceCombinations: ResourceType[][] = [];
+    const resources = Object.keys(ResourceType).concat(Object.keys(ResourceType)) as ResourceType[];
     getAllPossibleCombinations(resources, 2, resourceCombinations);
-    return [new TradePopularityOption()].concat(_.uniq(resourceCombinations));
+    resourceCombinations = _.map(
+        (resourceTypes: ResourceType[]) => new TradeResourcesOption(resourceTypes.pop(), resourceTypes.pop()),
+        _.uniq(resourceCombinations),
+    );
+    return [new TradePopularityOption()].concat(resourceCombinations);
+}
+
+export function availableProduceOptions(log: EventLog, player: Player): Option[] {
+    if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.PRODUCE)) {
+        return [];
+    }
+    const fieldsWithWorkers: Field[] = [];
+    for (const [unit, field] of GameInfo.units(log, player)) {
+        if (_.contains(field, fieldsWithWorkers) || !(unit instanceof Worker)) {
+            continue;
+        }
+        fieldsWithWorkers.push(field);
+    }
+
+    const fieldCombinations: Field[][] = [];
+    getAllPossibleCombinations(fieldsWithWorkers, 2, fieldCombinations);
+    if (fieldCombinations.length === 0) {
+        fieldCombinations.push(fieldsWithWorkers);
+    }
+
+    return _.map((locations: Field[]) => new ProduceOption(locations), _.uniq(fieldCombinations));
 }
 
 export function assertLocationControlledByPlayer(log: EventLog, player: Player, location: Field) {
