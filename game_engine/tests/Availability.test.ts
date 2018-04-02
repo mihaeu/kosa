@@ -57,25 +57,30 @@ describe("Options", () => {
     });
 
     describe("Produce", () => {
-        test("If player has workers on one field there is only one option with one field", () => {
+        test("If player has workers on one field there is only 1 option with one field", () => {
             game.log.add(new MoveEvent(blackIndustrialPlayerId, Worker.WORKER_1, Field.t8));
             expect(availableProduceOptions(log, blackIndustrialPlayer).pop()).toEqual(new ProduceOption([Field.t8]));
         });
 
-        test("If player has workers on two fields there is only one option with two fields", () => {
+        test("If player has workers on two fields there is only 1 option with two fields", () => {
             expect(availableProduceOptions(log, blackIndustrialPlayer).pop()).toEqual(
                 new ProduceOption([Field.m6, Field.t8]),
             );
         });
 
-        test("If player has workers on three fields there are three options", () => {
+        test("If player has workers on three fields there are 3 options", () => {
             game.log.add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.v6));
             expect(availableProduceOptions(log, blackIndustrialPlayer)).toEqual([
                 new ProduceOption([Field.m6, Field.t8]),
                 new ProduceOption([Field.m6, Field.v6]),
-
                 new ProduceOption([Field.t8, Field.v6]),
             ]);
+        });
+
+        test("If player has workers on four fields there are 6 options", () => {
+            game.log.add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.v6));
+            game.log.add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_4, Field.f5));
+            expect(availableProduceOptions(log, blackIndustrialPlayer).length).toEqual(6);
         });
 
         test("If player cannot produce there no options", () => {
