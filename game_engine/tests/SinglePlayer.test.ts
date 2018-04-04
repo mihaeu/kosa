@@ -4,6 +4,7 @@ import { EventLog } from "../src/Events/EventLog";
 import { Field } from "../src/Field";
 import { Game } from "../src/Game";
 import { GameInfo } from "../src/GameInfo";
+import { Move } from "../src/Move";
 import { PlayerFactory } from "../src/PlayerFactory";
 import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
@@ -14,7 +15,7 @@ import { Star } from "../src/Star";
 import { Mech } from "../src/Units/Mech";
 import { Worker } from "../src/Units/Worker";
 
-test("Single player game finishes eventually", () => {
+test("Single player game finishes with fixed play sequence", () => {
     const playerId = new PlayerId(1);
     const player = PlayerFactory.green(playerId, PlayerMat.industrial(playerId));
     const log = new EventLog();
@@ -67,7 +68,7 @@ test("Single player game finishes eventually", () => {
 
     expect(GameInfo.stars(log, player)).toContain(Star.ALL_RECRUITS);
 
-    game.move(player, Worker.WORKER_2, Field.v1);
+    game.move(player, new Move(Worker.WORKER_2, Field.v1));
     game.produce(player, Field.m1, Field.v1);
     game.gainCoins(player);
     game.produce(player, Field.m1, Field.v1);
@@ -77,11 +78,11 @@ test("Single player game finishes eventually", () => {
 
     expect(GameInfo.stars(log, player)).toContain(Star.ALL_WORKERS);
 
-    game.move(player, Worker.WORKER_3, Field.f1);
+    game.move(player, new Move(Worker.WORKER_3, Field.f1));
     game.tradeResources(player, Worker.WORKER_1, ResourceType.WOOD, ResourceType.WOOD);
     game.gainCoins(player);
     game.tradeResources(player, Worker.WORKER_1, ResourceType.WOOD, ResourceType.WOOD);
-    game.move(player, Worker.WORKER_4, Field.f1);
+    game.move(player, new Move(Worker.WORKER_4, Field.f1));
     game.build(player, Worker.WORKER_1, BuildingType.MINE, [
         new Resource(Field.m1, ResourceType.WOOD),
         new Resource(Field.m1, ResourceType.WOOD),
@@ -92,7 +93,7 @@ test("Single player game finishes eventually", () => {
         new Resource(Field.m1, ResourceType.METAL),
         new Resource(Field.m1, ResourceType.METAL),
     ]);
-    game.move(player, Worker.WORKER_4, Field.t2);
+    game.move(player, new Move(Worker.WORKER_4, Field.t2));
     game.deploy(player, Worker.WORKER_2, Mech.MECH_2, [
         new Resource(Field.m1, ResourceType.METAL),
         new Resource(Field.m1, ResourceType.METAL),

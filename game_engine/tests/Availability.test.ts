@@ -5,10 +5,9 @@ import {
     availableMoveOptions,
     availableProduceOptions,
     availableTradeOptions,
-    availableUpgradeOptions,
+    availableUpgradeOptions
 } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
-import { Building } from "../src/Building";
 import { BuildingType } from "../src/BuildingType";
 import { BuildEvent } from "../src/Events/BuildEvent";
 import { DeployEvent } from "../src/Events/DeployEvent";
@@ -137,15 +136,15 @@ describe("Options", () => {
 
         test("Players can build two building for the starting position", () => {
             expect(availableBuildOptions(log, blackIndustrialPlayer)).toEqual([
-                new RewardOnlyOption(),
-                new BuildOption(new Building(BuildingType.MONUMENT, Field.m6)),
-                new BuildOption(new Building(BuildingType.MILL, Field.m6)),
-                new BuildOption(new Building(BuildingType.MINE, Field.m6)),
-                new BuildOption(new Building(BuildingType.ARMORY, Field.m6)),
-                new BuildOption(new Building(BuildingType.MONUMENT, Field.t8)),
-                new BuildOption(new Building(BuildingType.MILL, Field.t8)),
-                new BuildOption(new Building(BuildingType.MINE, Field.t8)),
-                new BuildOption(new Building(BuildingType.ARMORY, Field.t8)),
+                new RewardOnlyOption(BottomAction.BUILD),
+                new BuildOption(Worker.WORKER_1, BuildingType.MONUMENT),
+                new BuildOption(Worker.WORKER_1, BuildingType.MILL),
+                new BuildOption(Worker.WORKER_1, BuildingType.MINE),
+                new BuildOption(Worker.WORKER_1, BuildingType.ARMORY),
+                new BuildOption(Worker.WORKER_2, BuildingType.MONUMENT),
+                new BuildOption(Worker.WORKER_2, BuildingType.MILL),
+                new BuildOption(Worker.WORKER_2, BuildingType.MINE),
+                new BuildOption(Worker.WORKER_2, BuildingType.ARMORY),
             ]);
         });
 
@@ -155,9 +154,9 @@ describe("Options", () => {
                 .add(new BuildEvent(blackIndustrialPlayerId, Field.t8, BuildingType.MILL))
                 .add(new DeployEvent(blackIndustrialPlayerId, Worker.WORKER_3, Field.F));
             expect(availableBuildOptions(log, blackIndustrialPlayer)).toEqual([
-                new RewardOnlyOption(),
-                new BuildOption(new Building(BuildingType.MONUMENT, Field.F)),
-                new BuildOption(new Building(BuildingType.MINE, Field.F)),
+                new RewardOnlyOption(BottomAction.BUILD),
+                new BuildOption(Worker.WORKER_3, BuildingType.MONUMENT),
+                new BuildOption(Worker.WORKER_3, BuildingType.MINE),
             ]);
         });
 
@@ -186,15 +185,15 @@ describe("Options", () => {
 
         test("Players can deploy for mechs in two positions for starting position", () => {
             expect(availableDeployOptions(log, blackIndustrialPlayer)).toEqual([
-                new RewardOnlyOption(),
-                new DeployOption(Field.m6, Mech.MECH_1),
-                new DeployOption(Field.t8, Mech.MECH_1),
-                new DeployOption(Field.m6, Mech.MECH_2),
-                new DeployOption(Field.t8, Mech.MECH_2),
-                new DeployOption(Field.m6, Mech.MECH_3),
-                new DeployOption(Field.t8, Mech.MECH_3),
-                new DeployOption(Field.m6, Mech.MECH_4),
-                new DeployOption(Field.t8, Mech.MECH_4),
+                new RewardOnlyOption(BottomAction.DEPLOY),
+                new DeployOption(Worker.WORKER_1, Mech.MECH_1),
+                new DeployOption(Worker.WORKER_2, Mech.MECH_1),
+                new DeployOption(Worker.WORKER_1, Mech.MECH_2),
+                new DeployOption(Worker.WORKER_2, Mech.MECH_2),
+                new DeployOption(Worker.WORKER_1, Mech.MECH_3),
+                new DeployOption(Worker.WORKER_2, Mech.MECH_3),
+                new DeployOption(Worker.WORKER_1, Mech.MECH_4),
+                new DeployOption(Worker.WORKER_2, Mech.MECH_4),
             ]);
         });
 

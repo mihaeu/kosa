@@ -23,6 +23,7 @@ import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
 import { Field } from "./Field";
 import { Player } from "./Player";
+import { Recruit } from "./Recruit";
 import { Resource } from "./Resource";
 import { Resources } from "./Resources";
 import { ResourceType } from "./ResourceType";
@@ -31,6 +32,7 @@ import { TopAction } from "./TopAction";
 import { Mech } from "./Units/Mech";
 import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
+import { Upgrade } from "./Upgrade";
 
 export class GameInfo {
     public static players(log: EventLog): Player[] {
@@ -114,6 +116,18 @@ export class GameInfo {
             GameInfo.resourceByType(ResourceType.OIL, availableResources),
             GameInfo.resourceByType(ResourceType.WOOD, availableResources),
         );
+    }
+
+    public static upgrades(log: EventLog, player: Player): Upgrade[] {
+        return _.map((event: UpgradeEvent) => {
+            return new Upgrade(event.topAction, event.bottomAction);
+        }, log.filterBy(player.playerId, UpgradeEvent) as UpgradeEvent[]);
+    }
+
+    public static recruits(log: EventLog, player: Player): Recruit[] {
+        return _.map((event: EnlistEvent) => {
+            return new Recruit(event.recruitReward, event.bottomAction);
+        }, log.filterBy(player.playerId, EnlistEvent) as EnlistEvent[]);
     }
 
     public static buildings(log: EventLog, player: Player): Building[] {

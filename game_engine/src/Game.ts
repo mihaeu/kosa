@@ -11,7 +11,7 @@ import {
     assertPower,
     assertUnitDeployed,
     assertUnitNotDeployed,
-    availableBottomActions,
+    availableBottomActions
 } from "./Availability";
 import { BottomAction } from "./BottomAction";
 import { BuildingType } from "./BuildingType";
@@ -26,6 +26,7 @@ import { EventLog } from "./Events/EventLog";
 import { GainResourceEvent } from "./Events/GainResourceEvent";
 import { GameEndEvent } from "./Events/GameEndEvent";
 import { MoveEvent } from "./Events/MoveEvent";
+import { NewPlayerEvent } from "./Events/NewPlayerEvent";
 import { PassEvent } from "./Events/PassEvent";
 import { PopularityEvent } from "./Events/PopularityEvent";
 import { PowerEvent } from "./Events/PowerEvent";
@@ -36,8 +37,21 @@ import { Field } from "./Field";
 import { FieldType } from "./FieldType";
 import { GameInfo } from "./GameInfo";
 import { GameMap } from "./GameMap";
-import { IllegalActionError } from "./IllegalActionError";
 import { IllegalMoveError } from "./IllegalMoveError";
+import { Move } from "./Move";
+import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
+import { BolsterPowerOption } from "./Options/BolsterPowerOption";
+import { BuildOption } from "./Options/BuildOption";
+import { DeployOption } from "./Options/DeployOption";
+import { EnlistOption } from "./Options/EnlistOption";
+import { GainCoinOption } from "./Options/GainCoinOption";
+import { MoveOption } from "./Options/MoveOption";
+import { Option } from "./Options/Option";
+import { ProduceOption } from "./Options/ProduceOption";
+import { RewardOnlyOption } from "./Options/RewardOnlyOption";
+import { TradePopularityOption } from "./Options/TradePopularityOption";
+import { TradeResourcesOption } from "./Options/TradeResourcesOption";
+import { UpgradeOption } from "./Options/UpgradeOption";
 import { Player } from "./Player";
 import { RecruitReward } from "./RecruitReward";
 import { Resource } from "./Resource";
@@ -49,14 +63,13 @@ import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
 
 export class Game {
+    public static PRODUCE_POWER_THRESHOLD = 4;
+    public static PRODUCE_POPULARITY_THRESHOLD = 6;
+    public static PRODUCE_COINS_THRESHOLD = 8;
+
     private static MAX_POWER = 16;
     private static MAX_POPULARITY = 18;
-
     private static MAX_WORKERS = 8;
-    private static PRODUCE_POWER_THRESHOLD = 4;
-    private static PRODUCE_POPULARITY_THRESHOLD = 6;
-
-    private static PRODUCE_COINS_THRESHOLD = 8;
 
     private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
         if (!GameMap.isReachable(currentLocation, destination)) {
@@ -71,21 +84,90 @@ export class Game {
         this.log = log;
 
         for (const player of this.players) {
+            log.add(new NewPlayerEvent(player.playerId, player));
             player.setupEvents.forEach((event) => this.log.add(event));
             player.playerMat.setupEvents.forEach((event) => this.log.add(event));
         }
     }
 
-    public move(player: Player, unit: Unit, destination: Field) {
-        assertActionCanBeTaken(this.log, this.players, player, TopAction.MOVE);
-        assertUnitDeployed(this.log, player, unit);
+    public actionFromOption(player: Player, option: Option) {
+        if (option instanceof BolsterCombatCardsOption) {
+            this.bolsterCombatCards(player);
+        }
 
-        const currentLocation = GameInfo.unitLocation(this.log, player, unit);
-        Game.assertLegalMove(currentLocation, destination, unit);
+        if (option instanceof BolsterPowerOption) {
+            this.bolsterPower(player);
+        }
 
-        this.log
-            .add(new ActionEvent(player.playerId, TopAction.MOVE))
-            .add(new MoveEvent(player.playerId, unit, destination));
+        if (option instanceof BuildOption) {
+            this.build(player, option.worker, option.buildingType, GameInfo.availableResources(this.log, player));
+        }
+
+        if (option instanceof DeployOption) {
+            this.deploy(player, option.worker, option.mech, GameInfo.availableResources(this.log, player));
+        }
+
+        if (option instanceof EnlistOption) {
+            this.enlist(player, option.bottomAction, option.reward, GameInfo.availableResources(this.log, player));
+        }
+
+        if (option instanceof GainCoinOption) {
+            this.gainCoins(player)
+        }
+
+        if (option instanceof MoveOption) {
+            // @ts-ignore
+            this.move(player, ...option.moves);
+        }
+
+        if (option instanceof ProduceOption) {
+            // @ts-ignore
+            this.produce(player, ...option.locations);
+        }
+
+        if (option instanceof TradePopularityOption) {
+            this.tradePopularity(player);
+        }
+
+        if (option instanceof TradeResourcesOption) {
+            this.tradeResources(
+                player,
+                // @ts-ignore
+                GameInfo.allWorkers(this.log, player).pop(),
+                option.resource1,
+                option.resource2,
+            );
+        }
+
+        if (option instanceof UpgradeOption) {
+            this.upgrade(
+                player,
+                option.upgrade.topAction,
+                option.upgrade.bottomAction,
+                GameInfo.availableResources(this.log, player),
+            );
+        }
+
+        if (option instanceof RewardOnlyOption) {
+            this.log
+                .add(new ActionEvent(player.playerId, option.bottomAction))
+                .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(option.bottomAction)));
+        }
+    }
+
+    public move(player: Player, ...moves: Move[]) {
+        const moveEvents = [];
+        for (const move of moves) {
+            assertActionCanBeTaken(this.log, this.players, player, TopAction.MOVE);
+            assertUnitDeployed(this.log, player, move.unit);
+
+            const currentLocation = GameInfo.unitLocation(this.log, player, move.unit);
+            Game.assertLegalMove(currentLocation, move.destination, move.unit);
+            moveEvents.push(new MoveEvent(player.playerId, move.unit, move.destination));
+        }
+
+        this.log.add(new ActionEvent(player.playerId, TopAction.MOVE));
+        moveEvents.forEach((event: MoveEvent) => this.log.add(event));
         return this.pass(player, TopAction.MOVE);
     }
 
@@ -139,24 +221,21 @@ export class Game {
         return this.pass(player, TopAction.TRADE);
     }
 
-    public produce(player: Player, field1: Field, field2: Field): Game {
+    public produce(player: Player, ...fields: Field[]): Game {
         assertActionCanBeTaken(this.log, this.players, player, TopAction.PRODUCE);
-        assertLocationControlledByPlayer(this.log, player, field1);
-        assertLocationControlledByPlayer(this.log, player, field2);
-        if (field1 === field2) {
-            throw new IllegalActionError(`Field 1 (${field1}) and Field 2 (${field2}) are the same`);
-        }
+        fields.forEach((field) => assertLocationControlledByPlayer(this.log, player, field));
+
         const allWorkersCount = GameInfo.allWorkers(this.log, player).length;
         if (allWorkersCount >= Game.PRODUCE_POWER_THRESHOLD) {
             assertPower(this.log, player, 1);
         }
 
         if (allWorkersCount >= Game.PRODUCE_POPULARITY_THRESHOLD) {
-            assertPopularity(this.log, player, 1);
+            assertPopularity(this.log, player);
         }
 
         if (allWorkersCount >= Game.PRODUCE_COINS_THRESHOLD) {
-            assertCoins(this.log, player, 1);
+            assertCoins(this.log, player);
         }
 
         this.log.add(new ActionEvent(player.playerId, TopAction.PRODUCE));
@@ -173,8 +252,7 @@ export class Game {
             this.log.add(new CoinEvent(player.playerId, -1));
         }
 
-        this.produceOnField(player, field1);
-        this.produceOnField(player, field2);
+        fields.forEach((field) => this.produceOnField(player, field));
         return this.pass(player, TopAction.PRODUCE);
     }
 
@@ -192,7 +270,8 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.BUILD))
             .add(new SpendResourceEvent(player.playerId, resources))
-            .add(new BuildEvent(player.playerId, location, building));
+            .add(new BuildEvent(player.playerId, location, building))
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.BUILD)));
         return this.pass(player, BottomAction.BUILD);
     }
 
@@ -221,7 +300,8 @@ export class Game {
         const location = GameInfo.unitLocation(this.log, player, worker);
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.DEPLOY))
-            .add(new DeployEvent(player.playerId, mech, location));
+            .add(new DeployEvent(player.playerId, mech, location))
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.DEPLOY)));
         return this.pass(player, BottomAction.DEPLOY);
     }
 
@@ -238,7 +318,8 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
             .addIfNew(new EnlistEvent(player.playerId, recruitReward, bottomAction))
-            .add(new SpendResourceEvent(player.playerId, resources));
+            .add(new SpendResourceEvent(player.playerId, resources))
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.ENLIST)));
         return this.pass(player, BottomAction.ENLIST);
     }
 
@@ -254,7 +335,8 @@ export class Game {
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.UPGRADE))
-            .add(new UpgradeEvent(player.playerId, topAction, bottomAction));
+            .add(new UpgradeEvent(player.playerId, topAction, bottomAction))
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.UPGRADE)));
         return this.pass(player, BottomAction.UPGRADE);
     }
 

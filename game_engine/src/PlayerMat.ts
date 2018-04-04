@@ -26,6 +26,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 2), new CoinEvent(playerId, 5)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.UPGRADE, 1)
+                .set(BottomAction.BUILD, 2)
+                .set(BottomAction.ENLIST, 3),
         );
     }
 
@@ -47,6 +51,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 4), new CoinEvent(playerId, 7)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.UPGRADE, 2)
+                .set(BottomAction.BUILD, 3)
+                .set(BottomAction.ENLIST, 1),
         );
     }
 
@@ -68,6 +76,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 2), new CoinEvent(playerId, 4)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.UPGRADE, 3)
+                .set(BottomAction.DEPLOY, 2)
+                .set(BottomAction.BUILD, 1),
         );
     }
 
@@ -89,6 +101,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 3), new CoinEvent(playerId, 6)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.DEPLOY, 2)
+                .set(BottomAction.BUILD, 2)
+                .set(BottomAction.ENLIST, 2),
         );
     }
 
@@ -110,6 +126,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 2), new CoinEvent(playerId, 6)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.UPGRADE, 1)
+                .set(BottomAction.DEPLOY, 3)
+                .set(BottomAction.ENLIST, 2),
         );
     }
 
@@ -131,6 +151,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 3), new CoinEvent(playerId, 5)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.UPGRADE, 3)
+                .set(BottomAction.DEPLOY, 1)
+                .set(BottomAction.BUILD, 2),
         );
     }
 
@@ -153,6 +177,10 @@ export class PlayerMat {
             [new PopularityEvent(playerId, 3), new CoinEvent(playerId, 4)],
             actionMap,
             bottomActionBaseCosts,
+            this.defaultRewards()
+                .set(BottomAction.DEPLOY, 3)
+                .set(BottomAction.BUILD, 1)
+                .set(BottomAction.ENLIST, 2),
         );
     }
 
@@ -170,6 +198,7 @@ export class PlayerMat {
         public readonly setupEvents: Event[] = [],
         private readonly actionMap: Map<TopAction, BottomAction>,
         public readonly bottomActionBaseCost: Map<BottomAction, ResourceCost>,
+        public readonly bottomActionReward: Map<BottomAction, number>,
         public readonly topActionBaseCost: Map<TopAction, number> = PlayerMat.topActionBaseCost(),
     ) {}
 
@@ -196,5 +225,13 @@ export class PlayerMat {
     public bottomActionCost(bottomAction: BottomAction): ResourceCost {
         // @ts-ignore
         return this.bottomActionBaseCost.get(bottomAction);
+    }
+
+    private static defaultRewards(): Map<BottomAction, number> {
+        return new Map<BottomAction, number>()
+            .set(BottomAction.BUILD, 0)
+            .set(BottomAction.UPGRADE, 0)
+            .set(BottomAction.ENLIST, 0)
+            .set(BottomAction.DEPLOY, 0);
     }
 }

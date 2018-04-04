@@ -1,7 +1,8 @@
+import { BottomAction } from "../BottomAction";
 import { Option } from "./Option";
 
 export class RewardOnlyOption extends Option {
-    constructor() {
+    constructor(public readonly bottomAction: BottomAction) {
         super();
     }
 }

@@ -27,6 +27,7 @@ export class GameMap {
             : connections
                   .filter(Connection.isReachable)
                   .map((connection: Connection) => connection.field)
+                  .filter(Field.isNotHomeBase)
                   .filter(Field.isNotLake);
     }
 

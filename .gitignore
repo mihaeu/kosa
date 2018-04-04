@@ -3,3 +3,4 @@ node_modules
 *.js
 *.js.map
 yarn-error.log
+game_engine/bin

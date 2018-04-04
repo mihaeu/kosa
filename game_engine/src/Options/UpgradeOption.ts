@@ -1,9 +1,8 @@
-import { BottomAction } from "../BottomAction";
-import { TopAction } from "../TopAction";
+import { Upgrade } from "../Upgrade";
 import { Option } from "./Option";
 
 export class UpgradeOption extends Option {
-    constructor(public readonly topAction: TopAction, public readonly bottomAction: BottomAction) {
+    constructor(public readonly upgrade: Upgrade) {
         super();
     }
 }

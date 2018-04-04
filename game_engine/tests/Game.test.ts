@@ -17,6 +17,7 @@ import { UpgradeEvent } from "../src/Events/UpgradeEvent";
 import { Field } from "../src/Field";
 import { Game } from "../src/Game";
 import { GameInfo } from "../src/GameInfo";
+import { Move } from "../src/Move";
 import { Player } from "../src/Player";
 import { PlayerFactory } from "../src/PlayerFactory";
 import { PlayerId } from "../src/PlayerId";
@@ -209,25 +210,27 @@ test("Black character starts on black with two adjacent workers", () => {
 });
 
 test("Black character can move from base to encounter on v6 in 2 moves (3 turns)", () => {
-    game.move(blackIndustrialPlayer, Character.CHARACTER, Field.m6);
+    game.move(blackIndustrialPlayer, new Move(Character.CHARACTER, Field.m6));
     expect(GameInfo.unitLocation(log, blackIndustrialPlayer, Character.CHARACTER)).toBe(Field.m6);
     game.produce(greenAgriculturalPlayer, Field.m1, Field.f1);
 
     game.produce(blackIndustrialPlayer, Field.m6, Field.t8);
     game.bolsterPower(greenAgriculturalPlayer);
 
-    game.move(blackIndustrialPlayer, Character.CHARACTER, Field.v6);
+    game.move(blackIndustrialPlayer, new Move(Character.CHARACTER, Field.v6));
     expect(GameInfo.unitLocation(log, blackIndustrialPlayer, Character.CHARACTER)).toBe(Field.v6);
 });
 
 test("Player cannot move a mech which has not been deployed", () => {
     const expectedError = /MECH_1 has not been deployed yet./;
-    expect(() => game.move(blackIndustrialPlayer, Mech.MECH_1, Field.black)).toThrowError(expectedError);
+    expect(() => game.move(blackIndustrialPlayer, new Move(Mech.MECH_1, Field.black)))
+        .toThrowError(expectedError);
 });
 
 test("Black character cannot move to another homebase", () => {
     const expectedError = /CHARACTER is not allowed to move from black:HOMEBASE to green:HOMEBASE./;
-    expect(() => game.move(blackIndustrialPlayer, Character.CHARACTER, Field.green)).toThrowError(expectedError);
+    expect(() => game.move(blackIndustrialPlayer, new Move(Character.CHARACTER, Field.green)))
+        .toThrowError(expectedError);
 });
 
 test("Player can gain one coin", () => {
