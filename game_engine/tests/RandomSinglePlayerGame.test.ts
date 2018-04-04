@@ -8,7 +8,7 @@ import {
     availableProduceOptions,
     availableTopActions,
     availableTradeOptions,
-    availableUpgradeOptions
+    availableUpgradeOptions,
 } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
 import { EventLog } from "../src/Events/EventLog";
@@ -27,12 +27,12 @@ test("Random single player game finishes eventually", () => {
     const players = [player];
     const game = new Game(players, log);
 
-    const randomAction = (actions: TopAction[]|BottomAction[]|Option[]): TopAction|BottomAction|Option => {
+    const randomAction = (actions: TopAction[] | BottomAction[] | Option[]): TopAction | BottomAction | Option => {
         return actions[Math.floor(Math.random() * Math.floor(actions.length))];
     };
 
     let count = 0;
-    while (GameInfo.stars(log, player).length < 2) {
+    while (GameInfo.stars(log, player).length < 1) {
         count += 1;
         const topActions = availableTopActions(log, players, player);
         if (topActions.length > 0) {
@@ -72,5 +72,5 @@ test("Random single player game finishes eventually", () => {
             }
         }
     }
-    expect(GameInfo.stars(log, player).length).toBe(2);
+    expect(GameInfo.stars(log, player).length).toBe(1);
 });

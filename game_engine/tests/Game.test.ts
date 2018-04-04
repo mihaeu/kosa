@@ -223,14 +223,14 @@ test("Black character can move from base to encounter on v6 in 2 moves (3 turns)
 
 test("Player cannot move a mech which has not been deployed", () => {
     const expectedError = /MECH_1 has not been deployed yet./;
-    expect(() => game.move(blackIndustrialPlayer, new Move(Mech.MECH_1, Field.black)))
-        .toThrowError(expectedError);
+    expect(() => game.move(blackIndustrialPlayer, new Move(Mech.MECH_1, Field.black))).toThrowError(expectedError);
 });
 
 test("Black character cannot move to another homebase", () => {
     const expectedError = /CHARACTER is not allowed to move from black:HOMEBASE to green:HOMEBASE./;
-    expect(() => game.move(blackIndustrialPlayer, new Move(Character.CHARACTER, Field.green)))
-        .toThrowError(expectedError);
+    expect(() => game.move(blackIndustrialPlayer, new Move(Character.CHARACTER, Field.green))).toThrowError(
+        expectedError,
+    );
 });
 
 test("Player can gain one coin", () => {

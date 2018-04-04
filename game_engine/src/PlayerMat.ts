@@ -193,6 +193,14 @@ export class PlayerMat {
         return topActionBaseCost;
     }
 
+    private static defaultRewards(): Map<BottomAction, number> {
+        return new Map<BottomAction, number>()
+            .set(BottomAction.BUILD, 0)
+            .set(BottomAction.UPGRADE, 0)
+            .set(BottomAction.ENLIST, 0)
+            .set(BottomAction.DEPLOY, 0);
+    }
+
     private constructor(
         public readonly startPosition: 1 | 2 | 3 | 4 | 5 | 6 | 7, // the actual game uses 1, 2, 2a, 3, 3a, 4, 5
         public readonly setupEvents: Event[] = [],
@@ -225,13 +233,5 @@ export class PlayerMat {
     public bottomActionCost(bottomAction: BottomAction): ResourceCost {
         // @ts-ignore
         return this.bottomActionBaseCost.get(bottomAction);
-    }
-
-    private static defaultRewards(): Map<BottomAction, number> {
-        return new Map<BottomAction, number>()
-            .set(BottomAction.BUILD, 0)
-            .set(BottomAction.UPGRADE, 0)
-            .set(BottomAction.ENLIST, 0)
-            .set(BottomAction.DEPLOY, 0);
     }
 }

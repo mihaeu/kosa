@@ -119,15 +119,21 @@ export class GameInfo {
     }
 
     public static upgrades(log: EventLog, player: Player): Upgrade[] {
-        return _.map((event: UpgradeEvent) => {
-            return new Upgrade(event.topAction, event.bottomAction);
-        }, log.filterBy(player.playerId, UpgradeEvent) as UpgradeEvent[]);
+        return _.map(
+            (event: UpgradeEvent) => {
+                return new Upgrade(event.topAction, event.bottomAction);
+            },
+            log.filterBy(player.playerId, UpgradeEvent) as UpgradeEvent[],
+        );
     }
 
     public static recruits(log: EventLog, player: Player): Recruit[] {
-        return _.map((event: EnlistEvent) => {
-            return new Recruit(event.recruitReward, event.bottomAction);
-        }, log.filterBy(player.playerId, EnlistEvent) as EnlistEvent[]);
+        return _.map(
+            (event: EnlistEvent) => {
+                return new Recruit(event.recruitReward, event.bottomAction);
+            },
+            log.filterBy(player.playerId, EnlistEvent) as EnlistEvent[],
+        );
     }
 
     public static buildings(log: EventLog, player: Player): Building[] {

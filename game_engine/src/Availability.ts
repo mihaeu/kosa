@@ -93,6 +93,29 @@ export function availableBottomActions(log: EventLog, players: Player[], player:
     return _.filter(isBottomActionAvailable(log, players, player), Object.keys(BottomAction) as BottomAction[]);
 }
 
+export function availableOptionsForAction(action: TopAction | BottomAction, log: EventLog, player: Player): Option[] {
+    switch (action) {
+        case TopAction.TRADE:
+            return availableTradeOptions(log, player);
+        case TopAction.BOLSTER:
+            return availableBolsterOptions(log, player);
+        case TopAction.PRODUCE:
+            return availableProduceOptions(log, player);
+        case TopAction.MOVE:
+            return availableMoveOptions(log, player);
+        case BottomAction.ENLIST:
+            return availableEnlistOptions(log, player);
+        case BottomAction.UPGRADE:
+            return availableUpgradeOptions(log, player);
+        case BottomAction.DEPLOY:
+            return availableDeployOptions(log, player);
+        case BottomAction.BUILD:
+            return availableBuildOptions(log, player);
+        default:
+            return [];
+    }
+}
+
 function getCombinations<T>(array: T[], size: number, start: number, initialStuff: T[], output: T[][]) {
     if (initialStuff.length >= size) {
         output.push(initialStuff);
@@ -131,10 +154,11 @@ export function availableTradeOptions(log: EventLog, player: Player): Option[] {
 function fieldsWithWorkers(log: EventLog, player: Player): Field[] {
     const fields: Field[] = [];
     for (const [unit, field] of GameInfo.units(log, player)) {
-        if (_.contains(field, fields)
-            || !(unit instanceof Worker)
-            || field.type === FieldType.HOMEBASE
-            || field.type === FieldType.LAKE
+        if (
+            _.contains(field, fields) ||
+            !(unit instanceof Worker) ||
+            field.type === FieldType.HOMEBASE ||
+            field.type === FieldType.LAKE
         ) {
             continue;
         }
@@ -337,7 +361,7 @@ export function assertActionCanBeTaken(
     log: EventLog,
     players: Player[],
     player: Player,
-    currentAction: TopAction | BottomAction
+    currentAction: TopAction | BottomAction,
 ): void {
     if (GameInfo.gameJustStarted(log) && !GameInfo.playerIsFirstPlayer(players, player)) {
         throw new IllegalActionError("You are not the starting player.");

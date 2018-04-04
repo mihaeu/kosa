@@ -11,7 +11,7 @@ import {
     assertPower,
     assertUnitDeployed,
     assertUnitNotDeployed,
-    availableBottomActions
+    availableBottomActions,
 } from "./Availability";
 import { BottomAction } from "./BottomAction";
 import { BuildingType } from "./BuildingType";
@@ -37,7 +37,6 @@ import { Field } from "./Field";
 import { FieldType } from "./FieldType";
 import { GameInfo } from "./GameInfo";
 import { GameMap } from "./GameMap";
-import { IllegalMoveError } from "./IllegalMoveError";
 import { Move } from "./Move";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
@@ -59,7 +58,6 @@ import { ResourceType } from "./ResourceType";
 import { Star } from "./Star";
 import { TopAction } from "./TopAction";
 import { Mech } from "./Units/Mech";
-import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
 
 export class Game {
@@ -71,19 +69,11 @@ export class Game {
     private static MAX_POPULARITY = 18;
     private static MAX_WORKERS = 8;
 
-    private static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
-        if (!GameMap.isReachable(currentLocation, destination)) {
-            throw new IllegalMoveError(unit, currentLocation, destination);
-        }
-    }
-
-    public log: EventLog;
-
-    public constructor(private readonly players: Player[], log: EventLog = new EventLog()) {
+    public constructor(private readonly players: Player[], public log: EventLog = new EventLog()) {
         this.players = players;
         this.log = log;
 
-        for (const player of this.players) {
+        for (const player of players) {
             log.add(new NewPlayerEvent(player.playerId, player));
             player.setupEvents.forEach((event) => this.log.add(event));
             player.playerMat.setupEvents.forEach((event) => this.log.add(event));
@@ -112,7 +102,7 @@ export class Game {
         }
 
         if (option instanceof GainCoinOption) {
-            this.gainCoins(player)
+            this.gainCoins(player);
         }
 
         if (option instanceof MoveOption) {
@@ -162,7 +152,7 @@ export class Game {
             assertUnitDeployed(this.log, player, move.unit);
 
             const currentLocation = GameInfo.unitLocation(this.log, player, move.unit);
-            Game.assertLegalMove(currentLocation, move.destination, move.unit);
+            GameMap.assertLegalMove(currentLocation, move.destination, move.unit);
             moveEvents.push(new MoveEvent(player.playerId, move.unit, move.destination));
         }
 

@@ -5,7 +5,7 @@ import {
     availableMoveOptions,
     availableProduceOptions,
     availableTradeOptions,
-    availableUpgradeOptions
+    availableUpgradeOptions,
 } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
 import { BuildingType } from "../src/BuildingType";

@@ -1,6 +1,8 @@
 import { Connection } from "./Connection";
 import { Field } from "./Field";
 import { FieldConnection } from "./FieldConnection";
+import { IllegalMoveError } from "./IllegalMoveError";
+import { Unit } from "./Units/Unit";
 
 export class GameMap {
     public static isReachable(start: Field, end: Field, distance: number = 1): boolean {
@@ -29,6 +31,12 @@ export class GameMap {
                   .map((connection: Connection) => connection.field)
                   .filter(Field.isNotHomeBase)
                   .filter(Field.isNotLake);
+    }
+
+    public static assertLegalMove(currentLocation: Field, destination: Field, unit: Unit): void {
+        if (!GameMap.isReachable(currentLocation, destination)) {
+            throw new IllegalMoveError(unit, currentLocation, destination);
+        }
     }
 
     private static fields: Map<Field, Connection[]> = GameMap.init();
