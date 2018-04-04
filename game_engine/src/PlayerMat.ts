@@ -234,4 +234,9 @@ export class PlayerMat {
         // @ts-ignore
         return this.bottomActionBaseCost.get(bottomAction);
     }
+
+    public bottomReward(bottomAction: BottomAction): number {
+        // @ts-ignore
+        return this.bottomActionReward.get(bottomAction);
+    }
 }

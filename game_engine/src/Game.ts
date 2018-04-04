@@ -33,10 +33,12 @@ import { PowerEvent } from "./Events/PowerEvent";
 import { SpendResourceEvent } from "./Events/SpendResourceEvent";
 import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
+import { Faction } from "./Faction";
 import { Field } from "./Field";
 import { FieldType } from "./FieldType";
 import { GameInfo } from "./GameInfo";
 import { GameMap } from "./GameMap";
+import { GameSetupError } from "./GameSetupError";
 import { Move } from "./Move";
 import { BolsterCombatCardsOption } from "./Options/BolsterCombatCardsOption";
 import { BolsterPowerOption } from "./Options/BolsterPowerOption";
@@ -52,6 +54,7 @@ import { TradePopularityOption } from "./Options/TradePopularityOption";
 import { TradeResourcesOption } from "./Options/TradeResourcesOption";
 import { UpgradeOption } from "./Options/UpgradeOption";
 import { Player } from "./Player";
+import { PlayerMat } from "./PlayerMat";
 import { RecruitReward } from "./RecruitReward";
 import { Resource } from "./Resource";
 import { ResourceType } from "./ResourceType";
@@ -69,7 +72,37 @@ export class Game {
     private static MAX_POPULARITY = 18;
     private static MAX_WORKERS = 8;
 
+    private static MAX_PLAYERS = 7;
+
+    private static assertPlayerCount(players: Player[]): void {
+        if (players.length < 1 || players.length > Game.MAX_PLAYERS) {
+            throw new GameSetupError("The game requires 1-7 players.");
+        }
+    }
+
+    private static assertPlayersHaveDifferentIds(players: Player[]): void {
+        if (players.length !== _.uniq(_.pluck("playerId", players)).length) {
+            throw new GameSetupError("Some players have identical PlayerIds.");
+        }
+    }
+
+    private static assertFactionAndPlayerMatMatching(players: Player[]): void {
+        const playerMats: PlayerMat[] = [];
+        const factions: Faction[] = [];
+        for (const player of players) {
+            if (_.contains(player.faction, factions) || _.contains(player.playerMat, playerMats)) {
+                throw new GameSetupError("Each faction and player mat is only allowed once.");
+            }
+            factions.push(player.faction);
+            playerMats.push(player.playerMat);
+        }
+    }
+
     public constructor(private readonly players: Player[], public log: EventLog = new EventLog()) {
+        Game.assertPlayerCount(players);
+        Game.assertPlayersHaveDifferentIds(players);
+        Game.assertFactionAndPlayerMatMatching(players);
+
         this.players = players;
         this.log = log;
 
@@ -141,7 +174,7 @@ export class Game {
         if (option instanceof RewardOnlyOption) {
             this.log
                 .add(new ActionEvent(player.playerId, option.bottomAction))
-                .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(option.bottomAction)));
+                .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(option.bottomAction)));
         }
     }
 
@@ -261,7 +294,7 @@ export class Game {
             .add(new ActionEvent(player.playerId, BottomAction.BUILD))
             .add(new SpendResourceEvent(player.playerId, resources))
             .add(new BuildEvent(player.playerId, location, building))
-            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.BUILD)));
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.BUILD)));
         return this.pass(player, BottomAction.BUILD);
     }
 
@@ -291,7 +324,7 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.DEPLOY))
             .add(new DeployEvent(player.playerId, mech, location))
-            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.DEPLOY)));
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.DEPLOY)));
         return this.pass(player, BottomAction.DEPLOY);
     }
 
@@ -309,7 +342,7 @@ export class Game {
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
             .addIfNew(new EnlistEvent(player.playerId, recruitReward, bottomAction))
             .add(new SpendResourceEvent(player.playerId, resources))
-            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.ENLIST)));
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.ENLIST)));
         return this.pass(player, BottomAction.ENLIST);
     }
 
@@ -326,7 +359,7 @@ export class Game {
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.UPGRADE))
             .add(new UpgradeEvent(player.playerId, topAction, bottomAction))
-            .add(new CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction.UPGRADE)));
+            .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.UPGRADE)));
         return this.pass(player, BottomAction.UPGRADE);
     }
 

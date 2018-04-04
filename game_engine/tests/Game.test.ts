@@ -1,3 +1,4 @@
+import * as _ from "ramda";
 import { availableBottomActions, availableTopActions } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
 import { Building } from "../src/Building";
@@ -736,6 +737,47 @@ test("Player cannot gain more than 18 popularity", () => {
     game.log.add(new PopularityEvent(blackIndustrialPlayerId, 16)); // total now 18
     game.tradePopularity(blackIndustrialPlayer);
     expect(GameInfo.popularity(log, blackIndustrialPlayer)).toBe(18);
+});
+
+test("Cannot start a game without players", () => {
+    expect(() => new Game([])).toThrowError(/The game requires 1-7 players./);
+});
+
+test("Cannot start a game with more than 8 players", () => {
+    const id = new PlayerId(1);
+    const players = _.map(() => PlayerFactory.white(id, PlayerMat.agricultural(id)), _.range(0, 8));
+    expect(() => new Game(players)).toThrowError(/The game requires 1-7 players./);
+});
+
+test("Cannot start a game where two players choose the same faction", () => {
+    const onePlayer = PlayerFactory.green(
+        blackIndustrialPlayerId,
+        PlayerMat.agricultural(blackIndustrialPlayerId),
+    );
+    const otherPlayer = PlayerFactory.green(
+        greenAgriculturalPlayerId,
+        PlayerMat.industrial(greenAgriculturalPlayerId),
+    );
+    expect(() => new Game([onePlayer, otherPlayer]))
+        .toThrowError(/Each faction and player mat is only allowed once./);
+});
+
+test("Cannot start a game where two players choose the same faction", () => {
+    const onePlayer = PlayerFactory.green(
+        blackIndustrialPlayerId,
+        PlayerMat.agricultural(blackIndustrialPlayerId),
+    );
+    const otherPlayer = PlayerFactory.black(
+        greenAgriculturalPlayerId,
+        PlayerMat.agricultural(blackIndustrialPlayerId),
+    );
+    expect(() => new Game([onePlayer, otherPlayer]))
+        .toThrowError(/Each faction and player mat is only allowed once./);
+});
+
+test("Cannot start a game where some players have identical ids", () => {
+    const otherPlayer = PlayerFactory.green(blackIndustrialPlayerId, PlayerMat.agricultural(blackIndustrialPlayerId));
+    expect(() => new Game([blackIndustrialPlayer, otherPlayer])).toThrowError(/Some players have identical PlayerIds./);
 });
 
 test.skip("Buildings cannot be placed on home territories", fail);

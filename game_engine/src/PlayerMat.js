@@ -161,5 +161,9 @@ class PlayerMat {
         // @ts-ignore
         return this.bottomActionBaseCost.get(bottomAction);
     }
+    bottomReward(bottomAction) {
+        // @ts-ignore
+        return this.bottomActionReward.get(bottomAction);
+    }
 }
 exports.PlayerMat = PlayerMat;

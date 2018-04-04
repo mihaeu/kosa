@@ -24,6 +24,7 @@ const UpgradeEvent_1 = require("./Events/UpgradeEvent");
 const FieldType_1 = require("./FieldType");
 const GameInfo_1 = require("./GameInfo");
 const GameMap_1 = require("./GameMap");
+const GameSetupError_1 = require("./GameSetupError");
 const BolsterCombatCardsOption_1 = require("./Options/BolsterCombatCardsOption");
 const BolsterPowerOption_1 = require("./Options/BolsterPowerOption");
 const BuildOption_1 = require("./Options/BuildOption");
@@ -45,12 +46,29 @@ class Game {
     constructor(players, log = new EventLog_1.EventLog()) {
         this.players = players;
         this.log = log;
+        Game.assertPlayerCount(players);
+        Game.assertFactionAndPlayerMatMatching(players);
         this.players = players;
         this.log = log;
         for (const player of players) {
             log.add(new NewPlayerEvent_1.NewPlayerEvent(player.playerId, player));
             player.setupEvents.forEach((event) => this.log.add(event));
             player.playerMat.setupEvents.forEach((event) => this.log.add(event));
+        }
+    }
+    static assertPlayerCount(players) {
+        if (players.length < 1 || players.length > Game.MAX_PLAYERS) {
+            throw new GameSetupError_1.GameSetupError("The game requires 1-7 players.");
+        }
+    }
+    static assertFactionAndPlayerMatMatching(players) {
+        const playerMats = [];
+        const factions = [];
+        for (const player of players) {
+            if (_.contains(player.faction, factions) ||
+                _.contains(player.playerMat, playerMats)) {
+                throw new GameSetupError_1.GameSetupError("Each faction and player mat is only allowed once.");
+            }
         }
     }
     actionFromOption(player, option) {
@@ -94,7 +112,7 @@ class Game {
         if (option instanceof RewardOnlyOption_1.RewardOnlyOption) {
             this.log
                 .add(new ActionEvent_1.ActionEvent(player.playerId, option.bottomAction))
-                .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(option.bottomAction)));
+                .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(option.bottomAction)));
         }
     }
     move(player, ...moves) {
@@ -186,7 +204,7 @@ class Game {
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.BUILD))
             .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, resources))
             .add(new BuildEvent_1.BuildEvent(player.playerId, location, building))
-            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction_1.BottomAction.BUILD)));
+            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.BUILD)));
         return this.pass(player, BottomAction_1.BottomAction.BUILD);
     }
     pass(player, action) {
@@ -205,7 +223,7 @@ class Game {
         this.log
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.DEPLOY))
             .add(new DeployEvent_1.DeployEvent(player.playerId, mech, location))
-            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction_1.BottomAction.DEPLOY)));
+            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.DEPLOY)));
         return this.pass(player, BottomAction_1.BottomAction.DEPLOY);
     }
     enlist(player, bottomAction, recruitReward, resources) {
@@ -215,7 +233,7 @@ class Game {
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.ENLIST))
             .addIfNew(new EnlistEvent_1.EnlistEvent(player.playerId, recruitReward, bottomAction))
             .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, resources))
-            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction_1.BottomAction.ENLIST)));
+            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.ENLIST)));
         return this.pass(player, BottomAction_1.BottomAction.ENLIST);
     }
     upgrade(player, topAction, bottomAction, resources) {
@@ -224,7 +242,7 @@ class Game {
         this.log
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.UPGRADE))
             .add(new UpgradeEvent_1.UpgradeEvent(player.playerId, topAction, bottomAction))
-            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomActionReward.get(BottomAction_1.BottomAction.UPGRADE)));
+            .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.UPGRADE)));
         return this.pass(player, BottomAction_1.BottomAction.UPGRADE);
     }
     bolster(player, event) {
@@ -297,4 +315,5 @@ Game.PRODUCE_COINS_THRESHOLD = 8;
 Game.MAX_POWER = 16;
 Game.MAX_POPULARITY = 18;
 Game.MAX_WORKERS = 8;
+Game.MAX_PLAYERS = 7;
 exports.Game = Game;
