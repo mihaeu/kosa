@@ -182,4 +182,6 @@ const server = net.createServer((socket) => {
     });
     // socket.pipe(socket);
 });
-server.listen(1337, "localhost");
+const hostname = process.argv[2] ? process.argv[2] : "0.0.0.0";
+const port = process.argv[3] ? parseInt(process.argv[3], 10) : 1337;
+server.listen(port, hostname);
