@@ -57,7 +57,7 @@ Arguments:
     <faction>       one of the following: green black yellow white purple blue red
     <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
     <action>        one of the following: trade move bolster produce
-    <option>        JSON object which you get from the available actions command
+    <option>        index of the options you got from the available action command
 
 ```
 
