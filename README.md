@@ -10,6 +10,57 @@ npm install
 npm test
 ```
 
+## Server
+
+```bash
+cd game_server
+npm start
+```
+
+## Client
+
+*For manual testing only*
+
+```bash
+nc localhost 1337
+```
+
+### Commands
+
+```
+#######################
+#   Kosa Game Server  #
+#######################
+
+Commands:
+    WAITING
+        List all games waiting for players
+    RUNNING
+        List all active games
+    FINISHED
+        List all finished games
+    NEW
+        Opens a new game
+    JOIN <gameId> <faction> <playerMat>
+        Join a game
+    START <gameId>
+        Starts a game
+    ACTION <gameId> <playerId>
+        List available action
+    ACTION <gameId> <playerId> <action>
+        List available options for an action
+    OPTION <gameId> <playerId> <option>
+
+Arguments:
+    <gameId>        UUID v4 strings which you get after joining a game.
+    <playerId>      UUID v4 strings which you get after joining the server.
+    <faction>       one of the following: green black yellow white purple blue red
+    <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
+    <action>        one of the following: trade move bolster produce
+    <option>        JSON object which you get from the available actions command
+
+```
+
 ## Rules
 
 For Scythe rules please refer to the [official manual from Stonemaier Games](https://stonemaiergames.com/games/scythe/rules-and-print-play/).

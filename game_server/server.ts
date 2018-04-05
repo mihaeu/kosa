@@ -24,6 +24,40 @@ import {UpgradeOption} from "../game_engine/src/options/UpgradeOption";
 import {Socket} from "net";
 import {v4} from "uuid";
 
+const welcomeMessage = `
+#######################
+#   Kosa Game Server  #
+#######################
+
+Commands:
+    WAITING
+        List all games waiting for players
+    RUNNING
+        List all active games
+    FINISHED
+        List all finished games
+    NEW
+        Opens a new game
+    JOIN <gameId> <faction> <playerMat>
+        Join a game
+    START <gameId>
+        Starts a game
+    ACTION <gameId> <playerId>
+        List available action
+    ACTION <gameId> <playerId> <action>
+        List available options for an action
+    OPTION <gameId> <playerId> <option>
+
+Arguments:
+    <gameId>        UUID v4 strings which you get after joining a game.
+    <playerId>      UUID v4 strings which you get after joining the server.
+    <faction>       one of the following: green black yellow white purple blue red
+    <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
+    <action>        one of the following: trade move bolster produce
+    <option>        JSON object which you get from the available actions command
+    
+`;
+
 type GameId = string;
 type PlayerUuid = string;
 
@@ -198,9 +232,7 @@ const server = net.createServer((socket) => {
         }
 
         if (request.length === 0) {
-            socket.write(
-                "Available commands: \n    " + Object.keys(Command).join("\n    ") + "\n",
-            );
+            socket.write(welcomeMessage);
         }
     });
 
