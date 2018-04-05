@@ -94,6 +94,11 @@ const server = net.createServer((socket) => {
     clients.set(playerUuid, socket);
     broadcast(`${playerUuid} joined the server ...\n`, clients);
 
+    socket.on('end', () => {
+        clients.delete(playerUuid);
+        broadcast(`${playerUuid} left the server ...\n`, clients);
+    });
+
     socket.on("data", (data) => {
         const request = data.toString().trim();
 
@@ -142,7 +147,7 @@ const server = net.createServer((socket) => {
                     `${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`, clients,
                 );
             } catch (error) {
-                socket.write(error("JOIN <gameId> <faction> <playerMat>\n"));
+                socket.write(errorMsg("JOIN <gameId> <faction> <playerMat>\n"));
             }
         } else if (request.toUpperCase().startsWith(Command.START)) {
             /**
@@ -241,7 +246,7 @@ const server = net.createServer((socket) => {
                     runningGames.delete(gameId);
                 }
             } catch (error) {
-                socket.write(error("Something went wrong ...\n"));
+                socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
             }
         }
 

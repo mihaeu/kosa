@@ -349,13 +349,19 @@ export function assertUnitNotDeployed(log: EventLog, player: Player, unit: Unit)
 }
 
 export function assertBuildingNotAlreadyBuilt(log: EventLog, player: Player, building: BuildingType): void {
-    if (!_.none((event: BuildEvent) => building === event.building, log.filterBy(player.playerId, BuildEvent))) {
+    if (!_.none(
+        (event: BuildEvent) => building === event.building,
+            log.filterBy(player.playerId, BuildEvent) as BuildEvent[],
+    )) {
         throw new BuildingAlreadyBuildError(building);
     }
 }
 
 export function assertLocationHasNoOtherBuildings(log: EventLog, player: Player, location: Field): void {
-    if (!_.none((event: BuildEvent) => location === event.location, log.filterBy(player.playerId, BuildEvent))) {
+    if (!_.none(
+        (event: BuildEvent) => location === event.location,
+            log.filterBy(player.playerId, BuildEvent) as BuildEvent[],
+    )) {
         throw new LocationAlreadyHasAnotherBuildingError(location);
     }
 }

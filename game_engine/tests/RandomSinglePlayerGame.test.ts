@@ -27,14 +27,14 @@ test.skip("Random single player game finishes eventually", () => {
     const players = [player];
     const game = new Game(players, log);
 
-    const randomAction = (actions: TopAction[] | BottomAction[] | Option[]): TopAction | BottomAction | Option => {
-        return actions[Math.floor(Math.random() * Math.floor(actions.length))];
-    };
+    function randomAction<T>(xs: T[]): T {
+        return xs[Math.floor(Math.random() * Math.floor(xs.length))];
+    }
 
     let count = 0;
     while (GameInfo.stars(log, player).length < 1) {
         count += 1;
-        const topActions = availableTopActions(log, players, player);
+        const topActions = availableTopActions(log, player);
         if (topActions.length > 0) {
             const topAction = randomAction(topActions);
             switch (topAction) {
@@ -53,7 +53,7 @@ test.skip("Random single player game finishes eventually", () => {
             }
         }
 
-        const bottomActions = availableBottomActions(log, players, player);
+        const bottomActions = availableBottomActions(log, player);
         if (bottomActions.length > 0) {
             const bottomAction = randomAction(bottomActions);
             switch (bottomAction) {
