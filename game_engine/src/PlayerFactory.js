@@ -10,6 +10,25 @@ const Player_1 = require("./Player");
 const Character_1 = require("./Units/Character");
 const Worker_1 = require("./Units/Worker");
 class PlayerFactory {
+    static createFromString(faction, playerId, playerMat) {
+        switch (faction) {
+            case Faction_1.Faction.BLACK:
+                return PlayerFactory.black(playerId, playerMat);
+            case Faction_1.Faction.RED:
+                return PlayerFactory.red(playerId, playerMat);
+            case Faction_1.Faction.BLUE:
+                return PlayerFactory.blue(playerId, playerMat);
+            case Faction_1.Faction.YELLOW:
+                return PlayerFactory.yellow(playerId, playerMat);
+            case Faction_1.Faction.WHITE:
+                return PlayerFactory.white(playerId, playerMat);
+            case Faction_1.Faction.PURPLE:
+                return PlayerFactory.purple(playerId, playerMat);
+            case Faction_1.Faction.GREEN:
+            default:
+                return PlayerFactory.green(playerId, playerMat);
+        }
+    }
     static black(playerId, playerMat) {
         return new Player_1.Player(playerId, Faction_1.Faction.BLACK, playerMat, [
             new DeployEvent_1.DeployEvent(playerId, Character_1.Character.CHARACTER, Field_1.Field.black),

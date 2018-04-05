@@ -47,11 +47,12 @@ class Game {
         this.players = players;
         this.log = log;
         Game.assertPlayerCount(players);
+        Game.assertPlayersHaveDifferentIds(players);
         Game.assertFactionAndPlayerMatMatching(players);
         this.players = players;
         this.log = log;
+        players.forEach((player) => log.add(new NewPlayerEvent_1.NewPlayerEvent(player.playerId, player)));
         for (const player of players) {
-            log.add(new NewPlayerEvent_1.NewPlayerEvent(player.playerId, player));
             player.setupEvents.forEach((event) => this.log.add(event));
             player.playerMat.setupEvents.forEach((event) => this.log.add(event));
         }
@@ -61,14 +62,20 @@ class Game {
             throw new GameSetupError_1.GameSetupError("The game requires 1-7 players.");
         }
     }
+    static assertPlayersHaveDifferentIds(players) {
+        if (players.length !== _.uniq(_.pluck("playerId", players)).length) {
+            throw new GameSetupError_1.GameSetupError("Some players have identical PlayerIds.");
+        }
+    }
     static assertFactionAndPlayerMatMatching(players) {
         const playerMats = [];
         const factions = [];
         for (const player of players) {
-            if (_.contains(player.faction, factions) ||
-                _.contains(player.playerMat, playerMats)) {
+            if (_.contains(player.faction, factions) || _.contains(player.playerMat, playerMats)) {
                 throw new GameSetupError_1.GameSetupError("Each faction and player mat is only allowed once.");
             }
+            factions.push(player.faction);
+            playerMats.push(player.playerMat);
         }
     }
     actionFromOption(player, option) {
@@ -209,7 +216,7 @@ class Game {
     }
     pass(player, action) {
         this.handOutStars(player);
-        if (action in TopAction_1.TopAction && Availability_1.availableBottomActions(this.log, this.players, player).length > 0) {
+        if (action in TopAction_1.TopAction && Availability_1.availableBottomActions(this.log, player).length > 0) {
             return this;
         }
         this.log.add(new PassEvent_1.PassEvent(player.playerId));

@@ -65,8 +65,8 @@ function isTopActionAvailable(log, players, player) {
         }
     };
 }
-function availableTopActions(log, players, player) {
-    return _.filter(isTopActionAvailable(log, players, player), Object.keys(TopAction_1.TopAction));
+function availableTopActions(log, player) {
+    return _.filter(isTopActionAvailable(log, GameInfo_1.GameInfo.players(log), player), Object.keys(TopAction_1.TopAction));
 }
 exports.availableTopActions = availableTopActions;
 function isBottomActionAvailable(log, players, player) {
@@ -81,8 +81,8 @@ function isBottomActionAvailable(log, players, player) {
         }
     };
 }
-function availableBottomActions(log, players, player) {
-    return _.filter(isBottomActionAvailable(log, players, player), Object.keys(BottomAction_1.BottomAction));
+function availableBottomActions(log, player) {
+    return _.filter(isBottomActionAvailable(log, GameInfo_1.GameInfo.players(log), player), Object.keys(BottomAction_1.BottomAction));
 }
 exports.availableBottomActions = availableBottomActions;
 function availableOptionsForAction(action, log, player) {
@@ -132,13 +132,13 @@ function availableTradeOptions(log, player) {
     if (!isTopActionAvailable(log, GameInfo_1.GameInfo.players(log), player)(TopAction_1.TopAction.TRADE)) {
         return [];
     }
-    let resourceCombinations = [];
+    const resourceCombinations = [];
     const resources = Object.keys(ResourceType_1.ResourceType).concat(Object.keys(ResourceType_1.ResourceType));
     getAllPossibleCombinations(resources, 2, resourceCombinations);
-    resourceCombinations = _.map(
+    const options = _.map(
     // @ts-ignore
     (resourceTypes) => new TradeResourcesOption_1.TradeResourcesOption(resourceTypes.pop(), resourceTypes.pop()), _.uniq(resourceCombinations));
-    return [new TradePopularityOption_1.TradePopularityOption()].concat(resourceCombinations);
+    return [new TradePopularityOption_1.TradePopularityOption()].concat(options);
 }
 exports.availableTradeOptions = availableTradeOptions;
 function fieldsWithWorkers(log, player) {

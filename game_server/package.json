@@ -1,5 +1,6 @@
 {
   "name": "kosa_game_server",
+  "private": true,
   "version": "1.0.0",
   "main": "index.js",
   "author": "Michael Haeuslmann <haeuslmann@gmail.com>",
@@ -8,6 +9,7 @@
     "@types/node": "^9.6.0",
     "pm2": "^2.10.2",
     "tslint": "^5.9.1",
-    "typescript": "^2.7.2"
+    "typescript": "^2.7.2",
+    "uuid": "^3.2.1"
   }
 }

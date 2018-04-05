@@ -11,6 +11,26 @@ import { Character } from "./Units/Character";
 import { Worker } from "./Units/Worker";
 
 export class PlayerFactory {
+    public static createFromString(faction: string, playerId: PlayerId, playerMat: PlayerMat): Player {
+        switch (faction) {
+            case Faction.BLACK:
+                return PlayerFactory.black(playerId, playerMat);
+            case Faction.RED:
+                return PlayerFactory.red(playerId, playerMat);
+            case Faction.BLUE:
+                return PlayerFactory.blue(playerId, playerMat);
+            case Faction.YELLOW:
+                return PlayerFactory.yellow(playerId, playerMat);
+            case Faction.WHITE:
+                return PlayerFactory.white(playerId, playerMat);
+            case Faction.PURPLE:
+                return PlayerFactory.purple(playerId, playerMat);
+            case Faction.GREEN:
+            default:
+                return PlayerFactory.green(playerId, playerMat);
+        }
+    }
+
     public static black(playerId: PlayerId, playerMat: PlayerMat): Player {
         return new Player(playerId, Faction.BLACK, playerMat, [
             new DeployEvent(playerId, Character.CHARACTER, Field.black),

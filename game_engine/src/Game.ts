@@ -106,8 +106,9 @@ export class Game {
         this.players = players;
         this.log = log;
 
+        players.forEach((player: Player) => log.add(new NewPlayerEvent(player.playerId, player)));
+
         for (const player of players) {
-            log.add(new NewPlayerEvent(player.playerId, player));
             player.setupEvents.forEach((event) => this.log.add(event));
             player.playerMat.setupEvents.forEach((event) => this.log.add(event));
         }
@@ -301,7 +302,7 @@ export class Game {
     public pass(player: Player, action: TopAction | BottomAction): Game {
         this.handOutStars(player);
 
-        if (action in TopAction && availableBottomActions(this.log, this.players, player).length > 0) {
+        if (action in TopAction && availableBottomActions(this.log, player).length > 0) {
             return this;
         }
 

@@ -1,67 +1,210 @@
 import net = require("net");
+import * as _ from "ramda";
 import {Game} from "../game_engine/src/Game";
+import {GameInfo} from "../game_engine/src/GameInfo";
 import {Option} from "../game_engine/src/Options/Option";
-import {TopAction} from "../game_engine/src/TopAction";
-import {BottomAction} from "../game_engine/src/BottomAction";
-import {availableBottomActions, availableTopActions, availableOptionsForAction} from "../game_engine/src/Availability";
-import {EventLog} from "../game_engine/src/Events/EventLog";
+import {availableBottomActions, availableOptionsForAction, availableTopActions,} from "../game_engine/src/Availability";
 import {PlayerFactory} from "../game_engine/src/PlayerFactory";
 import {PlayerMat} from "../game_engine/src/PlayerMat";
 import {PlayerId} from "../game_engine/src/PlayerId";
+import {Player} from "../game_engine/src/Player";
+import {BolsterCombatCardsOption} from "../game_engine/src/options/BolsterCombatCardsOption";
+import {BolsterPowerOption} from "../game_engine/src/options/BolsterPowerOption";
+import {BuildOption} from "../game_engine/src/options/BuildOption";
+import {DeployOption} from "../game_engine/src/options/DeployOption";
+import {EnlistOption} from "../game_engine/src/options/EnlistOption";
+import {GainCoinOption} from "../game_engine/src/options/GainCoinOption";
+import {MoveOption} from "../game_engine/src/options/MoveOption";
+import {Option} from "../game_engine/src/options/Option";
+import {ProduceOption} from "../game_engine/src/options/ProduceOption";
+import {RewardOnlyOption} from "../game_engine/src/options/RewardOnlyOption";
+import {TradePopularityOption} from "../game_engine/src/options/TradePopularityOption";
+import {TradeResourcesOption} from "../game_engine/src/options/TradeResourcesOption";
+import {UpgradeOption} from "../game_engine/src/options/UpgradeOption";
+import {Socket} from "net";
+import {v4} from "uuid";
 
-enum SocketEvent {
-    DATA = "data",
+type GameId = string;
+type PlayerUuid = string;
+
+const clients = new Map<string, Socket>();
+const waitingGames: Map<GameId, Player[]> = new Map();
+const runningGames: Map<GameId, Game> = new Map();
+const finishedGames: GameId[] = [];
+
+const broadcast = (message: string, allClients: Map<string, Socket>): void => {
+    for (const [uuid, socket] of allClients) {
+        socket.write(message);
+    }
+};
+
+enum Command {
+    WAITING = "WAITING",
+    RUNNING = "RUNNING",
+    FINISHED = "FINISHED",
+    NEW = "NEW",
+    JOIN = "JOIN",
+    START = "START",
+    ACTION = "ACTION",
+    OPTION = "OPTION",
 }
 
-const playerId1 = new PlayerId(1);
-const player1 = PlayerFactory.black(playerId1, PlayerMat.industrial(playerId1));
-
-const players = [player1];
-const log = new EventLog();
-const game = new Game(players, log);
-
 const server = net.createServer((socket) => {
-    function printAvailableActions() {
-        socket.write(
-            availableTopActions(log, players, player1).join(", ") +
-            "\n"
-            + availableBottomActions(log, players, player1).join(", ") + "\n",
-        );
-    }
+    const playerUuid = v4();
+    clients.set(playerUuid, socket);
+    broadcast(`${playerUuid} joined the server ...\n`, clients);
 
-    function printAvailableOptions(action: TopAction|BottomAction) {
-        const availableOption = availableOptionsForAction(action, log, player1);
-        socket.write(availableOption.map(
-            (option: Option, index: number) => `[${index}]` + JSON.stringify(option, null, "\t"))
-            .join("\n") + "\n",
-        );
-        return availableOption;
-    }
-
-    let action: TopAction;
-    let options: Option[] = [];
-    socket.on(SocketEvent.DATA, (data) => {
+    socket.on("data", (data) => {
         const request = data.toString().trim();
-        if (request in TopAction) {
-            action = request;
-            socket.write("Choose an option:\n");
-            options = printAvailableOptions(request);
-        } else if (request in BottomAction) {
-            action = request;
-            socket.write("Choose an option:\n");
-            options = printAvailableOptions(request);
-        } else if (request.match(/^[0-9]+$/)) {
-            console.log(options, request.trim());
-            game.actionFromOption(player1, options[request.trim()]);
-            socket.write("Choose an action:\n");
-            printAvailableActions();
-        } else {
-            socket.write("Unknown command ... select an action, then an option ...");
-            printAvailableActions();
+
+        /**
+         * SHOW WAITING GAMES
+         */
+        if (request.toUpperCase() === Command.WAITING) {
+            socket.write(JSON.stringify(Array.from(waitingGames.entries())) + "\n");
+        }
+
+        /**
+         * SHOW RUNNING GAMES
+         */
+        if (request.toUpperCase() === Command.RUNNING) {
+            socket.write(JSON.stringify(Array.from(runningGames.entries())) + "\n");
+        }
+
+        /**
+         * SHOW FINISHED GAMES
+         */
+        if (request.toUpperCase() === Command.FINISHED) {
+            socket.write(JSON.stringify(Array.from(finishedGames.entries())) + "\n");
+        }
+
+        /**
+         * START A NEW GAME
+         */
+        if (request.toUpperCase() === Command.NEW) {
+            const gameId = v4();
+            waitingGames.set(gameId, []);
+            broadcast(`${playerUuid} opened a new game ${gameId} ...\n`, clients);
+        }
+
+        /**
+         * JOIN AN EXISTING GAME
+         */
+        if (request.toUpperCase().startsWith(Command.JOIN)) {
+            const matches = request.split(" ");
+
+            try {
+                const gameId = matches[1];
+                const faction = matches[2].toUpperCase();
+                const playerMat = matches[3].toLowerCase();
+                const playerId = new PlayerId(playerUuid);
+                const player = PlayerFactory.createFromString(
+                    faction,
+                    playerId,
+                    PlayerMat.createFromString(playerMat, playerId),
+                );
+                waitingGames.get(gameId).push(player);
+
+                broadcast(
+                    `${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`, clients,
+                );
+            } catch (error) {
+                socket.write("JOIN <gameId> <faction> <playerMat>\n");
+            }
+        }
+
+        /**
+         * START A GAME
+         */
+        if (request.toUpperCase().startsWith(Command.START)) {
+            const matches = request.split(" ");
+            if (matches.length < 2) {
+                socket.write("START <gameId>\n");
+                return;
+            }
+            const gameId = matches[1];
+
+            const game = new Game(waitingGames.get(gameId));
+            waitingGames.delete(gameId);
+            runningGames.set(gameId, game);
+
+            broadcast(
+                `${playerUuid} started game ${gameId} ...\n`, clients,
+            );
+        }
+
+        /**
+         * SHOW AVAILABLE ACTIONS / SHOW OPTIONS FOR ACTION
+         *
+         * ACTION <gameId> <playerId>
+         * ACTION <gameId> <playerId> <action>
+         */
+        if (request.toUpperCase().startsWith(Command.ACTION)) {
+            const matches = request.split(" ");
+            if (matches.length < 3) {
+                socket.write("ACTION <gameId> <playerId>\n");
+                socket.write("ACTION <gameId> <playerId> TRADE|BOLSTER|MOVE|PRODUCE\n");
+                return;
+            }
+
+            const gameId = matches[1];
+            const game = runningGames.get(gameId);
+
+            const playerId = matches[2];
+            const currentPlayer = _.find(
+                (player: Player) => playerId === player.playerId.playerId,
+                GameInfo.players(game.log),
+            );
+
+            if (currentPlayer === undefined) {
+                socket.write("Player not found ...\n");
+            }
+
+            if (matches.length === 3) {
+                socket.write(
+                    availableTopActions(game.log, currentPlayer).join(", ") +
+                    "\n" +
+                    availableBottomActions(game.log, currentPlayer).join(", ") + "\n",
+                );
+            } else if (matches.length === 4) {
+                const action = matches[3].toUpperCase();
+                socket.write(JSON.stringify(availableOptionsForAction(action, game.log, currentPlayer)) + "\n");
+            }
+        }
+
+        /**
+         * TAKE A SPECIFIC ACTION
+         *
+         * OPTION <gameId> <playerId> <option>
+         */
+        if (request.toUpperCase().startsWith(Command.OPTION)) {
+            const matches = request.split(" ");
+            if (matches.length < 4) {
+                socket.write("OPTION <gameId> <playerId> <option>\n");
+                return;
+            }
+
+            const gameId = matches[1];
+            const game = runningGames.get(gameId);
+
+            const playerId = matches[2];
+            const currentPlayer = _.find(
+                (player: Player) => playerId === player.playerId.playerId,
+                GameInfo.players(game.log),
+            );
+
+            const option = Option.deserializeFromJsonObject(JSON.parse(matches[3]) as Option);
+            game.actionFromOption(currentPlayer, option);
+        }
+
+        if (request.length === 0) {
+            socket.write(
+                "Available commands: \n    " + Object.keys(Command).join("\n    ") + "\n",
+            );
         }
     });
 
-    socket.pipe(socket);
+    // socket.pipe(socket);
 });
 
-server.listen(1337, "0.0.0.0");
+server.listen(1337, "localhost");

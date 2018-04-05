@@ -8,6 +8,26 @@ import { ResourceType } from "./ResourceType";
 import { TopAction } from "./TopAction";
 
 export class PlayerMat {
+    public static createFromString(playerMat: string, playerId: PlayerId): PlayerMat {
+        switch (playerMat) {
+            case "engineering":
+                return PlayerMat.engineering(playerId);
+            case "agricultural":
+                return PlayerMat.agricultural(playerId);
+            case "industrial":
+                return PlayerMat.industrial(playerId);
+            case "mechanical":
+                return PlayerMat.mechanical(playerId);
+            case "patriotic":
+                return PlayerMat.patriotic(playerId);
+            case "innovative":
+                return PlayerMat.innovative(playerId);
+            case "militant":
+            default:
+                return PlayerMat.militant(playerId);
+        }
+    }
+
     public static engineering(playerId: PlayerId): PlayerMat {
         const actionMap = new Map<TopAction, BottomAction>();
         actionMap.set(TopAction.PRODUCE, BottomAction.UPGRADE);

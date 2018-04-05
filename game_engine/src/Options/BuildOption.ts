@@ -4,6 +4,6 @@ import { Option } from "./Option";
 
 export class BuildOption extends Option {
     constructor(public readonly worker: Worker, public readonly buildingType: BuildingType) {
-        super();
+        super("BuildOption");
     }
 }

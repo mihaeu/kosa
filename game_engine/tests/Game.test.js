@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("ramda");
 const Availability_1 = require("../src/Availability");
 const BottomAction_1 = require("../src/BottomAction");
 const Building_1 = require("../src/Building");
@@ -351,7 +352,7 @@ test("Player cannot play out of order", () => {
     expect(() => game.gainCoins(blackIndustrialPlayer).bolsterPower(blackIndustrialPlayer)).toThrowError("It is not your turn yet.");
 });
 test("Players can take all available top actions at the start of the game", () => {
-    expect(Availability_1.availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(4);
+    expect(Availability_1.availableTopActions(log, blackIndustrialPlayer).length).toBe(4);
 });
 test("Black player controls three territories at the start", () => {
     expect(GameInfo_1.GameInfo.territories(log, blackIndustrialPlayer)).toEqual([Field_1.Field.black, Field_1.Field.m6, Field_1.Field.t8]);
@@ -364,22 +365,28 @@ test("Black player controls three units at the start", () => {
 });
 test("Players don't have available actions when it's not their turn", () => {
     game.bolsterPower(blackIndustrialPlayer);
-    expect(Availability_1.availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(0);
+    expect(Availability_1.availableTopActions(log, blackIndustrialPlayer).length).toBe(0);
 });
 test("Players have three available actions on their second turn", () => {
     game.bolsterPower(blackIndustrialPlayer).bolsterPower(greenAgriculturalPlayer);
-    expect(Availability_1.availableTopActions(log, testPlayers, blackIndustrialPlayer).length).toBe(3);
+    expect(Availability_1.availableTopActions(log, blackIndustrialPlayer).length).toBe(3);
 });
 test("Players have no bottom costs available on their first turn", () => {
-    expect(Availability_1.availableBottomActions(log, testPlayers, blackIndustrialPlayer).length).toBe(0);
+    expect(Availability_1.availableBottomActions(log, blackIndustrialPlayer).length).toBe(0);
 });
 test("Players can take all bottom actions if they have enough resources", () => {
     mockResourcesAndCoinsForPlayer(blackIndustrialPlayer);
-    expect(Availability_1.availableBottomActions(log, testPlayers, blackIndustrialPlayer).length).toBe(4);
+    expect(Availability_1.availableBottomActions(log, blackIndustrialPlayer).length).toBe(4);
 });
 test("Players can only take the bottom actions they can afford", () => {
     addResourcesForPlayer(blackIndustrialPlayer, ResourceType_1.ResourceType.METAL, 4);
-    expect(Availability_1.availableBottomActions(log, testPlayers, blackIndustrialPlayer).pop()).toEqual(BottomAction_1.BottomAction.DEPLOY);
+    expect(Availability_1.availableBottomActions(log, blackIndustrialPlayer).pop()).toEqual(BottomAction_1.BottomAction.DEPLOY);
+});
+test("GameInfo restores players from log", () => {
+    expect(GameInfo_1.GameInfo.players(log)).toEqual([
+        blackIndustrialPlayer,
+        greenAgriculturalPlayer,
+    ]);
 });
 test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {
     game.produce(blackIndustrialPlayer, Field_1.Field.m6, Field_1.Field.t8);
@@ -589,6 +596,30 @@ test("Player cannot gain more than 18 popularity", () => {
     game.log.add(new PopularityEvent_1.PopularityEvent(blackIndustrialPlayerId, 16)); // total now 18
     game.tradePopularity(blackIndustrialPlayer);
     expect(GameInfo_1.GameInfo.popularity(log, blackIndustrialPlayer)).toBe(18);
+});
+test("Cannot start a game without players", () => {
+    expect(() => new Game_1.Game([])).toThrowError(/The game requires 1-7 players./);
+});
+test("Cannot start a game with more than 8 players", () => {
+    const id = new PlayerId_1.PlayerId(1);
+    const players = _.map(() => PlayerFactory_1.PlayerFactory.white(id, PlayerMat_1.PlayerMat.agricultural(id)), _.range(0, 8));
+    expect(() => new Game_1.Game(players)).toThrowError(/The game requires 1-7 players./);
+});
+test("Cannot start a game where two players choose the same faction", () => {
+    const onePlayer = PlayerFactory_1.PlayerFactory.green(blackIndustrialPlayerId, PlayerMat_1.PlayerMat.agricultural(blackIndustrialPlayerId));
+    const otherPlayer = PlayerFactory_1.PlayerFactory.green(greenAgriculturalPlayerId, PlayerMat_1.PlayerMat.industrial(greenAgriculturalPlayerId));
+    expect(() => new Game_1.Game([onePlayer, otherPlayer]))
+        .toThrowError(/Each faction and player mat is only allowed once./);
+});
+test("Cannot start a game where two players choose the same faction", () => {
+    const onePlayer = PlayerFactory_1.PlayerFactory.green(blackIndustrialPlayerId, PlayerMat_1.PlayerMat.agricultural(blackIndustrialPlayerId));
+    const otherPlayer = PlayerFactory_1.PlayerFactory.black(greenAgriculturalPlayerId, PlayerMat_1.PlayerMat.agricultural(blackIndustrialPlayerId));
+    expect(() => new Game_1.Game([onePlayer, otherPlayer]))
+        .toThrowError(/Each faction and player mat is only allowed once./);
+});
+test("Cannot start a game where some players have identical ids", () => {
+    const otherPlayer = PlayerFactory_1.PlayerFactory.green(blackIndustrialPlayerId, PlayerMat_1.PlayerMat.agricultural(blackIndustrialPlayerId));
+    expect(() => new Game_1.Game([blackIndustrialPlayer, otherPlayer])).toThrowError(/Some players have identical PlayerIds./);
 });
 test.skip("Buildings cannot be placed on home territories", fail);
 test.skip("Mechs cannot be placed on home territories", fail);

@@ -73,8 +73,8 @@ function isTopActionAvailable(log: EventLog, players: Player[], player: Player) 
     };
 }
 
-export function availableTopActions(log: EventLog, players: Player[], player: Player): TopAction[] {
-    return _.filter(isTopActionAvailable(log, players, player), Object.keys(TopAction) as TopAction[]);
+export function availableTopActions(log: EventLog, player: Player): TopAction[] {
+    return _.filter(isTopActionAvailable(log, GameInfo.players(log), player), Object.keys(TopAction) as TopAction[]);
 }
 
 function isBottomActionAvailable(log: EventLog, players: Player[], player: Player) {
@@ -89,8 +89,11 @@ function isBottomActionAvailable(log: EventLog, players: Player[], player: Playe
     };
 }
 
-export function availableBottomActions(log: EventLog, players: Player[], player: Player): BottomAction[] {
-    return _.filter(isBottomActionAvailable(log, players, player), Object.keys(BottomAction) as BottomAction[]);
+export function availableBottomActions(log: EventLog, player: Player): BottomAction[] {
+    return _.filter(
+        isBottomActionAvailable(log, GameInfo.players(log), player),
+        Object.keys(BottomAction) as BottomAction[],
+    );
 }
 
 export function availableOptionsForAction(action: TopAction | BottomAction, log: EventLog, player: Player): Option[] {
@@ -140,15 +143,15 @@ export function availableTradeOptions(log: EventLog, player: Player): Option[] {
     if (!isTopActionAvailable(log, GameInfo.players(log), player)(TopAction.TRADE)) {
         return [];
     }
-    let resourceCombinations: ResourceType[][] = [];
+    const resourceCombinations: ResourceType[][] = [];
     const resources = Object.keys(ResourceType).concat(Object.keys(ResourceType)) as ResourceType[];
     getAllPossibleCombinations(resources, 2, resourceCombinations);
-    resourceCombinations = _.map(
+    const options = _.map(
         // @ts-ignore
         (resourceTypes: ResourceType[]) => new TradeResourcesOption(resourceTypes.pop(), resourceTypes.pop()),
         _.uniq(resourceCombinations),
     );
-    return [new TradePopularityOption()].concat(resourceCombinations);
+    return [new TradePopularityOption()].concat(options);
 }
 
 function fieldsWithWorkers(log: EventLog, player: Player): Field[] {
@@ -346,13 +349,13 @@ export function assertUnitNotDeployed(log: EventLog, player: Player, unit: Unit)
 }
 
 export function assertBuildingNotAlreadyBuilt(log: EventLog, player: Player, building: BuildingType): void {
-    if (!_.none((event) => building === (event as BuildEvent).building, log.filterBy(player.playerId, BuildEvent))) {
+    if (!_.none((event: BuildEvent) => building === event.building, log.filterBy(player.playerId, BuildEvent))) {
         throw new BuildingAlreadyBuildError(building);
     }
 }
 
 export function assertLocationHasNoOtherBuildings(log: EventLog, player: Player, location: Field): void {
-    if (!_.none((event) => location === (event as BuildEvent).location, log.filterBy(player.playerId, BuildEvent))) {
+    if (!_.none((event: BuildEvent) => location === event.location, log.filterBy(player.playerId, BuildEvent))) {
         throw new LocationAlreadyHasAnotherBuildingError(location);
     }
 }

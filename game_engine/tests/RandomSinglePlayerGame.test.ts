@@ -20,7 +20,7 @@ import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
 import { TopAction } from "../src/TopAction";
 
-test("Random single player game finishes eventually", () => {
+test.skip("Random single player game finishes eventually", () => {
     const playerId = new PlayerId(1);
     const player = PlayerFactory.green(playerId, PlayerMat.industrial(playerId));
     const log = new EventLog();

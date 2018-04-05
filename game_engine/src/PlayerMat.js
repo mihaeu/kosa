@@ -16,6 +16,25 @@ class PlayerMat {
         this.bottomActionReward = bottomActionReward;
         this.topActionBaseCost = topActionBaseCost;
     }
+    static createFromString(playerMat, playerId) {
+        switch (playerMat) {
+            case "engineering":
+                return PlayerMat.engineering(playerId);
+            case "agricultural":
+                return PlayerMat.agricultural(playerId);
+            case "industrial":
+                return PlayerMat.industrial(playerId);
+            case "mechanical":
+                return PlayerMat.mechanical(playerId);
+            case "patriotic":
+                return PlayerMat.patriotic(playerId);
+            case "innovative":
+                return PlayerMat.innovative(playerId);
+            case "militant":
+            default:
+                return PlayerMat.militant(playerId);
+        }
+    }
     static engineering(playerId) {
         const actionMap = new Map();
         actionMap.set(TopAction_1.TopAction.PRODUCE, BottomAction_1.BottomAction.UPGRADE);

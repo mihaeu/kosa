@@ -1,1 +1,3 @@
-export class Option {}
+export class Option {
+    constructor(public readonly type: string) {}
+}
