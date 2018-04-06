@@ -486,10 +486,7 @@ test("Players can only take the bottom actions they can afford", () => {
 });
 
 test("GameInfo restores players from log", () => {
-    expect(GameInfo.players(log)).toEqual([
-        blackIndustrialPlayer,
-        greenAgriculturalPlayer,
-    ]);
+    expect(GameInfo.players(log)).toEqual([blackIndustrialPlayer, greenAgriculturalPlayer]);
 });
 
 test.skip("Black producing at starting position will get 1 oil and 1 metal", () => {
@@ -757,29 +754,15 @@ test("Cannot start a game with more than 8 players", () => {
 });
 
 test("Cannot start a game where two players choose the same faction", () => {
-    const onePlayer = PlayerFactory.green(
-        blackIndustrialPlayerId,
-        PlayerMat.agricultural(blackIndustrialPlayerId),
-    );
-    const otherPlayer = PlayerFactory.green(
-        greenAgriculturalPlayerId,
-        PlayerMat.industrial(greenAgriculturalPlayerId),
-    );
-    expect(() => new Game([onePlayer, otherPlayer]))
-        .toThrowError(/Each faction and player mat is only allowed once./);
+    const onePlayer = PlayerFactory.green(blackIndustrialPlayerId, PlayerMat.agricultural(blackIndustrialPlayerId));
+    const otherPlayer = PlayerFactory.green(greenAgriculturalPlayerId, PlayerMat.industrial(greenAgriculturalPlayerId));
+    expect(() => new Game([onePlayer, otherPlayer])).toThrowError(/Each faction and player mat is only allowed once./);
 });
 
 test("Cannot start a game where two players choose the same faction", () => {
-    const onePlayer = PlayerFactory.green(
-        blackIndustrialPlayerId,
-        PlayerMat.agricultural(blackIndustrialPlayerId),
-    );
-    const otherPlayer = PlayerFactory.black(
-        greenAgriculturalPlayerId,
-        PlayerMat.agricultural(blackIndustrialPlayerId),
-    );
-    expect(() => new Game([onePlayer, otherPlayer]))
-        .toThrowError(/Each faction and player mat is only allowed once./);
+    const onePlayer = PlayerFactory.green(blackIndustrialPlayerId, PlayerMat.agricultural(blackIndustrialPlayerId));
+    const otherPlayer = PlayerFactory.black(greenAgriculturalPlayerId, PlayerMat.agricultural(blackIndustrialPlayerId));
+    expect(() => new Game([onePlayer, otherPlayer])).toThrowError(/Each faction and player mat is only allowed once./);
 });
 
 test("Cannot start a game where some players have identical ids", () => {

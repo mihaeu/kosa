@@ -73,6 +73,7 @@ const broadcast = (message: string, allClients: Map<string, Socket>): void => {
 
 const infoMsg = (message: string) => `\n\x1b[33;01m${message}\x1b[0m\n`;
 const errorMsg = (message: string) => `\n\x1b[31;01m${message}\x1b[0m\n`;
+const successMsg = (message: string) => `\n\x1b[32;01m${message}\x1b[0m\n`;
 
 enum Command {
     WAITING = "WAITING",
@@ -236,12 +237,12 @@ const server = net.createServer((socket) => {
 
                 const optionIndex = parseInt(matches[3], 10);
                 if (optionIndex === undefined) {
-                    socket.write("Option doesn't exist ....\n");
+                    socket.write(errorMsg("Option doesn't exist ....\n" ));
                 }
                 game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
 
                 if (GameInfo.gameOver(game.log)) {
-                    broadcast(`Game ${gameId} is over ...`);
+                    broadcast(`Game ${gameId} is over ...`, clients);
                     finishedGames.push(gameId);
                     runningGames.delete(gameId);
                 }

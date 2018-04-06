@@ -44,26 +44,30 @@ function isTopActionAvailable(log, players, player) {
     return (topAction) => {
         try {
             assertActionCanBeTaken(log, players, player, topAction);
-            assertCoins(log, player, player.playerMat.topActionCost(topAction));
-            // @TODO super hacky, extract
-            if (topAction === TopAction_1.TopAction.PRODUCE) {
-                const workerCount = GameInfo_1.GameInfo.allWorkers(log, player).length;
-                if (workerCount >= Game_1.Game.PRODUCE_POWER_THRESHOLD) {
-                    assertPower(log, player);
-                }
-                if (workerCount >= Game_1.Game.PRODUCE_POPULARITY_THRESHOLD) {
-                    assertPopularity(log, player);
-                }
-                if (workerCount >= Game_1.Game.PRODUCE_COINS_THRESHOLD) {
-                    assertCoins(log, player);
-                }
-            }
+            assertTopActionCosts(log, player, topAction);
             return true;
         }
         catch (error) {
             return false;
         }
     };
+}
+function assertTopActionCosts(log, player, topAction) {
+    topAction === TopAction_1.TopAction.PRODUCE
+        ? assertProduceCosts(log, player)
+        : assertCoins(log, player, player.playerMat.topActionCost(topAction));
+}
+function assertProduceCosts(log, player) {
+    const workerCount = GameInfo_1.GameInfo.allWorkers(log, player).length;
+    if (workerCount >= Game_1.Game.PRODUCE_POWER_THRESHOLD) {
+        assertPower(log, player);
+    }
+    if (workerCount >= Game_1.Game.PRODUCE_POPULARITY_THRESHOLD) {
+        assertPopularity(log, player);
+    }
+    if (workerCount >= Game_1.Game.PRODUCE_COINS_THRESHOLD) {
+        assertCoins(log, player);
+    }
 }
 function availableTopActions(log, player) {
     return _.filter(isTopActionAvailable(log, GameInfo_1.GameInfo.players(log), player), Object.keys(TopAction_1.TopAction));

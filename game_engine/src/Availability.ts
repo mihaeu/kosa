@@ -50,27 +50,32 @@ function isTopActionAvailable(log: EventLog, players: Player[], player: Player) 
     return (topAction: TopAction): boolean => {
         try {
             assertActionCanBeTaken(log, players, player, topAction);
-            assertCoins(log, player, player.playerMat.topActionCost(topAction));
-
-            // @TODO super hacky, extract
-            if (topAction === TopAction.PRODUCE) {
-                const workerCount = GameInfo.allWorkers(log, player).length;
-                if (workerCount >= Game.PRODUCE_POWER_THRESHOLD) {
-                    assertPower(log, player);
-                }
-                if (workerCount >= Game.PRODUCE_POPULARITY_THRESHOLD) {
-                    assertPopularity(log, player);
-                }
-
-                if (workerCount >= Game.PRODUCE_COINS_THRESHOLD) {
-                    assertCoins(log, player);
-                }
-            }
+            assertTopActionCosts(log, player, topAction)
             return true;
         } catch (error) {
             return false;
         }
     };
+}
+
+function assertTopActionCosts(log: EventLog, player: Player, topAction: TopAction): void {
+    topAction === TopAction.PRODUCE
+        ? assertProduceCosts(log, player)
+        : assertCoins(log, player, player.playerMat.topActionCost(topAction));
+}
+
+function assertProduceCosts(log: EventLog, player: Player): void {
+    const workerCount = GameInfo.allWorkers(log, player).length;
+    if (workerCount >= Game.PRODUCE_POWER_THRESHOLD) {
+        assertPower(log, player);
+    }
+    if (workerCount >= Game.PRODUCE_POPULARITY_THRESHOLD) {
+        assertPopularity(log, player);
+    }
+
+    if (workerCount >= Game.PRODUCE_COINS_THRESHOLD) {
+        assertCoins(log, player);
+    }
 }
 
 export function availableTopActions(log: EventLog, player: Player): TopAction[] {
@@ -90,10 +95,9 @@ function isBottomActionAvailable(log: EventLog, players: Player[], player: Playe
 }
 
 export function availableBottomActions(log: EventLog, player: Player): BottomAction[] {
-    return _.filter(
-        isBottomActionAvailable(log, GameInfo.players(log), player),
-        Object.keys(BottomAction) as BottomAction[],
-    );
+    return _.filter(isBottomActionAvailable(log, GameInfo.players(log), player), Object.keys(
+        BottomAction,
+    ) as BottomAction[]);
 }
 
 export function availableOptionsForAction(action: TopAction | BottomAction, log: EventLog, player: Player): Option[] {
@@ -349,19 +353,23 @@ export function assertUnitNotDeployed(log: EventLog, player: Player, unit: Unit)
 }
 
 export function assertBuildingNotAlreadyBuilt(log: EventLog, player: Player, building: BuildingType): void {
-    if (!_.none(
-        (event: BuildEvent) => building === event.building,
-            log.filterBy(player.playerId, BuildEvent) as BuildEvent[],
-    )) {
+    if (
+        !_.none((event: BuildEvent) => building === event.building, log.filterBy(
+            player.playerId,
+            BuildEvent,
+        ) as BuildEvent[])
+    ) {
         throw new BuildingAlreadyBuildError(building);
     }
 }
 
 export function assertLocationHasNoOtherBuildings(log: EventLog, player: Player, location: Field): void {
-    if (!_.none(
-        (event: BuildEvent) => location === event.location,
-            log.filterBy(player.playerId, BuildEvent) as BuildEvent[],
-    )) {
+    if (
+        !_.none((event: BuildEvent) => location === event.location, log.filterBy(
+            player.playerId,
+            BuildEvent,
+        ) as BuildEvent[])
+    ) {
         throw new LocationAlreadyHasAnotherBuildingError(location);
     }
 }

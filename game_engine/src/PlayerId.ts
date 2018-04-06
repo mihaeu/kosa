@@ -1,3 +1,3 @@
 export class PlayerId {
-    constructor(public readonly playerId: string|number) {}
+    constructor(public readonly playerId: string | number) {}
 }
