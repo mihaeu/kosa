@@ -8,6 +8,7 @@
         "test": "tests"
     },
     "scripts": {
+        "compile": "node_modules/typescript/bin/tsc -w",
         "test": "node_modules/jest/bin/jest.js",
         "watch": "node_modules/jest/bin/jest.js --watch",
         "fix": "node_modules/prettier/bin-prettier.js --print-width=120 --trailing-comma=all --tab-width=4 --arrow-parens always --write '{src,tests}/**/*.ts'",
