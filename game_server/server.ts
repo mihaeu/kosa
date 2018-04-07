@@ -3,7 +3,11 @@ import * as _ from "ramda";
 import {Game} from "../game_engine/src/Game";
 import {GameInfo} from "../game_engine/src/GameInfo";
 import {Option} from "../game_engine/src/Options/Option";
-import {availableBottomActions, availableOptionsForAction, availableTopActions,} from "../game_engine/src/Availability";
+import {
+    availableBottomActions,
+    availableOptionsForAction,
+    availableTopActions,
+} from "../game_engine/src/Availability";
 import {PlayerFactory} from "../game_engine/src/PlayerFactory";
 import {PlayerMat} from "../game_engine/src/PlayerMat";
 import {PlayerId} from "../game_engine/src/PlayerId";

@@ -50,7 +50,7 @@ function isTopActionAvailable(log: EventLog, players: Player[], player: Player) 
     return (topAction: TopAction): boolean => {
         try {
             assertActionCanBeTaken(log, players, player, topAction);
-            assertTopActionCosts(log, player, topAction)
+            assertTopActionCosts(log, player, topAction);
             return true;
         } catch (error) {
             return false;

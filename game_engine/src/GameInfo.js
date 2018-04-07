@@ -6,9 +6,9 @@ const Building_1 = require("./Building");
 const ActionEvent_1 = require("./Events/ActionEvent");
 const BuildEvent_1 = require("./Events/BuildEvent");
 const CoinEvent_1 = require("./Events/CoinEvent");
-const CombatCardEvent_1 = require("./Events/CombatCardEvent");
 const DeployEvent_1 = require("./Events/DeployEvent");
 const EnlistEvent_1 = require("./Events/EnlistEvent");
+const GainCombatCardEvent_1 = require("./Events/GainCombatCardEvent");
 const GainResourceEvent_1 = require("./Events/GainResourceEvent");
 const GameEndEvent_1 = require("./Events/GameEndEvent");
 const LocationEvent_1 = require("./Events/LocationEvent");
@@ -83,7 +83,7 @@ class GameInfo {
     }
     static combatCards(log, player) {
         // @ts-ignore
-        return _.pluck("combatCard", log.filterBy(player.playerId, CombatCardEvent_1.GainCombatCardEvent));
+        return _.pluck("combatCard", log.filterBy(player.playerId, GainCombatCardEvent_1.GainCombatCardEvent));
     }
     static resources(log, player) {
         const availableResources = GameInfo.availableResources(log, player);

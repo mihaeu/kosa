@@ -8,7 +8,7 @@ import {
     availableProduceOptions,
     availableTopActions,
     availableTradeOptions,
-    availableUpgradeOptions
+    availableUpgradeOptions,
 } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
 import { EventLog } from "../src/Events/EventLog";
@@ -20,9 +20,7 @@ import { PlayerMat } from "../src/PlayerMat";
 import { Star } from "../src/Star";
 import { TopAction } from "../src/TopAction";
 
-const randomAction = <T>(xs: T[]): T => {
-    return xs[Math.floor(Math.random() * Math.floor(xs.length))];
-};
+const randomAction = <T>(xs: T[]): T => xs[Math.floor(Math.random() * Math.floor(xs.length))];
 
 let playerId;
 let player;

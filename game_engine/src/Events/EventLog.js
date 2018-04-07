@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("ramda");
 class EventLog {
-    constructor() {
-        this.log = [];
+    constructor(log = []) {
+        this.log = log;
     }
     add(event) {
         this.log.push(event);

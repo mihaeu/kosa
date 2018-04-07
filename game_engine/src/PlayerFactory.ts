@@ -1,6 +1,6 @@
 import { CombatCard } from "./CombatCard";
-import { GainCombatCardEvent } from "./Events/CombatCardEvent";
 import { DeployEvent } from "./Events/DeployEvent";
+import { GainCombatCardEvent } from "./Events/GainCombatCardEvent";
 import { PowerEvent } from "./Events/PowerEvent";
 import { Faction } from "./Faction";
 import { Field } from "./Field";

@@ -9,9 +9,7 @@ const PlayerFactory_1 = require("../src/PlayerFactory");
 const PlayerId_1 = require("../src/PlayerId");
 const PlayerMat_1 = require("../src/PlayerMat");
 const TopAction_1 = require("../src/TopAction");
-const randomAction = (xs) => {
-    return xs[Math.floor(Math.random() * Math.floor(xs.length))];
-};
+const randomAction = (xs) => xs[Math.floor(Math.random() * Math.floor(xs.length))];
 let playerId;
 let player;
 let log;

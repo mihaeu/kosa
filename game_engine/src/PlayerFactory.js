@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const CombatCard_1 = require("./CombatCard");
-const CombatCardEvent_1 = require("./Events/CombatCardEvent");
 const DeployEvent_1 = require("./Events/DeployEvent");
+const GainCombatCardEvent_1 = require("./Events/GainCombatCardEvent");
 const PowerEvent_1 = require("./Events/PowerEvent");
 const Faction_1 = require("./Faction");
 const Field_1 = require("./Field");
@@ -35,10 +35,10 @@ class PlayerFactory {
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_1, Field_1.Field.m6),
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_2, Field_1.Field.t8),
             new PowerEvent_1.PowerEvent(playerId, 1),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
         ]);
     }
     static red(playerId, playerMat) {
@@ -47,8 +47,8 @@ class PlayerFactory {
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_1, Field_1.Field.v3),
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_2, Field_1.Field.m5),
             new PowerEvent_1.PowerEvent(playerId, 3),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
         ]);
     }
     static blue(playerId, playerMat) {
@@ -57,7 +57,7 @@ class PlayerFactory {
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_1, Field_1.Field.w1),
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_2, Field_1.Field.t1),
             new PowerEvent_1.PowerEvent(playerId, 4),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
         ]);
     }
     static yellow(playerId, playerMat) {
@@ -74,9 +74,9 @@ class PlayerFactory {
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_1, Field_1.Field.w2),
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_2, Field_1.Field.f4),
             new PowerEvent_1.PowerEvent(playerId, 2),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
         ]);
     }
     static purple(playerId, playerMat) {
@@ -84,8 +84,8 @@ class PlayerFactory {
             new DeployEvent_1.DeployEvent(playerId, Character_1.Character.CHARACTER, Field_1.Field.purple),
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_1, Field_1.Field.t7),
             new DeployEvent_1.DeployEvent(playerId, Worker_1.Worker.WORKER_2, Field_1.Field.f7),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
-            new CombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
+            new GainCombatCardEvent_1.GainCombatCardEvent(playerId, new CombatCard_1.CombatCard()),
         ]);
     }
     static green(playerId, playerMat) {

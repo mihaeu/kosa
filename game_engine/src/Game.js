@@ -7,10 +7,10 @@ const CombatCard_1 = require("./CombatCard");
 const ActionEvent_1 = require("./Events/ActionEvent");
 const BuildEvent_1 = require("./Events/BuildEvent");
 const CoinEvent_1 = require("./Events/CoinEvent");
-const CombatCardEvent_1 = require("./Events/CombatCardEvent");
 const DeployEvent_1 = require("./Events/DeployEvent");
 const EnlistEvent_1 = require("./Events/EnlistEvent");
 const EventLog_1 = require("./Events/EventLog");
+const GainCombatCardEvent_1 = require("./Events/GainCombatCardEvent");
 const GainResourceEvent_1 = require("./Events/GainResourceEvent");
 const GameEndEvent_1 = require("./Events/GameEndEvent");
 const MoveEvent_1 = require("./Events/MoveEvent");
@@ -146,7 +146,7 @@ class Game {
         return this.bolster(player, new PowerEvent_1.PowerEvent(player.playerId, gainedPower));
     }
     bolsterCombatCards(player) {
-        return this.bolster(player, new CombatCardEvent_1.GainCombatCardEvent(player.playerId, new CombatCard_1.CombatCard(2)));
+        return this.bolster(player, new GainCombatCardEvent_1.GainCombatCardEvent(player.playerId, new CombatCard_1.CombatCard(2)));
     }
     tradeResources(player, worker, resource1, resource2) {
         Availability_1.assertActionCanBeTaken(this.log, this.players, player, TopAction_1.TopAction.TRADE);

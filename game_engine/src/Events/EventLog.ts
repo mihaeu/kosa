@@ -3,7 +3,7 @@ import { PlayerId } from "../PlayerId";
 import { Event } from "./Event";
 
 export class EventLog {
-    public log: Event[] = [];
+    constructor(public log: Event[] = []) {}
 
     public add(event: Event): this {
         this.log.push(event);
