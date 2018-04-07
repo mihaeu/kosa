@@ -214,6 +214,9 @@ const server = net.createServer((socket) => {
                         broadcast(successMsg(`Game ${gameId} is over ...`), clients);
                         finishedGames.push(gameId);
                         runningGames.delete(gameId);
+                        fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
+                            ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
+                            : socket.write(successMsg(`Saved game to finished/${gameId}\n`)));
                     }
                 }
                 catch (error) {
