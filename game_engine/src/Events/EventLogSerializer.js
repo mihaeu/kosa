@@ -3,10 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ActionEvent_1 = require("./ActionEvent");
 const BuildEvent_1 = require("./BuildEvent");
 const CoinEvent_1 = require("./CoinEvent");
-const GainCombatCardEvent_1 = require("./GainCombatCardEvent");
 const DeployEvent_1 = require("./DeployEvent");
 const EnlistEvent_1 = require("./EnlistEvent");
 const EventLog_1 = require("./EventLog");
+const GainCombatCardEvent_1 = require("./GainCombatCardEvent");
 const GainResourceEvent_1 = require("./GainResourceEvent");
 const GameEndEvent_1 = require("./GameEndEvent");
 const LocationEvent_1 = require("./LocationEvent");
@@ -34,14 +34,8 @@ class EventLogSerializer {
         for (const serializedEvent of serializedEventLog.split("\n")) {
             const deserializedJson = JSON.parse(serializedEvent);
             const eventType = EventLogSerializer.dynamicClassLookup(deserializedJson.type);
-            try {
-                const event = new eventType();
-                log.push(Object.assign(event, deserializedJson));
-            }
-            catch (error) {
-                console.error(`Unable to deserialize ${deserializedJson}. Check if the class is supported.`);
-                throw error;
-            }
+            const event = new eventType();
+            log.push(Object.assign(event, deserializedJson));
         }
         return new EventLog_1.EventLog(log);
     }

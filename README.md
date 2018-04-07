@@ -45,11 +45,18 @@ Commands:
         Join a game
     START <gameId>
         Starts a game
-    ACTION <gameId> <playerId>
-        List available action
-    ACTION <gameId> <playerId> <action>
-        List available options for an action
+    STOP <gameId>
+        Stops a game and saves the current state to disk
+    ACTION <gameId> <playerId> [<action>]
+        List available actions or options for an action
     OPTION <gameId> <playerId> <option>
+        Play an action by specifying the option
+    SU <playerId>
+        Change your identity to that of another player
+    EXPORT <gameId>
+        Exports the game state as serialized JSON
+    IMPORT <gameId>
+        Imports serialized game state and adds the game to the waiting list
 
 Arguments:
     <gameId>        UUID v4 strings which you get after joining a game.
@@ -58,6 +65,7 @@ Arguments:
     <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
     <action>        one of the following: trade move bolster produce
     <option>        index of the options you got from the available action command
+
 
 ```
 

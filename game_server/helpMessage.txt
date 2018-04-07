@@ -1,0 +1,38 @@
+#######################
+#   Kosa Game Server  #
+#######################
+
+Commands:
+    WAITING
+        List all games waiting for players
+    RUNNING
+        List all active games
+    FINISHED
+        List all finished games
+    NEW
+        Opens a new game
+    JOIN <gameId> <faction> <playerMat>
+        Join a game
+    START <gameId>
+        Starts a game
+    STOP <gameId>
+        Stops a game and saves the current state to disk
+    ACTION <gameId> <playerId> [<action>]
+        List available actions or options for an action
+    OPTION <gameId> <playerId> <option>
+        Play an action by specifying the option
+    SU <playerId>
+        Change your identity to that of another player
+    EXPORT <gameId>
+        Exports the game state as serialized JSON
+    IMPORT <gameId>
+        Imports serialized game state and adds the game to the waiting list
+
+Arguments:
+    <gameId>        UUID v4 strings which you get after joining a game.
+    <playerId>      UUID v4 strings which you get after joining the server.
+    <faction>       one of the following: green black yellow white purple blue red
+    <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
+    <action>        one of the following: trade move bolster produce
+    <option>        index of the options you got from the available action command
+

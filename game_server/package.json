@@ -9,14 +9,19 @@
     "start": "node_modules/pm2/bin/pm2-dev server.js",
     "compile": "node_modules/typescript/bin/tsc -w",
     "fix": "npm run format && npm run lint",
-    "format": "node_modules/prettier/bin-prettier.js --print-width=120 --trailing-comma=all --tab-width=4 --arrow-parens always --write '{src,tests}/**/*.ts'",
-    "lint": "node_modules/tslint/bin/tslint --project tsconfig.json --config tslint.json --fix {src,test}/**/*.ts"
+    "format": "node_modules/prettier/bin-prettier.js --print-width=120 --trailing-comma=all --tab-width=4 --arrow-parens always --write '**/*.ts'",
+    "lint": "node_modules/tslint/bin/tslint --project tsconfig.json --config tslint.json --fix *.ts"
   },
   "dependencies": {
-    "@types/node": "^9.6.0",
+    "@types/uuid": "^3.4.3",
     "pm2": "^2.10.2",
-    "tslint": "^5.9.1",
+    "ramda": "^0.25.0",
     "typescript": "^2.7.2",
     "uuid": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^9.6.0",
+    "@types/ramda": "^0.25.20",
+    "tslint": "^5.9.1"
   }
 }

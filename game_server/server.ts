@@ -1,73 +1,32 @@
+import * as fs from "fs";
 import net = require("net");
+import { Socket } from "net";
 import * as _ from "ramda";
-import {Game} from "../game_engine/src/Game";
-import {GameInfo} from "../game_engine/src/GameInfo";
-import {Option} from "../game_engine/src/Options/Option";
+import { v4 } from "uuid";
 import {
     availableBottomActions,
     availableOptionsForAction,
     availableTopActions,
 } from "../game_engine/src/Availability";
-import {PlayerFactory} from "../game_engine/src/PlayerFactory";
-import {PlayerMat} from "../game_engine/src/PlayerMat";
-import {PlayerId} from "../game_engine/src/PlayerId";
-import {Player} from "../game_engine/src/Player";
-import {BolsterCombatCardsOption} from "../game_engine/src/options/BolsterCombatCardsOption";
-import {BolsterPowerOption} from "../game_engine/src/options/BolsterPowerOption";
-import {BuildOption} from "../game_engine/src/options/BuildOption";
-import {DeployOption} from "../game_engine/src/options/DeployOption";
-import {EnlistOption} from "../game_engine/src/options/EnlistOption";
-import {GainCoinOption} from "../game_engine/src/options/GainCoinOption";
-import {MoveOption} from "../game_engine/src/options/MoveOption";
-import {Option} from "../game_engine/src/options/Option";
-import {ProduceOption} from "../game_engine/src/options/ProduceOption";
-import {RewardOnlyOption} from "../game_engine/src/options/RewardOnlyOption";
-import {TradePopularityOption} from "../game_engine/src/options/TradePopularityOption";
-import {TradeResourcesOption} from "../game_engine/src/options/TradeResourcesOption";
-import {UpgradeOption} from "../game_engine/src/options/UpgradeOption";
-import {Socket} from "net";
-import {v4} from "uuid";
+import { EventLogSerializer } from "../game_engine/src/Events/EventLogSerializer";
+import { Game } from "../game_engine/src/Game";
+import { GameInfo } from "../game_engine/src/GameInfo";
+import { Option } from "../game_engine/src/Options/Option";
+import { Player } from "../game_engine/src/Player";
+import { PlayerFactory } from "../game_engine/src/PlayerFactory";
+import { PlayerId } from "../game_engine/src/PlayerId";
+import { PlayerMat } from "../game_engine/src/PlayerMat";
+import ErrnoException = NodeJS.ErrnoException;
 
-const welcomeMessage = `
-#######################
-#   Kosa Game Server  #
-#######################
+const helpMessage = fs.readFileSync("./helpMessage.txt");
 
-Commands:
-    WAITING
-        List all games waiting for players
-    RUNNING
-        List all active games
-    FINISHED
-        List all finished games
-    NEW
-        Opens a new game
-    JOIN <gameId> <faction> <playerMat>
-        Join a game
-    START <gameId>
-        Starts a game
-    ACTION <gameId> <playerId>
-        List available action
-    ACTION <gameId> <playerId> <action>
-        List available options for an action
-    OPTION <gameId> <playerId> <option>
-
-Arguments:
-    <gameId>        UUID v4 strings which you get after joining a game.
-    <playerId>      UUID v4 strings which you get after joining the server.
-    <faction>       one of the following: green black yellow white purple blue red
-    <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
-    <action>        one of the following: trade move bolster produce
-    <option>        index of the options you got from the available action command
-    
-`;
-
-type GameId = string;
+type GameUUID = string;
+type PlayerUUID = string;
 
 const clients = new Map<string, Socket>();
-const waitingGames: Map<GameId, Player[]> = new Map();
-const runningGames: Map<GameId, Game> = new Map();
-const finishedGames: GameId[] = [];
+const waitingGames: Map<GameUUID, Player[]> = new Map();
+const runningGames: Map<GameUUID, Game> = new Map();
+const finishedGames: GameUUID[] = [];
 
 const broadcast = (message: string, allClients: Map<string, Socket>): void => {
     for (const [uuid, socket] of allClients) {
@@ -86,20 +45,27 @@ enum Command {
     NEW = "NEW",
     JOIN = "JOIN",
     START = "START",
+    STOP = "STOP",
     ACTION = "ACTION",
     OPTION = "OPTION",
+    SU = "SU",
+    EXPORT = "EXPORT",
+    IMPORT = "IMPORT",
 }
 
 // temp hack
-const hackyOptions: Map<PlayerId, Option[]> = new Map();
+const hackyOptions: Map<PlayerUUID, Option[]> = new Map();
+
+if (!fs.existsSync("./finished")) {
+    fs.mkdirSync("./finished");
+}
 
 const server = net.createServer((socket) => {
-
-    const playerUuid = v4();
+    let playerUuid = v4();
     clients.set(playerUuid, socket);
     broadcast(`${playerUuid} joined the server ...\n`, clients);
 
-    socket.on('end', () => {
+    socket.on("end", () => {
         clients.delete(playerUuid);
         broadcast(`${playerUuid} left the server ...\n`, clients);
     });
@@ -129,6 +95,20 @@ const server = net.createServer((socket) => {
             const gameId = v4();
             waitingGames.set(gameId, []);
             broadcast(`${playerUuid} opened a new game ${gameId} ...\n`, clients);
+        } else if (request.toUpperCase().startsWith(Command.SU)) {
+            /**
+             * SWITCH TO ANOTHER USER/PLAYER
+             */
+            const matches = request.split(" ");
+            const newPlayerUuid: PlayerUUID = matches[1];
+            if (newPlayerUuid === undefined) {
+                socket.write(errorMsg("SU <playerId>"));
+                return;
+            }
+            clients.delete(playerUuid);
+            clients.set(newPlayerUuid, socket);
+            broadcast(infoMsg(`${playerUuid} is now ${newPlayerUuid}`), clients);
+            playerUuid = newPlayerUuid;
         } else if (request.toUpperCase().startsWith(Command.JOIN)) {
             /**
              * JOIN AN EXISTING GAME
@@ -149,10 +129,11 @@ const server = net.createServer((socket) => {
                 waitingGames.get(gameId).push(player);
 
                 broadcast(
-                    `${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`, clients,
+                    `${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`,
+                    clients,
                 );
             } catch (error) {
-                socket.write(errorMsg("JOIN <gameId> <faction> <playerMat>\n"));
+                socket.write(errorMsg(`JOIN <gameId> <faction> <playerMat>\n\n${error.message}\n`));
             }
         } else if (request.toUpperCase().startsWith(Command.START)) {
             /**
@@ -171,12 +152,31 @@ const server = net.createServer((socket) => {
                 waitingGames.delete(gameId);
                 runningGames.set(gameId, game);
 
-                broadcast(
-                    `${playerUuid} started game ${gameId} ...\n`, clients,
-                );
+                broadcast(`${playerUuid} started game ${gameId} ...\n`, clients);
             } catch (error) {
                 socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n`));
             }
+        } else if (request.toUpperCase().startsWith(Command.STOP)) {
+            /**
+             * STOP A GAME
+             */
+
+            const matches = request.split(" ");
+            const gameId = matches[1];
+            if (gameId === undefined || !runningGames.has(gameId)) {
+                socket.write(errorMsg(`STOP <gameId>\n`));
+                return;
+            }
+
+            finishedGames.push(gameId);
+            const game = runningGames.get(gameId);
+            fs.writeFile(
+                `./finished/${gameId}`,
+                EventLogSerializer.serialize(game.log),
+                (err: ErrnoException) => err
+                    ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
+                    : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n`)),
+            );
         } else if (request.toUpperCase().startsWith(Command.ACTION)) {
             /**
              * SHOW AVAILABLE ACTIONS / SHOW OPTIONS FOR ACTION
@@ -206,8 +206,9 @@ const server = net.createServer((socket) => {
             if (matches.length === 3) {
                 socket.write(
                     availableTopActions(game.log, currentPlayer).join(", ") +
-                    "\n" +
-                    availableBottomActions(game.log, currentPlayer).join(", ") + "\n",
+                        "\n" +
+                        availableBottomActions(game.log, currentPlayer).join(", ") +
+                        "\n",
                 );
             } else if (matches.length === 4) {
                 const action = matches[3].toUpperCase();
@@ -230,33 +231,49 @@ const server = net.createServer((socket) => {
             }
 
             const gameId = matches[1];
-            const game = runningGames.get(gameId);
+            const game = runningGames.get(gameId) as Game;
 
             const playerId = matches[2];
             try {
                 const currentPlayer = _.find(
                     (player: Player) => playerId === player.playerId.playerId,
                     GameInfo.players(game.log),
-                );
+                ) as Player;
 
                 const optionIndex = parseInt(matches[3], 10);
                 if (optionIndex === undefined) {
-                    socket.write(errorMsg("Option doesn't exist ....\n" ));
+                    socket.write(errorMsg("Option doesn't exist ....\n"));
                 }
                 game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
 
                 if (GameInfo.gameOver(game.log)) {
-                    broadcast(`Game ${gameId} is over ...`, clients);
+                    broadcast(successMsg(`Game ${gameId} is over ...`), clients);
                     finishedGames.push(gameId);
                     runningGames.delete(gameId);
                 }
             } catch (error) {
                 socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
             }
+        } else if (request.toUpperCase().startsWith(Command.IMPORT)) {
+            /**
+             * IMPORT GAME STATE AND ADD TO WAITING
+             *
+             * IMPORT <gameId>
+             */
+            const matches = request.split(" ");
+            const gameId = matches[1];
+
+        } else if (request.toUpperCase().startsWith(Command.EXPORT)) {
+            /**
+             * EXPORT GAME STATE
+             *
+             * EXPORT <gameId>
+             */
+            // write serialized game state
         }
 
         if (request.length === 0) {
-            socket.write(welcomeMessage);
+            socket.write(helpMessage);
         }
     });
 });

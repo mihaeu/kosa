@@ -1,47 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs = require("fs");
 const net = require("net");
 const _ = require("ramda");
+const uuid_1 = require("uuid");
+const Availability_1 = require("../game_engine/src/Availability");
+const EventLogSerializer_1 = require("../game_engine/src/Events/EventLogSerializer");
 const Game_1 = require("../game_engine/src/Game");
 const GameInfo_1 = require("../game_engine/src/GameInfo");
-const Availability_1 = require("../game_engine/src/Availability");
 const PlayerFactory_1 = require("../game_engine/src/PlayerFactory");
-const PlayerMat_1 = require("../game_engine/src/PlayerMat");
 const PlayerId_1 = require("../game_engine/src/PlayerId");
-const uuid_1 = require("uuid");
-const welcomeMessage = `
-#######################
-#   Kosa Game Server  #
-#######################
-
-Commands:
-    WAITING
-        List all games waiting for players
-    RUNNING
-        List all active games
-    FINISHED
-        List all finished games
-    NEW
-        Opens a new game
-    JOIN <gameId> <faction> <playerMat>
-        Join a game
-    START <gameId>
-        Starts a game
-    ACTION <gameId> <playerId>
-        List available action
-    ACTION <gameId> <playerId> <action>
-        List available options for an action
-    OPTION <gameId> <playerId> <option>
-
-Arguments:
-    <gameId>        UUID v4 strings which you get after joining a game.
-    <playerId>      UUID v4 strings which you get after joining the server.
-    <faction>       one of the following: green black yellow white purple blue red
-    <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
-    <action>        one of the following: trade move bolster produce
-    <option>        index of the options you got from the available action command
-    
-`;
+const PlayerMat_1 = require("../game_engine/src/PlayerMat");
+const helpMessage = fs.readFileSync("./helpMessage.txt");
 const clients = new Map();
 const waitingGames = new Map();
 const runningGames = new Map();
@@ -62,16 +32,23 @@ var Command;
     Command["NEW"] = "NEW";
     Command["JOIN"] = "JOIN";
     Command["START"] = "START";
+    Command["STOP"] = "STOP";
     Command["ACTION"] = "ACTION";
     Command["OPTION"] = "OPTION";
+    Command["SU"] = "SU";
+    Command["EXPORT"] = "EXPORT";
+    Command["IMPORT"] = "IMPORT";
 })(Command || (Command = {}));
 // temp hack
 const hackyOptions = new Map();
+if (!fs.existsSync("./finished")) {
+    fs.mkdirSync("./finished");
+}
 const server = net.createServer((socket) => {
-    const playerUuid = uuid_1.v4();
+    let playerUuid = uuid_1.v4();
     clients.set(playerUuid, socket);
     broadcast(`${playerUuid} joined the server ...\n`, clients);
-    socket.on('end', () => {
+    socket.on("end", () => {
         clients.delete(playerUuid);
         broadcast(`${playerUuid} left the server ...\n`, clients);
     });
@@ -103,6 +80,21 @@ const server = net.createServer((socket) => {
             waitingGames.set(gameId, []);
             broadcast(`${playerUuid} opened a new game ${gameId} ...\n`, clients);
         }
+        else if (request.toUpperCase().startsWith(Command.SU)) {
+            /**
+             * SWITCH TO ANOTHER USER/PLAYER
+             */
+            const matches = request.split(" ");
+            const newPlayerUuid = matches[1];
+            if (newPlayerUuid === undefined) {
+                socket.write(errorMsg("SU <playerId>"));
+                return;
+            }
+            clients.delete(playerUuid);
+            clients.set(newPlayerUuid, socket);
+            broadcast(infoMsg(`${playerUuid} is now ${newPlayerUuid}`), clients);
+            playerUuid = newPlayerUuid;
+        }
         else if (request.toUpperCase().startsWith(Command.JOIN)) {
             /**
              * JOIN AN EXISTING GAME
@@ -118,7 +110,7 @@ const server = net.createServer((socket) => {
                 broadcast(`${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`, clients);
             }
             catch (error) {
-                socket.write(errorMsg("JOIN <gameId> <faction> <playerMat>\n"));
+                socket.write(errorMsg(`JOIN <gameId> <faction> <playerMat>\n\n${error.message}\n`));
             }
         }
         else if (request.toUpperCase().startsWith(Command.START)) {
@@ -140,6 +132,22 @@ const server = net.createServer((socket) => {
             catch (error) {
                 socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n`));
             }
+        }
+        else if (request.toUpperCase().startsWith(Command.STOP)) {
+            /**
+             * STOP A GAME
+             */
+            const matches = request.split(" ");
+            const gameId = matches[1];
+            if (gameId === undefined || !runningGames.has(gameId)) {
+                socket.write(errorMsg(`STOP <gameId>\n`));
+                return;
+            }
+            finishedGames.push(gameId);
+            const game = runningGames.get(gameId);
+            fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
+                ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
+                : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n`)));
         }
         else if (request.toUpperCase().startsWith(Command.ACTION)) {
             /**
@@ -163,7 +171,8 @@ const server = net.createServer((socket) => {
             if (matches.length === 3) {
                 socket.write(Availability_1.availableTopActions(game.log, currentPlayer).join(", ") +
                     "\n" +
-                    Availability_1.availableBottomActions(game.log, currentPlayer).join(", ") + "\n");
+                    Availability_1.availableBottomActions(game.log, currentPlayer).join(", ") +
+                    "\n");
             }
             else if (matches.length === 4) {
                 const action = matches[3].toUpperCase();
@@ -196,7 +205,7 @@ const server = net.createServer((socket) => {
                 }
                 game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
                 if (GameInfo_1.GameInfo.gameOver(game.log)) {
-                    broadcast(`Game ${gameId} is over ...`, clients);
+                    broadcast(successMsg(`Game ${gameId} is over ...`), clients);
                     finishedGames.push(gameId);
                     runningGames.delete(gameId);
                 }
@@ -205,8 +214,25 @@ const server = net.createServer((socket) => {
                 socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
             }
         }
+        else if (request.toUpperCase().startsWith(Command.IMPORT)) {
+            /**
+             * IMPORT GAME STATE AND ADD TO WAITING
+             *
+             * IMPORT <gameId>
+             */
+            const matches = request.split(" ");
+            const gameId = matches[1];
+        }
+        else if (request.toUpperCase().startsWith(Command.EXPORT)) {
+            /**
+             * EXPORT GAME STATE
+             *
+             * EXPORT <gameId>
+             */
+            // write serialized game state
+        }
         if (request.length === 0) {
-            socket.write(welcomeMessage);
+            socket.write(helpMessage);
         }
     });
 });

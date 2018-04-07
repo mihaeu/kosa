@@ -41,7 +41,7 @@ export class EventLogSerializer {
         return new EventLog(log);
     }
 
-    private static EVENT_CLASSES = {
+    private static EVENT_CLASSES: any = {
         ActionEvent,
         BuildEvent,
         CoinEvent,
