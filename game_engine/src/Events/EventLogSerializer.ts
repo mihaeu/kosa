@@ -27,16 +27,16 @@ export class EventLogSerializer {
             event.type = event.constructor.name;
             jsonEvents.push(JSON.stringify(event));
         }
-        return jsonEvents.join("\n");
+        return "[" + jsonEvents.join(",") + "]";
     }
 
     public static deserialize(serializedEventLog: string): EventLog {
         const log: Event[] = [];
-        for (const serializedEvent of serializedEventLog.split("\n")) {
-            const deserializedJson = JSON.parse(serializedEvent);
-            const eventType = EventLogSerializer.dynamicClassLookup(deserializedJson.type);
+        const deserializedJsonEvents = JSON.parse(serializedEventLog);
+        for (const jsonEvent of deserializedJsonEvents) {
+            const eventType = EventLogSerializer.dynamicClassLookup(jsonEvent.type);
             const event = new eventType();
-            log.push((Object as any).assign(event, deserializedJson));
+            log.push((Object as any).assign(event, jsonEvent));
         }
         return new EventLog(log);
     }

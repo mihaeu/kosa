@@ -103,12 +103,12 @@ const server = net.createServer((socket) => {
             const newPlayerUuid: PlayerUUID = matches[1];
             if (newPlayerUuid === undefined) {
                 socket.write(errorMsg("SU <playerId>"));
-                return;
+            } else {
+                clients.delete(playerUuid);
+                clients.set(newPlayerUuid, socket);
+                broadcast(infoMsg(`${playerUuid} is now ${newPlayerUuid}`), clients);
+                playerUuid = newPlayerUuid;
             }
-            clients.delete(playerUuid);
-            clients.set(newPlayerUuid, socket);
-            broadcast(infoMsg(`${playerUuid} is now ${newPlayerUuid}`), clients);
-            playerUuid = newPlayerUuid;
         } else if (request.toUpperCase().startsWith(Command.JOIN)) {
             /**
              * JOIN AN EXISTING GAME
@@ -141,20 +141,19 @@ const server = net.createServer((socket) => {
              */
 
             const matches = request.split(" ");
-            if (matches.length < 2) {
-                socket.write(errorMsg("START <gameId>\n"));
-                return;
-            }
             const gameId = matches[1];
+            if (gameId === undefined) {
+                socket.write(errorMsg("START <gameId>\n"));
+            } else {
+                try {
+                    const game = new Game(waitingGames.get(gameId));
+                    waitingGames.delete(gameId);
+                    runningGames.set(gameId, game);
 
-            try {
-                const game = new Game(waitingGames.get(gameId));
-                waitingGames.delete(gameId);
-                runningGames.set(gameId, game);
-
-                broadcast(`${playerUuid} started game ${gameId} ...\n`, clients);
-            } catch (error) {
-                socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n`));
+                    broadcast(`${playerUuid} started game ${gameId} ...\n`, clients);
+                } catch (error) {
+                    socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n`));
+                }
             }
         } else if (request.toUpperCase().startsWith(Command.STOP)) {
             /**
@@ -165,18 +164,18 @@ const server = net.createServer((socket) => {
             const gameId = matches[1];
             if (gameId === undefined || !runningGames.has(gameId)) {
                 socket.write(errorMsg(`STOP <gameId>\n`));
-                return;
+            } else {
+                finishedGames.push(gameId);
+                const game = runningGames.get(gameId);
+                fs.writeFile(
+                    `./finished/${gameId}`,
+                    EventLogSerializer.serialize(game.log),
+                    (err: ErrnoException) => err
+                        ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
+                        : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n`)),
+                );
+                runningGames.delete(gameId);
             }
-
-            finishedGames.push(gameId);
-            const game = runningGames.get(gameId);
-            fs.writeFile(
-                `./finished/${gameId}`,
-                EventLogSerializer.serialize(game.log),
-                (err: ErrnoException) => err
-                    ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
-                    : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n`)),
-            );
         } else if (request.toUpperCase().startsWith(Command.ACTION)) {
             /**
              * SHOW AVAILABLE ACTIONS / SHOW OPTIONS FOR ACTION
@@ -188,34 +187,34 @@ const server = net.createServer((socket) => {
             if (matches.length < 3) {
                 socket.write(errorMsg("ACTION <gameId> <playerId>\n"));
                 socket.write(errorMsg("ACTION <gameId> <playerId> TRADE|BOLSTER|MOVE|PRODUCE\n"));
-            }
+            } else {
+                const gameId = matches[1];
+                const game = runningGames.get(gameId);
 
-            const gameId = matches[1];
-            const game = runningGames.get(gameId);
-
-            const playerId = matches[2];
-            const currentPlayer = _.find(
-                (player: Player) => playerId === player.playerId.playerId,
-                GameInfo.players(game.log),
-            );
-
-            if (currentPlayer === undefined) {
-                socket.write(errorMsg("Player not found ...\n"));
-            }
-
-            if (matches.length === 3) {
-                socket.write(
-                    availableTopActions(game.log, currentPlayer).join(", ") +
-                        "\n" +
-                        availableBottomActions(game.log, currentPlayer).join(", ") +
-                        "\n",
+                const playerId = matches[2];
+                const currentPlayer = _.find(
+                    (player: Player) => playerId === player.playerId.playerId,
+                    GameInfo.players(game.log),
                 );
-            } else if (matches.length === 4) {
-                const action = matches[3].toUpperCase();
-                const options = availableOptionsForAction(action, game.log, currentPlayer);
-                hackyOptions.set(playerId, options);
-                for (const index in options) {
-                    socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n");
+
+                if (currentPlayer === undefined) {
+                    socket.write(errorMsg("Player not found ...\n"));
+                }
+
+                if (matches.length === 3) {
+                    socket.write(
+                        availableTopActions(game.log, currentPlayer).join(", ") +
+                            "\n" +
+                            availableBottomActions(game.log, currentPlayer).join(", ") +
+                            "\n",
+                    );
+                } else if (matches.length === 4) {
+                    const action = matches[3].toUpperCase();
+                    const options = availableOptionsForAction(action, game.log, currentPlayer);
+                    hackyOptions.set(playerId, options);
+                    for (const index in options) {
+                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n");
+                    }
                 }
             }
         } else if (request.toUpperCase().startsWith(Command.OPTION)) {
@@ -227,41 +226,52 @@ const server = net.createServer((socket) => {
             const matches = request.split(" ");
             if (matches.length < 4) {
                 socket.write(errorMsg("OPTION <gameId> <playerId> <option>\n"));
-                return;
-            }
+            } else {
+                const gameId = matches[1];
+                const game = runningGames.get(gameId) as Game;
 
-            const gameId = matches[1];
-            const game = runningGames.get(gameId) as Game;
+                const playerId = matches[2];
+                try {
+                    const currentPlayer = _.find(
+                        (player: Player) => playerId === player.playerId.playerId,
+                        GameInfo.players(game.log),
+                    ) as Player;
 
-            const playerId = matches[2];
-            try {
-                const currentPlayer = _.find(
-                    (player: Player) => playerId === player.playerId.playerId,
-                    GameInfo.players(game.log),
-                ) as Player;
+                    const optionIndex = parseInt(matches[3], 10);
+                    if (optionIndex === undefined) {
+                        socket.write(errorMsg("Option doesn't exist ....\n"));
+                    }
+                    game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
 
-                const optionIndex = parseInt(matches[3], 10);
-                if (optionIndex === undefined) {
-                    socket.write(errorMsg("Option doesn't exist ....\n"));
+                    if (GameInfo.gameOver(game.log)) {
+                        broadcast(successMsg(`Game ${gameId} is over ...`), clients);
+                        finishedGames.push(gameId);
+                        runningGames.delete(gameId);
+                    }
+                } catch (error) {
+                    socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
                 }
-                game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
-
-                if (GameInfo.gameOver(game.log)) {
-                    broadcast(successMsg(`Game ${gameId} is over ...`), clients);
-                    finishedGames.push(gameId);
-                    runningGames.delete(gameId);
-                }
-            } catch (error) {
-                socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
             }
         } else if (request.toUpperCase().startsWith(Command.IMPORT)) {
             /**
              * IMPORT GAME STATE AND ADD TO WAITING
              *
-             * IMPORT <gameId>
+             * IMPORT <gameId> <serializedEvents>
              */
             const matches = request.split(" ");
             const gameId = matches[1];
+            const serializedEventLog = matches[2];
+            if (gameId === undefined || serializedEventLog === undefined) {
+                socket.write(errorMsg(`IMPORT <gameId> <serializedEvents>\n`))
+            } else {
+                try {
+                    const log = EventLogSerializer.deserialize(serializedEventLog);
+                    runningGames.set(gameId, new Game(GameInfo.players(log), log));
+                    broadcast(infoMsg(`${playerUuid} imported ${gameId}`), clients);
+                } catch (e) {
+                    socket.write(`Unable to import game state\n\n${e.message}\n`);
+                }
+            }
 
         } else if (request.toUpperCase().startsWith(Command.EXPORT)) {
             /**
@@ -269,10 +279,21 @@ const server = net.createServer((socket) => {
              *
              * EXPORT <gameId>
              */
-            // write serialized game state
-        }
 
-        if (request.length === 0) {
+            const matches = request.split(" ");
+            const gameId = matches[1];
+            if (gameId === undefined) {
+                socket.write(errorMsg(`EXPORT <gameId>\n`));
+            } else {
+                try {
+                    const game = runningGames.get(gameId) as Game;
+                    socket.write(EventLogSerializer.serialize(game.log) + "\n\n");
+                } catch (e) {
+                    socket.write(`Unable to export game state\n\n${e.message}\n`);
+                }
+            }
+
+        } else {
             socket.write(helpMessage);
         }
     });

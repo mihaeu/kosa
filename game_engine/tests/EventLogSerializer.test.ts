@@ -9,9 +9,9 @@ test("Serializes EventLog to JSON with one Event per line", () => {
     const playerId = new PlayerId(1);
     const log: Event[] = [new CoinEvent(playerId, 5), new PopularityEvent(playerId, 5), new CoinEvent(playerId, -3)];
     expect(EventLogSerializer.serialize(new EventLog(log))).toEqual(
-        `{"playerId":{"playerId":1},"coins":5,"type":"CoinEvent"}\n` +
-            `{"playerId":{"playerId":1},"popularity":5,"type":"PopularityEvent"}\n` +
-            `{"playerId":{"playerId":1},"coins":-3,"type":"CoinEvent"}`,
+        `[{"playerId":{"playerId":1},"coins":5,"type":"CoinEvent"},` +
+            `{"playerId":{"playerId":1},"popularity":5,"type":"PopularityEvent"},` +
+            `{"playerId":{"playerId":1},"coins":-3,"type":"CoinEvent"}]`,
     );
 });
 
