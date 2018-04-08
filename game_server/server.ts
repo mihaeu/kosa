@@ -319,7 +319,26 @@ const app = express();
 
 app.get("/load", (req, res) => {
     if (runningGames.has(req.query.gameId)) {
-        res.json(runningGames.get(req.query.gameId).log)
+        const game = runningGames.get(req.query.gameId) as Game;
+        const players = GameInfo.players(game.log);
+        let stats = {};
+        stats.players = [];
+        players.forEach((player: Player) => {
+            stats.players.push({
+                coins: GameInfo.coins(game.log, player),
+                combatCards: GameInfo.combatCards(game.log, player).length,
+                faction: player.faction,
+                playerId: player.playerId.playerId,
+                playerMat: "tbd",
+                popularity: GameInfo.popularity(game.log, player),
+                power: GameInfo.power(game.log, player),
+                stars: GameInfo.stars(game.log, player).length,
+                units: Array.from(GameInfo.units(game.log, player).entries()),
+            });
+        });
+        stats.resources = GameInfo.allResources(game.log);
+        stats.log = game.log.log;
+        res.json(stats);
     }
 });
 app.use(express.static('public'));

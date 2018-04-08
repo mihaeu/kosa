@@ -103,6 +103,10 @@ class GameInfo {
         return _.map(Building_1.Building.fromEvent, log.filterBy(player.playerId, BuildEvent_1.BuildEvent));
     }
     static availableResources(log, player) {
+        const territories = GameInfo.territories(log, player);
+        return _.filter((resource) => territories.indexOf(resource.location) >= 0, GameInfo.allResources(log));
+    }
+    static allResources(log) {
         const extractResource = (event) => event.resources;
         const gained = _.chain(extractResource, log.filter(GainResourceEvent_1.GainResourceEvent));
         const spent = _.chain(extractResource, log.filter(SpendResourceEvent_1.SpendResourceEvent));
@@ -114,8 +118,7 @@ class GameInfo {
                 }
             }
         }
-        const territories = GameInfo.territories(log, player);
-        return _.filter((resource) => territories.indexOf(resource.location) >= 0, gained);
+        return gained;
     }
     static popularity(log, player) {
         return _.sum(_.map((event) => event.popularity, log.filterBy(player.playerId, PopularityEvent_1.PopularityEvent)));

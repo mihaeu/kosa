@@ -277,7 +277,26 @@ server.listen(port, hostname);
 const app = express();
 app.get("/load", (req, res) => {
     if (runningGames.has(req.query.gameId)) {
-        res.json(runningGames.get(req.query.gameId).log);
+        const game = runningGames.get(req.query.gameId);
+        const players = GameInfo_1.GameInfo.players(game.log);
+        let stats = {};
+        stats.players = [];
+        players.forEach((player) => {
+            stats.players.push({
+                coins: GameInfo_1.GameInfo.coins(game.log, player),
+                combatCards: GameInfo_1.GameInfo.combatCards(game.log, player).length,
+                faction: player.faction,
+                playerId: player.playerId.playerId,
+                playerMat: "tbd",
+                popularity: GameInfo_1.GameInfo.popularity(game.log, player),
+                power: GameInfo_1.GameInfo.power(game.log, player),
+                stars: GameInfo_1.GameInfo.stars(game.log, player).length,
+                units: Array.from(GameInfo_1.GameInfo.units(game.log, player).entries()),
+            });
+        });
+        stats.resources = GameInfo_1.GameInfo.allResources(game.log);
+        stats.log = game.log.log;
+        res.json(stats);
     }
 });
 app.use(express.static('public'));

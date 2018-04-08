@@ -141,6 +141,11 @@ export class GameInfo {
     }
 
     public static availableResources(log: EventLog, player: Player): Resource[] {
+        const territories = GameInfo.territories(log, player);
+        return _.filter((resource) => territories.indexOf(resource.location) >= 0, GameInfo.allResources(log));
+    }
+
+    public static allResources(log: EventLog): Resource[] {
         const extractResource = (event: ResourceEvent) => event.resources;
         const gained = _.chain(extractResource, log.filter(GainResourceEvent) as GainResourceEvent[]);
         const spent = _.chain(extractResource, log.filter(SpendResourceEvent) as SpendResourceEvent[]);
@@ -152,8 +157,7 @@ export class GameInfo {
                 }
             }
         }
-        const territories = GameInfo.territories(log, player);
-        return _.filter((resource) => territories.indexOf(resource.location) >= 0, gained);
+        return gained;
     }
 
     public static popularity(log: EventLog, player: Player): number {

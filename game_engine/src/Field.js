@@ -6,8 +6,6 @@ class Field {
     constructor(name, type) {
         this.name = name;
         this.type = type;
-        this.name = name;
-        this.type = type;
     }
     static isNotLake(field) {
         return field.type !== FieldType_1.FieldType.LAKE;

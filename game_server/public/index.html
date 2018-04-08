@@ -226,6 +226,8 @@
 
         .content {
             overflow: hidden;
+            width: 150px;
+            text-align: center;
         }
 
     </style>
@@ -574,6 +576,10 @@
             <input type="text" name="gameId" id="gameId">
         </label>
         <button type="submit" id="load">Load / Refresh</button>
+        <label for="auto-refresh">
+            Auto-Reload
+            <input type="checkbox" id="auto-refresh" name="auto-refresh">
+        </label>
         <span id="result"></span>
 
         <h1>Stats</h1>
@@ -590,7 +596,7 @@
                     <th>Combat Cards</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="stats">
 
             </tbody>
         </table>
@@ -599,11 +605,12 @@
         <table>
             <thead>
             <tr>
-                <th>UUID (click to load state for this event)</th>
+                <th>UUID</th>
+                <th>Name</th>
                 <th>Event</th>
             </tr>
             </thead>
-            <tbody>
+            <tbody id="log">
 
             </tbody>
         </table>
@@ -611,21 +618,74 @@
     <script>
       (function() {
 
-        const load = (gameId) => fetch(`http://localhost:3000/load?gameId=${gameId}`).then((res) => {
-          const success = res.status === 200;
-          document.getElementById("result").innerHTML = success
-            ? '✓'
-            : '✗';
-          if (!success) {
-            return;
-          }
+        const load = (gameId) => fetch(`/load?gameId=${gameId}`)
+          .then((res) => {
+              const success = res.status === 200;
+              document.getElementById("result").innerHTML = success
+                ? '✓'
+                : '✗';
+              if (!success) {
+                return;
+              }
 
-          console.log(res.json().then(console.log));
-        }).catch(console.error);
+              res.json().then((data) => {
+
+                const logElement = document.getElementById("log");
+                const statsElement = document.getElementById("stats");
+                for (const el of document.querySelectorAll(".units, .resources")) {
+                  el.innerHTML = "";
+                }
+
+                logElement.innerHTML = "";
+                statsElement.innerHTML = "";
+
+                for (const event of data.log) {
+                  logElement.innerHTML += `
+                    <tr>
+                        <td>TBD</td>
+                        <td>${event.constructor.name}</td>
+                        <td>${JSON.stringify(event, null, '    ')}</td>
+                    </tr>
+                  `;
+                }
+                for (const playerStats of data.players) {
+                  statsElement.innerHTML += `
+                    <tr>
+                        <td>${playerStats.playerId}</td>
+                        <td>${playerStats.faction}</td>
+                        <td>${playerStats.playerMat}</td>
+                        <td>${playerStats.coins}</td>
+                        <td>${playerStats.popularity}</td>
+                        <td>${playerStats.power}</td>
+                        <td>${playerStats.stars}</td>
+                        <td>${playerStats.combatCards}</td>
+                    </tr>
+                  `;
+                  for (const unit of playerStats.units) {
+                    document.querySelector(`#${unit[1].name} .units`).innerHTML += unit[0].name;
+                  }
+                }
+
+                for (const resource of data.resources) {
+                  document.querySelector(`#${resource.location.name} .resources`).innerHTML += resource.type + ".";
+                }
+
+              });
+            })
+          .catch(console.error);
 
         const gameId = () => document.getElementById("gameId").value;
 
         document.getElementById("load").onclick = () => load(gameId()) && false;
+
+        let interval = 0;
+        document.getElementById("auto-refresh").onchange = () => {
+          if (document.getElementById("auto-refresh").checked) {
+            interval = setInterval(() => load(gameId()), 500);
+          } else {
+            clearInterval(interval);
+          }
+        };
       })();
     </script>
 </body>
