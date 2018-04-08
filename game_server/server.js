@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const net = require("net");
 const _ = require("ramda");
+const express = require("express");
 const uuid_1 = require("uuid");
 const Availability_1 = require("../game_engine/src/Availability");
 const EventLogSerializer_1 = require("../game_engine/src/Events/EventLogSerializer");
@@ -18,7 +19,7 @@ const runningGames = new Map();
 const finishedGames = [];
 const broadcast = (message, allClients) => {
     for (const [uuid, socket] of allClients) {
-        socket.write(infoMsg(message));
+        socket.write(infoMsg(message) + "\n\n");
     }
 };
 const infoMsg = (message) => `\n\x1b[33;01m${message}\x1b[0m\n`;
@@ -47,10 +48,10 @@ if (!fs.existsSync("./finished")) {
 const server = net.createServer((socket) => {
     let playerUuid = uuid_1.v4();
     clients.set(playerUuid, socket);
-    broadcast(`${playerUuid} joined the server ...\n`, clients);
+    broadcast(`${playerUuid} joined the server ...`, clients);
     socket.on("end", () => {
         clients.delete(playerUuid);
-        broadcast(`${playerUuid} left the server ...\n`, clients);
+        broadcast(`${playerUuid} left the server ...`, clients);
     });
     socket.on("data", (data) => {
         const request = data.toString().trim();
@@ -58,19 +59,19 @@ const server = net.createServer((socket) => {
             /**
              * SHOW WAITING GAMES
              */
-            socket.write(JSON.stringify(Array.from(waitingGames.entries())) + "\n");
+            socket.write(JSON.stringify(Array.from(waitingGames.entries())) + "\n\n");
         }
         else if (request.toUpperCase() === Command.RUNNING) {
             /**
              * SHOW RUNNING GAMES
              */
-            socket.write(JSON.stringify(Array.from(runningGames.entries())) + "\n");
+            socket.write(JSON.stringify(Array.from(runningGames.entries())) + "\n\n");
         }
         else if (request.toUpperCase() === Command.FINISHED) {
             /**
              * SHOW FINISHED GAMES
              */
-            socket.write(JSON.stringify(Array.from(finishedGames.entries())) + "\n");
+            socket.write(JSON.stringify(Array.from(finishedGames.entries())) + "\n\n");
         }
         else if (request.toUpperCase() === Command.NEW) {
             /**
@@ -78,7 +79,7 @@ const server = net.createServer((socket) => {
              */
             const gameId = uuid_1.v4();
             waitingGames.set(gameId, []);
-            broadcast(`${playerUuid} opened a new game ${gameId} ...\n`, clients);
+            broadcast(`${playerUuid} opened a new game ${gameId} ...`, clients);
         }
         else if (request.toUpperCase().startsWith(Command.SU)) {
             /**
@@ -108,7 +109,7 @@ const server = net.createServer((socket) => {
                 const playerId = new PlayerId_1.PlayerId(playerUuid);
                 const player = PlayerFactory_1.PlayerFactory.createFromString(faction, playerId, PlayerMat_1.PlayerMat.createFromString(playerMat, playerId));
                 waitingGames.get(gameId).push(player);
-                broadcast(`${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`, clients);
+                broadcast(`${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...`, clients);
             }
             catch (error) {
                 socket.write(errorMsg(`JOIN <gameId> <faction> <playerMat>\n\n${error.message}\n`));
@@ -128,10 +129,10 @@ const server = net.createServer((socket) => {
                     const game = new Game_1.Game(waitingGames.get(gameId));
                     waitingGames.delete(gameId);
                     runningGames.set(gameId, game);
-                    broadcast(`${playerUuid} started game ${gameId} ...\n`, clients);
+                    broadcast(`${playerUuid} started game ${gameId} ...`, clients);
                 }
                 catch (error) {
-                    socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n`));
+                    socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n\n`));
                 }
             }
         }
@@ -148,8 +149,8 @@ const server = net.createServer((socket) => {
                 finishedGames.push(gameId);
                 const game = runningGames.get(gameId);
                 fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
-                    ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
-                    : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n`)));
+                    ? socket.write(errorMsg(`Failed to serialize ${gameId}\n\n`))
+                    : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n\n`)));
                 runningGames.delete(gameId);
             }
         }
@@ -175,16 +176,16 @@ const server = net.createServer((socket) => {
                 }
                 if (matches.length === 3) {
                     socket.write(Availability_1.availableTopActions(game.log, currentPlayer).join(", ") +
-                        "\n" +
+                        ", " +
                         Availability_1.availableBottomActions(game.log, currentPlayer).join(", ") +
-                        "\n");
+                        "\n\n");
                 }
                 else if (matches.length === 4) {
                     const action = matches[3].toUpperCase();
                     const options = Availability_1.availableOptionsForAction(action, game.log, currentPlayer);
                     hackyOptions.set(playerId, options);
                     for (const index in options) {
-                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n");
+                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n\n");
                     }
                 }
             }
@@ -197,7 +198,7 @@ const server = net.createServer((socket) => {
              */
             const matches = request.split(" ");
             if (matches.length < 4) {
-                socket.write(errorMsg("OPTION <gameId> <playerId> <option>\n"));
+                socket.write(errorMsg("OPTION <gameId> <playerId> <option>\n\n"));
             }
             else {
                 const gameId = matches[1];
@@ -207,7 +208,7 @@ const server = net.createServer((socket) => {
                     const currentPlayer = _.find((player) => playerId === player.playerId.playerId, GameInfo_1.GameInfo.players(game.log));
                     const optionIndex = parseInt(matches[3], 10);
                     if (optionIndex === undefined) {
-                        socket.write(errorMsg("Option doesn't exist ....\n"));
+                        socket.write(errorMsg("Option doesn't exist ....\n\n"));
                     }
                     game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
                     if (GameInfo_1.GameInfo.gameOver(game.log)) {
@@ -215,12 +216,12 @@ const server = net.createServer((socket) => {
                         finishedGames.push(gameId);
                         runningGames.delete(gameId);
                         fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
-                            ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
-                            : socket.write(successMsg(`Saved game to finished/${gameId}\n`)));
+                            ? socket.write(errorMsg(`Failed to serialize ${gameId}\n\n`))
+                            : socket.write(successMsg(`Saved game to finished/${gameId}\n\n`)));
                     }
                 }
                 catch (error) {
-                    socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
+                    socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n\n`));
                 }
             }
         }
@@ -234,7 +235,7 @@ const server = net.createServer((socket) => {
             const gameId = matches[1];
             const serializedEventLog = matches[2];
             if (gameId === undefined || serializedEventLog === undefined) {
-                socket.write(errorMsg(`IMPORT <gameId> <serializedEvents>\n`));
+                socket.write(errorMsg(`IMPORT <gameId> <serializedEvents>\n\n`));
             }
             else {
                 try {
@@ -243,7 +244,7 @@ const server = net.createServer((socket) => {
                     broadcast(infoMsg(`${playerUuid} imported ${gameId}`), clients);
                 }
                 catch (e) {
-                    socket.write(`Unable to import game state\n\n${e.message}\n`);
+                    socket.write(`Unable to import game state\n\n${e.message}\n\n`);
                 }
             }
         }
@@ -264,7 +265,7 @@ const server = net.createServer((socket) => {
                     socket.write(EventLogSerializer_1.EventLogSerializer.serialize(game.log) + "\n\n");
                 }
                 catch (e) {
-                    socket.write(`Unable to export game state\n\n${e.message}\n`);
+                    socket.write(`Unable to export game state\n\n${e.message}\n\n`);
                 }
             }
         }
@@ -276,3 +277,20 @@ const server = net.createServer((socket) => {
 const hostname = process.argv[2] ? process.argv[2] : "0.0.0.0";
 const port = process.argv[3] ? parseInt(process.argv[3], 10) : 1337;
 server.listen(port, hostname);
+// const httpServer = http.createServer().listen(3000, "0.0.0.0");
+// httpServer.on("request", (req, res) => {
+//     let body = "";
+//     req.on("data", (data: string) => {
+//         body += data
+//     });
+//
+//     req.on("end", () => {
+//         console.log(querystring.parse(body));
+//         res.writeHead(200, {"Content-Type": "text/html"});
+//         res.end("<h1>Hello World</h1>");
+//     });
+// });
+const app = express();
+app.get("/load", (req, res) => res.json(req.query.gameId));
+app.use(express.static('public'));
+app.listen(3000);

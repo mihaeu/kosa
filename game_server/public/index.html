@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        #map {
+            float: left;
+            top:0;
+            left:0;
+            width: 1200px;
+            height: 1375px;
+            background-color: black;
+        }
+
+        aside {
+            float: left;
+            width: 800px;
+            height: 1375px;
+            padding-left: 10px;
+        }
+
+        .hexagon {
+            position: absolute;
+            width: 150px;
+            height: 86.60px;
+            margin: 43.30px 0;
+        }
+
+        .hexagon:before,
+        .hexagon:after {
+            content: "";
+            position: absolute;
+            width: 0;
+            border-left: 75px solid transparent;
+            border-right: 75px solid transparent;
+        }
+
+        .hexagon:before {
+            bottom: 100%;
+        }
+
+        .hexagon:after {
+            top: 100%;
+            width: 0;
+        }
+
+        .lake {
+            background-color: dodgerblue;
+        }
+        .lake:after {
+            border-top: 43.40px solid dodgerblue;
+        }
+        .lake:before {
+            border-bottom: 43.30px solid dodgerblue;
+        }
+
+        .village {
+            background-color: darkred;
+        }
+        .village:after {
+            border-top: 43.40px solid darkred;
+        }
+        .village:before {
+            border-bottom: 43.40px solid darkred;
+        }
+
+        .farm {
+            background-color: yellow;
+        }
+        .farm:after {
+            border-top: 43.40px solid yellow;
+        }
+        .farm:before {
+            border-bottom: 43.40px solid yellow;
+        }
+
+        .tundra {
+            background-color: darkslategray;
+        }
+        .tundra:after {
+            border-top: 43.40px solid darkslategray;
+        }
+        .tundra:before {
+            border-bottom: 43.40px solid darkslategray;
+        }
+
+        .mountain {
+            background-color: gray;
+        }
+        .mountain:after {
+            border-top: 43.40px solid gray;
+        }
+        .mountain:before {
+            border-bottom: 43.40px solid gray;
+        }
+
+        .homebase {
+            background-color: lightgray;
+        }
+        .homebase:after {
+            border-top: 43.40px solid lightgray;
+        }
+        .homebase:before {
+            border-bottom: 43.40px solid lightgray;
+        }
+
+        .factory {
+            background-color: purple;
+        }
+        .factory:after {
+            border-top: 43.40px solid purple;
+        }
+        .factory:before {
+            border-bottom: 43.40px solid purple;
+        }
+
+        .woods {
+            background-color: darkolivegreen;
+        }
+        .woods:after {
+            border-top: 43.40px solid darkolivegreen;
+        }
+        .woods:before {
+            border-bottom: 43.40px solid darkolivegreen;
+        }
+
+        .row0 {
+            top: 0;
+        }
+
+        .row1 {
+            top: 150px;
+        }
+
+        .row2 {
+            top: 300px;
+        }
+
+        .row3 {
+            top: 450px;
+        }
+
+        .row4 {
+            top: 600px;
+        }
+
+        .row5 {
+            top: 750px;
+        }
+
+        .row6 {
+            top: 900px;
+        }
+
+        .row7 {
+            top: 1050px;
+        }
+
+        .row8 {
+            top: 1200px;
+        }
+
+        .column0-0 {
+            left: 0;
+        }
+
+        .column0-5 {
+            left: 75px;
+        }
+
+        .column1-0 {
+            left: 150px;
+        }
+
+        .column1-5 {
+            left: 225px;
+        }
+
+        .column2-0 {
+            left: 300px;
+        }
+
+        .column2-5 {
+            left: 375px;
+        }
+
+        .column3-0 {
+            left: 450px;
+        }
+
+        .column3-5 {
+            left: 525px;
+        }
+
+        .column4-0 {
+            left: 600px;
+        }
+
+        .column4-5 {
+            left: 675px;
+        }
+
+        .column5-0 {
+            left: 750px;
+        }
+
+        .column5-5 {
+            left: 825px;
+        }
+
+        .column6-0 {
+            left: 900px;
+        }
+
+        .column6-5 {
+            left: 975px;
+        }
+
+        .column7-0 {
+            left: 1050px;
+        }
+
+        .content {
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="map">
+        <div class="hexagon homebase row0 column1-5" id="green">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon homebase row0 column4-5" id="blue">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon mountain row1 column1-0" id="m1">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon farm row1 column2-0" id="f1">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row1 column3-0" id="v1">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon woods row1 column4-0" id="w1">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row1 column5-0" id="t1">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row1 column6-0" id="v2">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon lake row2 column0-5" id="l1">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row2 column1-5" id="t2">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon lake row2 column2-5" id="l2">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row2 column3-5" id="t3">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon mountain row2 column4-5" id="m2">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon farm row2 column5-5" id="f2">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon farm row2 column6-5" id="f3">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon homebase row3 column0-0" id="white">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon woods row3 column1-0" id="w2">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon mountain row3 column2-0" id="m3">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon woods row3 column3-0" id="w3">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon lake row3 column4-0" id="l4">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon woods row3 column5-0" id="w4">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row3 column6-0" id="v3">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon homebase row3 column7-0" id="red">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon farm row4 column0-5" id="f4">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row4 column1-5" id="v4">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon lake row4 column2-5" id="l5">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon factory row4 column3-5" id="F">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon mountain row4 column4-5" id="m4">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row4 column5-5" id="t4">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon mountain row4 column6-5" id="m5">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon woods row5 column0-0" id="w5">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon woods row5 column1-0" id="w6">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon farm row5 column2-0" id="f5">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row5 column3-0" id="t5">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon lake row5 column4-0" id="l6">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row5 column5-0" id="v5">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon lake row5 column6-0" id="l7">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon mountain row6 column0-5" id="m6">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row6 column1-5" id="v6">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row6 column2-5" id="v7">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row6 column3-5" id="t6">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon woods row6 column4-5" id="w7">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon mountain row6 column5-5" id="m7">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row6 column6-5" id="t7">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon homebase row7 column0-0" id="black">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon tundra row7 column1-0" id="t8">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon lake row7 column2-0" id="l3">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon farm row7 column3-0" id="f6">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon mountain row7 column4-0" id="m8">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row7 column5-0" id="v8">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon farm row7 column6-0" id="f7">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon homebase row7 column7-0" id="purple">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+
+        <div class="hexagon homebase row8 column2-5" id="yellow">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+        <div class="hexagon village row8 column3-5" id="v9">
+            <div class="content">
+                <div class="units"></div>
+                <div class="resources"></div>
+            </div>
+        </div>
+    </div>
+
+    <aside>
+        <h1>Game</h1>
+        <label for="gameId">
+            Game UUID
+            <input type="text" name="gameId" id="gameId">
+        </label>
+        <button type="submit" id="load">Load / Refresh</button>
+        <span id="result"></span>
+
+        <h1>Stats</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Faction</th>
+                    <th>Player Mat</th>
+                    <th>Coins</th>
+                    <th>Popularity</th>
+                    <th>Power</th>
+                    <th>Stars</th>
+                    <th>Combat Cards</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+
+        <h1>Log</h1>
+        <table>
+            <thead>
+            <tr>
+                <th>UUID (click to load state for this event)</th>
+                <th>Event</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </aside>
+    <script>
+      (function() {
+
+        const load = (gameId) => fetch(`http://localhost:3000/load?gameId=${gameId}`).then((res) => {
+          const success = res.status === 200;
+          document.getElementById("result").innerHTML = success
+            ? '✓'
+            : '✗';
+          if (!success) {
+            return;
+          }
+
+          console.log(res.json().then(console.log));
+        }).catch(console.error);
+
+        const gameId = () => document.getElementById("gameId").value;
+
+        document.getElementById("load").onclick = () => load(gameId()) && false;
+      })();
+    </script>
+</body>
+</html>

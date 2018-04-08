@@ -1,7 +1,10 @@
 import * as fs from "fs";
-import net = require("net");
+import http = require("http");
 import { Socket } from "net";
+import net = require("net");
+import * as querystring from "querystring";
 import * as _ from "ramda";
+import * as express from "express";
 import { v4 } from "uuid";
 import {
     availableBottomActions,
@@ -30,7 +33,7 @@ const finishedGames: GameUUID[] = [];
 
 const broadcast = (message: string, allClients: Map<string, Socket>): void => {
     for (const [uuid, socket] of allClients) {
-        socket.write(infoMsg(message));
+        socket.write(infoMsg(message) + "\n\n");
     }
 };
 
@@ -63,11 +66,11 @@ if (!fs.existsSync("./finished")) {
 const server = net.createServer((socket) => {
     let playerUuid = v4();
     clients.set(playerUuid, socket);
-    broadcast(`${playerUuid} joined the server ...\n`, clients);
+    broadcast(`${playerUuid} joined the server ...`, clients);
 
     socket.on("end", () => {
         clients.delete(playerUuid);
-        broadcast(`${playerUuid} left the server ...\n`, clients);
+        broadcast(`${playerUuid} left the server ...`, clients);
     });
 
     socket.on("data", (data) => {
@@ -77,24 +80,24 @@ const server = net.createServer((socket) => {
             /**
              * SHOW WAITING GAMES
              */
-            socket.write(JSON.stringify(Array.from(waitingGames.entries())) + "\n");
+            socket.write(JSON.stringify(Array.from(waitingGames.entries())) + "\n\n");
         } else if (request.toUpperCase() === Command.RUNNING) {
             /**
              * SHOW RUNNING GAMES
              */
-            socket.write(JSON.stringify(Array.from(runningGames.entries())) + "\n");
+            socket.write(JSON.stringify(Array.from(runningGames.entries())) + "\n\n");
         } else if (request.toUpperCase() === Command.FINISHED) {
             /**
              * SHOW FINISHED GAMES
              */
-            socket.write(JSON.stringify(Array.from(finishedGames.entries())) + "\n");
+            socket.write(JSON.stringify(Array.from(finishedGames.entries())) + "\n\n");
         } else if (request.toUpperCase() === Command.NEW) {
             /**
              * START A NEW GAME
              */
             const gameId = v4();
             waitingGames.set(gameId, []);
-            broadcast(`${playerUuid} opened a new game ${gameId} ...\n`, clients);
+            broadcast(`${playerUuid} opened a new game ${gameId} ...`, clients);
         } else if (request.toUpperCase().startsWith(Command.SU)) {
             /**
              * SWITCH TO ANOTHER USER/PLAYER
@@ -129,7 +132,7 @@ const server = net.createServer((socket) => {
                 waitingGames.get(gameId).push(player);
 
                 broadcast(
-                    `${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...\n`,
+                    `${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...`,
                     clients,
                 );
             } catch (error) {
@@ -150,9 +153,9 @@ const server = net.createServer((socket) => {
                     waitingGames.delete(gameId);
                     runningGames.set(gameId, game);
 
-                    broadcast(`${playerUuid} started game ${gameId} ...\n`, clients);
+                    broadcast(`${playerUuid} started game ${gameId} ...`, clients);
                 } catch (error) {
-                    socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n`));
+                    socket.write(errorMsg(`Something went wrong:\n\n${error.message}\n\n`));
                 }
             }
         } else if (request.toUpperCase().startsWith(Command.STOP)) {
@@ -171,8 +174,8 @@ const server = net.createServer((socket) => {
                     `./finished/${gameId}`,
                     EventLogSerializer.serialize(game.log),
                     (err: ErrnoException) => err
-                        ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
-                        : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n`)),
+                        ? socket.write(errorMsg(`Failed to serialize ${gameId}\n\n`))
+                        : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n\n`)),
                 );
                 runningGames.delete(gameId);
             }
@@ -204,16 +207,16 @@ const server = net.createServer((socket) => {
                 if (matches.length === 3) {
                     socket.write(
                         availableTopActions(game.log, currentPlayer).join(", ") +
-                            "\n" +
+                            ", " +
                             availableBottomActions(game.log, currentPlayer).join(", ") +
-                            "\n",
+                            "\n\n",
                     );
                 } else if (matches.length === 4) {
                     const action = matches[3].toUpperCase();
                     const options = availableOptionsForAction(action, game.log, currentPlayer);
                     hackyOptions.set(playerId, options);
                     for (const index in options) {
-                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n");
+                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n\n");
                     }
                 }
             }
@@ -225,7 +228,7 @@ const server = net.createServer((socket) => {
              */
             const matches = request.split(" ");
             if (matches.length < 4) {
-                socket.write(errorMsg("OPTION <gameId> <playerId> <option>\n"));
+                socket.write(errorMsg("OPTION <gameId> <playerId> <option>\n\n"));
             } else {
                 const gameId = matches[1];
                 const game = runningGames.get(gameId) as Game;
@@ -239,7 +242,7 @@ const server = net.createServer((socket) => {
 
                     const optionIndex = parseInt(matches[3], 10);
                     if (optionIndex === undefined) {
-                        socket.write(errorMsg("Option doesn't exist ....\n"));
+                        socket.write(errorMsg("Option doesn't exist ....\n\n"));
                     }
                     game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
 
@@ -252,12 +255,12 @@ const server = net.createServer((socket) => {
                             `./finished/${gameId}`,
                             EventLogSerializer.serialize(game.log),
                             (err: ErrnoException) => err
-                                ? socket.write(errorMsg(`Failed to serialize ${gameId}\n`))
-                                : socket.write(successMsg(`Saved game to finished/${gameId}\n`)),
+                                ? socket.write(errorMsg(`Failed to serialize ${gameId}\n\n`))
+                                : socket.write(successMsg(`Saved game to finished/${gameId}\n\n`)),
                         );
                     }
                 } catch (error) {
-                    socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n`));
+                    socket.write(errorMsg(`Something went wrong ...\n\n${error.message}\n\n`));
                 }
             }
         } else if (request.toUpperCase().startsWith(Command.IMPORT)) {
@@ -270,14 +273,14 @@ const server = net.createServer((socket) => {
             const gameId = matches[1];
             const serializedEventLog = matches[2];
             if (gameId === undefined || serializedEventLog === undefined) {
-                socket.write(errorMsg(`IMPORT <gameId> <serializedEvents>\n`))
+                socket.write(errorMsg(`IMPORT <gameId> <serializedEvents>\n\n`))
             } else {
                 try {
                     const log = EventLogSerializer.deserialize(serializedEventLog);
                     runningGames.set(gameId, new Game(GameInfo.players(log), log));
                     broadcast(infoMsg(`${playerUuid} imported ${gameId}`), clients);
                 } catch (e) {
-                    socket.write(`Unable to import game state\n\n${e.message}\n`);
+                    socket.write(`Unable to import game state\n\n${e.message}\n\n`);
                 }
             }
 
@@ -297,7 +300,7 @@ const server = net.createServer((socket) => {
                     const game = runningGames.get(gameId) as Game;
                     socket.write(EventLogSerializer.serialize(game.log) + "\n\n");
                 } catch (e) {
-                    socket.write(`Unable to export game state\n\n${e.message}\n`);
+                    socket.write(`Unable to export game state\n\n${e.message}\n\n`);
                 }
             }
 
@@ -310,3 +313,24 @@ const server = net.createServer((socket) => {
 const hostname = process.argv[2] ? process.argv[2] : "0.0.0.0";
 const port = process.argv[3] ? parseInt(process.argv[3], 10) : 1337;
 server.listen(port, hostname);
+
+// const httpServer = http.createServer().listen(3000, "0.0.0.0");
+// httpServer.on("request", (req, res) => {
+//     let body = "";
+//     req.on("data", (data: string) => {
+//         body += data
+//     });
+//
+//     req.on("end", () => {
+//         console.log(querystring.parse(body));
+//         res.writeHead(200, {"Content-Type": "text/html"});
+//         res.end("<h1>Hello World</h1>");
+//     });
+// });
+
+const app = express();
+
+app.get("/load", (req, res) => res.json(req.query.gameId));
+app.use(express.static('public'));
+
+app.listen(3000);

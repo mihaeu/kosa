@@ -36,6 +36,7 @@ Field.f6 = new Field(FieldName_1.FieldName.f6, FieldType_1.FieldType.FARM);
 Field.f7 = new Field(FieldName_1.FieldName.f7, FieldType_1.FieldType.FARM);
 Field.l1 = new Field(FieldName_1.FieldName.l1, FieldType_1.FieldType.LAKE);
 Field.l2 = new Field(FieldName_1.FieldName.l2, FieldType_1.FieldType.LAKE);
+Field.l3 = new Field(FieldName_1.FieldName.l2, FieldType_1.FieldType.LAKE);
 Field.l4 = new Field(FieldName_1.FieldName.l4, FieldType_1.FieldType.LAKE);
 Field.l5 = new Field(FieldName_1.FieldName.l5, FieldType_1.FieldType.LAKE);
 Field.l6 = new Field(FieldName_1.FieldName.l6, FieldType_1.FieldType.LAKE);

@@ -64,7 +64,7 @@ class GameMap {
         fields.set(Field_1.Field.yellow, [
             new Connection_1.Connection(Field_1.Field.f6, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.v9, FieldConnection_1.FieldConnection.DEFAULT),
-            new Connection_1.Connection(Field_1.Field.l7, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.l3, FieldConnection_1.FieldConnection.DEFAULT),
         ]);
         fields.set(Field_1.Field.m1, [
             new Connection_1.Connection(Field_1.Field.f1, FieldConnection_1.FieldConnection.DEFAULT),
@@ -321,8 +321,8 @@ class GameMap {
             new Connection_1.Connection(Field_1.Field.t4, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.v5, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.m7, FieldConnection_1.FieldConnection.DEFAULT),
-            new Connection_1.Connection(Field_1.Field.l7, FieldConnection_1.FieldConnection.DEFAULT),
-            new Connection_1.Connection(Field_1.Field.t4, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.t7, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.m5, FieldConnection_1.FieldConnection.DEFAULT),
         ]);
         fields.set(Field_1.Field.m6, [
             new Connection_1.Connection(Field_1.Field.w5, FieldConnection_1.FieldConnection.RIVER),
@@ -334,14 +334,14 @@ class GameMap {
             new Connection_1.Connection(Field_1.Field.w6, FieldConnection_1.FieldConnection.RIVER),
             new Connection_1.Connection(Field_1.Field.m6, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.t8, FieldConnection_1.FieldConnection.DEFAULT),
-            new Connection_1.Connection(Field_1.Field.l7, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.l3, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.v7, FieldConnection_1.FieldConnection.RIVER),
             new Connection_1.Connection(Field_1.Field.f5, FieldConnection_1.FieldConnection.RIVER),
         ]);
         fields.set(Field_1.Field.v7, [
             new Connection_1.Connection(Field_1.Field.f5, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.v6, FieldConnection_1.FieldConnection.RIVER),
-            new Connection_1.Connection(Field_1.Field.l7, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.l3, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.f6, FieldConnection_1.FieldConnection.RIVER),
             new Connection_1.Connection(Field_1.Field.t6, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.t5, FieldConnection_1.FieldConnection.DEFAULT),
@@ -382,10 +382,10 @@ class GameMap {
         ]);
         fields.set(Field_1.Field.t8, [
             new Connection_1.Connection(Field_1.Field.m6, FieldConnection_1.FieldConnection.DEFAULT),
-            new Connection_1.Connection(Field_1.Field.l7, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.l3, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.v6, FieldConnection_1.FieldConnection.DEFAULT),
         ]);
-        fields.set(Field_1.Field.l7, [
+        fields.set(Field_1.Field.l3, [
             new Connection_1.Connection(Field_1.Field.v6, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.t8, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.f6, FieldConnection_1.FieldConnection.DEFAULT),
@@ -393,7 +393,7 @@ class GameMap {
         ]);
         fields.set(Field_1.Field.f6, [
             new Connection_1.Connection(Field_1.Field.v7, FieldConnection_1.FieldConnection.RIVER),
-            new Connection_1.Connection(Field_1.Field.l7, FieldConnection_1.FieldConnection.DEFAULT),
+            new Connection_1.Connection(Field_1.Field.l3, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.v9, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.m8, FieldConnection_1.FieldConnection.DEFAULT),
             new Connection_1.Connection(Field_1.Field.t6, FieldConnection_1.FieldConnection.RIVER),

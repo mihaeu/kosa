@@ -22,6 +22,7 @@ export class Field {
 
     public static readonly l1 = new Field(FieldName.l1, FieldType.LAKE);
     public static readonly l2 = new Field(FieldName.l2, FieldType.LAKE);
+    public static readonly l3 = new Field(FieldName.l2, FieldType.LAKE);
     public static readonly l4 = new Field(FieldName.l4, FieldType.LAKE);
     public static readonly l5 = new Field(FieldName.l5, FieldType.LAKE);
     public static readonly l6 = new Field(FieldName.l6, FieldType.LAKE);

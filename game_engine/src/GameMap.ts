@@ -79,7 +79,7 @@ export class GameMap {
         fields.set(Field.yellow, [
             new Connection(Field.f6, FieldConnection.DEFAULT),
             new Connection(Field.v9, FieldConnection.DEFAULT),
-            new Connection(Field.l7, FieldConnection.DEFAULT),
+            new Connection(Field.l3, FieldConnection.DEFAULT),
         ]);
 
         fields.set(Field.m1, [
@@ -369,8 +369,8 @@ export class GameMap {
             new Connection(Field.t4, FieldConnection.DEFAULT),
             new Connection(Field.v5, FieldConnection.DEFAULT),
             new Connection(Field.m7, FieldConnection.DEFAULT),
-            new Connection(Field.l7, FieldConnection.DEFAULT),
-            new Connection(Field.t4, FieldConnection.DEFAULT),
+            new Connection(Field.t7, FieldConnection.DEFAULT),
+            new Connection(Field.m5, FieldConnection.DEFAULT),
         ]);
 
         fields.set(Field.m6, [
@@ -384,7 +384,7 @@ export class GameMap {
             new Connection(Field.w6, FieldConnection.RIVER),
             new Connection(Field.m6, FieldConnection.DEFAULT),
             new Connection(Field.t8, FieldConnection.DEFAULT),
-            new Connection(Field.l7, FieldConnection.DEFAULT),
+            new Connection(Field.l3, FieldConnection.DEFAULT),
             new Connection(Field.v7, FieldConnection.RIVER),
             new Connection(Field.f5, FieldConnection.RIVER),
         ]);
@@ -392,7 +392,7 @@ export class GameMap {
         fields.set(Field.v7, [
             new Connection(Field.f5, FieldConnection.DEFAULT),
             new Connection(Field.v6, FieldConnection.RIVER),
-            new Connection(Field.l7, FieldConnection.DEFAULT),
+            new Connection(Field.l3, FieldConnection.DEFAULT),
             new Connection(Field.f6, FieldConnection.RIVER),
             new Connection(Field.t6, FieldConnection.DEFAULT),
             new Connection(Field.t5, FieldConnection.DEFAULT),
@@ -438,11 +438,11 @@ export class GameMap {
 
         fields.set(Field.t8, [
             new Connection(Field.m6, FieldConnection.DEFAULT),
-            new Connection(Field.l7, FieldConnection.DEFAULT),
+            new Connection(Field.l3, FieldConnection.DEFAULT),
             new Connection(Field.v6, FieldConnection.DEFAULT),
         ]);
 
-        fields.set(Field.l7, [
+        fields.set(Field.l3, [
             new Connection(Field.v6, FieldConnection.DEFAULT),
             new Connection(Field.t8, FieldConnection.DEFAULT),
             new Connection(Field.f6, FieldConnection.DEFAULT),
@@ -451,7 +451,7 @@ export class GameMap {
 
         fields.set(Field.f6, [
             new Connection(Field.v7, FieldConnection.RIVER),
-            new Connection(Field.l7, FieldConnection.DEFAULT),
+            new Connection(Field.l3, FieldConnection.DEFAULT),
             new Connection(Field.v9, FieldConnection.DEFAULT),
             new Connection(Field.m8, FieldConnection.DEFAULT),
             new Connection(Field.t6, FieldConnection.RIVER),
