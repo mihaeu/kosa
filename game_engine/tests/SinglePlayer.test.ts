@@ -6,7 +6,6 @@ import { Game } from "../src/Game";
 import { GameInfo } from "../src/GameInfo";
 import { Move } from "../src/Move";
 import { PlayerFactory } from "../src/PlayerFactory";
-import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
 import { RecruitReward } from "../src/RecruitReward";
 import { Resource } from "../src/Resource";
@@ -16,7 +15,7 @@ import { Mech } from "../src/Units/Mech";
 import { Worker } from "../src/Units/Worker";
 
 test("Single player game finishes with fixed play sequence", () => {
-    const playerId = new PlayerId(1);
+    const playerId = "1";
     const player = PlayerFactory.green(playerId, PlayerMat.industrial(playerId));
     const log = new EventLog();
     const players = [player];

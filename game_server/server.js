@@ -10,7 +10,6 @@ const EventLogSerializer_1 = require("../game_engine/src/Events/EventLogSerializ
 const Game_1 = require("../game_engine/src/Game");
 const GameInfo_1 = require("../game_engine/src/GameInfo");
 const PlayerFactory_1 = require("../game_engine/src/PlayerFactory");
-const PlayerId_1 = require("../game_engine/src/PlayerId");
 const PlayerMat_1 = require("../game_engine/src/PlayerMat");
 const helpMessage = fs.readFileSync("./helpMessage.txt");
 const clients = new Map();
@@ -106,8 +105,7 @@ const server = net.createServer((socket) => {
                 const gameId = matches[1];
                 const faction = matches[2].toUpperCase();
                 const playerMat = matches[3].toLowerCase();
-                const playerId = new PlayerId_1.PlayerId(playerUuid);
-                const player = PlayerFactory_1.PlayerFactory.createFromString(faction, playerId, PlayerMat_1.PlayerMat.createFromString(playerMat, playerId));
+                const player = PlayerFactory_1.PlayerFactory.createFromString(faction, playerUuid, PlayerMat_1.PlayerMat.createFromString(playerMat, playerUuid));
                 waitingGames.get(gameId).push(player);
                 broadcast(`${playerUuid} joined game ${gameId} (${waitingGames.get(gameId).length} player(s)) ...`, clients);
             }
@@ -170,7 +168,7 @@ const server = net.createServer((socket) => {
                 const gameId = matches[1];
                 const game = runningGames.get(gameId);
                 const playerId = matches[2];
-                const currentPlayer = _.find((player) => playerId === player.playerId.playerId, GameInfo_1.GameInfo.players(game.log));
+                const currentPlayer = _.find((player) => playerId === player.playerId, GameInfo_1.GameInfo.players(game.log));
                 if (currentPlayer === undefined) {
                     socket.write(errorMsg("Player not found ...\n"));
                 }
@@ -202,7 +200,7 @@ const server = net.createServer((socket) => {
                 const game = runningGames.get(gameId);
                 const playerId = matches[2];
                 try {
-                    const currentPlayer = _.find((player) => playerId === player.playerId.playerId, GameInfo_1.GameInfo.players(game.log));
+                    const currentPlayer = _.find((player) => playerId === player.playerId, GameInfo_1.GameInfo.players(game.log));
                     const optionIndex = parseInt(matches[3], 10);
                     if (optionIndex === undefined) {
                         socket.write(errorMsg("Option doesn't exist ....\n\n"));
@@ -286,7 +284,7 @@ app.get("/load", (req, res) => {
                 coins: GameInfo_1.GameInfo.coins(game.log, player),
                 combatCards: GameInfo_1.GameInfo.combatCards(game.log, player).length,
                 faction: player.faction,
-                playerId: player.playerId.playerId,
+                playerId: player.playerId,
                 playerMat: player.playerMat.name,
                 popularity: GameInfo_1.GameInfo.popularity(game.log, player),
                 power: GameInfo_1.GameInfo.power(game.log, player),

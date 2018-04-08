@@ -21,7 +21,6 @@ import { GameInfo } from "../src/GameInfo";
 import { Move } from "../src/Move";
 import { Player } from "../src/Player";
 import { PlayerFactory } from "../src/PlayerFactory";
-import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
 import { RecruitReward } from "../src/RecruitReward";
 import { Resource } from "../src/Resource";
@@ -34,8 +33,8 @@ import { Worker } from "../src/Units/Worker";
 
 let game: Game;
 
-const blackIndustrialPlayerId = new PlayerId(1);
-const greenAgriculturalPlayerId = new PlayerId(2);
+const blackIndustrialPlayerId = "1";
+const greenAgriculturalPlayerId = "2";
 
 const blackIndustrialPlayer = PlayerFactory.black(
     blackIndustrialPlayerId,
@@ -48,25 +47,25 @@ const greenAgriculturalPlayer = PlayerFactory.green(
 );
 const testPlayers = [blackIndustrialPlayer, greenAgriculturalPlayer];
 
-const blueInnovativePlayerId = new PlayerId(3);
+const blueInnovativePlayerId = "3";
 const blueInnovativePlayer = PlayerFactory.blue(blueInnovativePlayerId, PlayerMat.innovative(blueInnovativePlayerId));
 
-const redPatrioticPlayerId = new PlayerId(4);
+const redPatrioticPlayerId = "4";
 const redPatrioticPlayer = PlayerFactory.red(redPatrioticPlayerId, PlayerMat.patriotic(redPatrioticPlayerId));
 
-const yellowEngineeringPlayerId = new PlayerId(5);
+const yellowEngineeringPlayerId = "5";
 const yellowEngineeringPlayer = PlayerFactory.yellow(
     yellowEngineeringPlayerId,
     PlayerMat.engineering(yellowEngineeringPlayerId),
 );
 
-const whiteMechanicalPlayerId = new PlayerId(6);
+const whiteMechanicalPlayerId = "6";
 const whiteMechanicalPlayer = PlayerFactory.white(
     whiteMechanicalPlayerId,
     PlayerMat.mechanical(whiteMechanicalPlayerId),
 );
 
-const purpleMilitantPlayerId = new PlayerId(7);
+const purpleMilitantPlayerId = "7";
 const purpleMilitantPlayer = PlayerFactory.purple(purpleMilitantPlayerId, PlayerMat.militant(purpleMilitantPlayerId));
 
 let log: EventLog;
@@ -748,7 +747,7 @@ test("Cannot start a game without players", () => {
 });
 
 test("Cannot start a game with more than 8 players", () => {
-    const id = new PlayerId(1);
+    const id = "1";
     const players = _.map(() => PlayerFactory.white(id, PlayerMat.agricultural(id)), _.range(0, 8));
     expect(() => new Game(players)).toThrowError(/The game requires 1-7 players./);
 });

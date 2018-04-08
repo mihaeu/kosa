@@ -1,9 +1,8 @@
 import { BottomAction } from "../src/BottomAction";
-import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
 import { TopAction } from "../src/TopAction";
 
-const playerId = new PlayerId(1);
+const playerId = "1";
 
 test("Agricultural player mat combines move and upgrade", () => {
     expect(

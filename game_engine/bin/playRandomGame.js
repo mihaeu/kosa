@@ -6,7 +6,6 @@ const EventLog_1 = require("../src/Events/EventLog");
 const Game_1 = require("../src/Game");
 const GameInfo_1 = require("../src/GameInfo");
 const PlayerFactory_1 = require("../src/PlayerFactory");
-const PlayerId_1 = require("../src/PlayerId");
 const PlayerMat_1 = require("../src/PlayerMat");
 const TopAction_1 = require("../src/TopAction");
 const randomAction = (xs) => xs[Math.floor(Math.random() * Math.floor(xs.length))];
@@ -17,7 +16,7 @@ let players;
 let game;
 let stars = [];
 do {
-    playerId = new PlayerId_1.PlayerId(1);
+    playerId = "1";
     player = PlayerFactory_1.PlayerFactory.black(playerId, PlayerMat_1.PlayerMat.industrial(playerId));
     log = new EventLog_1.EventLog();
     players = [player];

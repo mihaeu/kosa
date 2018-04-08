@@ -124,11 +124,10 @@ const server = net.createServer((socket) => {
                 const gameId = matches[1];
                 const faction = matches[2].toUpperCase();
                 const playerMat = matches[3].toLowerCase();
-                const playerId = new PlayerId(playerUuid);
                 const player = PlayerFactory.createFromString(
                     faction,
-                    playerId,
-                    PlayerMat.createFromString(playerMat, playerId),
+                    playerUuid,
+                    PlayerMat.createFromString(playerMat, playerUuid),
                 );
                 waitingGames.get(gameId).push(player);
 
@@ -197,7 +196,7 @@ const server = net.createServer((socket) => {
 
                 const playerId = matches[2];
                 const currentPlayer = _.find(
-                    (player: Player) => playerId === player.playerId.playerId,
+                    (player: Player) => playerId === player.playerId,
                     GameInfo.players(game.log),
                 );
 
@@ -238,7 +237,7 @@ const server = net.createServer((socket) => {
                 const playerId = matches[2];
                 try {
                     const currentPlayer = _.find(
-                        (player: Player) => playerId === player.playerId.playerId,
+                        (player: Player) => playerId === player.playerId,
                         GameInfo.players(game.log),
                     ) as Player;
 
@@ -329,7 +328,7 @@ app.get("/load", (req, res) => {
                 coins: GameInfo.coins(game.log, player),
                 combatCards: GameInfo.combatCards(game.log, player).length,
                 faction: player.faction,
-                playerId: player.playerId.playerId,
+                playerId: player.playerId,
                 playerMat: player.playerMat.name,
                 popularity: GameInfo.popularity(game.log, player),
                 power: GameInfo.power(game.log, player),

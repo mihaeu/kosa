@@ -5,7 +5,7 @@ import {
     availableMoveOptions,
     availableProduceOptions,
     availableTradeOptions,
-    availableUpgradeOptions,
+    availableUpgradeOptions
 } from "../src/Availability";
 import { BottomAction } from "../src/BottomAction";
 import { BuildingType } from "../src/BuildingType";
@@ -21,7 +21,6 @@ import { DeployOption } from "../src/Options/DeployOption";
 import { ProduceOption } from "../src/Options/ProduceOption";
 import { RewardOnlyOption } from "../src/Options/RewardOnlyOption";
 import { PlayerFactory } from "../src/PlayerFactory";
-import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
 import { Resource } from "../src/Resource";
 import { ResourceType } from "../src/ResourceType";
@@ -32,8 +31,8 @@ import { resources } from "./Game.test";
 
 let game: Game;
 
-const blackIndustrialPlayerId = new PlayerId(1);
-const greenAgriculturalPlayerId = new PlayerId(2);
+const blackIndustrialPlayerId = "1";
+const greenAgriculturalPlayerId = "2";
 
 const blackIndustrialPlayer = PlayerFactory.black(
     blackIndustrialPlayerId,

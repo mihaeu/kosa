@@ -31,7 +31,7 @@ let stars: Star[] = [];
 
 do {
 
-    playerId = new PlayerId(1);
+    playerId = "1";
     player = PlayerFactory.black(playerId, PlayerMat.industrial(playerId));
     log = new EventLog();
     players = [player];
