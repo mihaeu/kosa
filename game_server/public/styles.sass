@@ -1,0 +1,188 @@
+$hegaxon-size: 100px
+$hexagon-center-height: 57.74px
+
+html
+  background: #EEE
+
+#map
+  float: left
+  top: 0
+  left: 0
+  width: 8 * $hegaxon-size
+  height: 9 * $hegaxon-size
+
+aside
+  float: left
+  width: 800px
+  height: 9 * $hegaxon-size
+  padding-left: 10px
+
+.hexagon
+  position: absolute
+  width: $hegaxon-size
+  height: $hexagon-center-height
+  margin: $hexagon-center-height/2 0
+
+.hexagon:before,
+.hexagon:after
+  content: ""
+  position: absolute
+  width: 0
+  border-left: $hegaxon-size/2 solid transparent
+  border-right: $hegaxon-size/2 solid transparent
+
+.hexagon:before
+  bottom: 100%
+
+.hexagon:after
+  top: 100%
+  width: 0
+
+.lake
+  background-color: dodgerblue
+
+.lake:after
+  border-top: $hexagon-center-height/2 solid dodgerblue
+
+.lake:before
+  border-bottom: $hexagon-center-height/2 solid dodgerblue
+
+.village
+  background-color: darkred
+
+.village:after
+  border-top: $hexagon-center-height/2 solid darkred
+
+.village:before
+  border-bottom: $hexagon-center-height/2 solid darkred
+
+.farm
+  background-color: yellow
+
+.farm:after
+  border-top: $hexagon-center-height/2 solid yellow
+
+.farm:before
+  border-bottom: $hexagon-center-height/2 solid yellow
+
+.tundra
+  background-color: darkslategray
+
+.tundra:after
+  border-top: $hexagon-center-height/2 solid darkslategray
+
+.tundra:before
+  border-bottom: $hexagon-center-height/2 solid darkslategray
+
+.mountain
+  background-color: gray
+
+.mountain:after
+  border-top: $hexagon-center-height/2 solid gray
+
+.mountain:before
+  border-bottom: $hexagon-center-height/2 solid gray
+
+.homebase
+  background-color: lightgray
+
+.homebase:after
+  border-top: $hexagon-center-height/2 solid lightgray
+
+.homebase:before
+  border-bottom: $hexagon-center-height/2 solid lightgray
+
+.factory
+  background-color: purple
+
+.factory:after
+  border-top: $hexagon-center-height/2 solid purple
+
+.factory:before
+  border-bottom: $hexagon-center-height/2 solid purple
+
+.woods
+  background-color: darkolivegreen
+
+.woods:after
+  border-top: $hexagon-center-height/2 solid darkolivegreen
+
+.woods:before
+  border-bottom: $hexagon-center-height/2 solid darkolivegreen
+
+.row0
+  top: $hegaxon-size * 0
+
+.row1
+  top: $hegaxon-size * 1
+
+.row2
+  top: $hegaxon-size * 2
+
+.row3
+  top: $hegaxon-size * 3
+
+.row4
+  top: $hegaxon-size * 4
+
+.row5
+  top: $hegaxon-size * 5
+
+.row6
+  top: $hegaxon-size * 6
+
+.row7
+  top: $hegaxon-size * 7
+
+.row8
+  top: $hegaxon-size * 8
+
+.column0-0
+  left: $hegaxon-size * 0
+
+.column0-5
+  left: $hegaxon-size * 0.5
+
+.column1-0
+  left: $hegaxon-size * 1
+
+.column1-5
+  left: $hegaxon-size * 1.5
+
+.column2-0
+  left: $hegaxon-size * 2
+
+.column2-5
+  left: $hegaxon-size * 2.5
+
+.column3-0
+  left: $hegaxon-size * 3
+
+.column3-5
+  left: $hegaxon-size * 3.5
+
+.column4-0
+  left: $hegaxon-size * 4
+
+.column4-5
+  left: $hegaxon-size * 4.5
+
+.column5-0
+  left: $hegaxon-size * 5
+
+.column5-5
+  left: $hegaxon-size * 5.5
+
+.column6-0
+  left: $hegaxon-size * 6
+
+.column6-5
+  left: $hegaxon-size * 6.5
+
+.column7-0
+  left: $hegaxon-size * 7
+
+.content
+  overflow: hidden
+  width: $hegaxon-size
+  text-align: center
