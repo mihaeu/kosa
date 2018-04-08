@@ -21,16 +21,20 @@ class Client(BaseClient):
     def get_waiting_games(self):
         return json.loads(self.perform_command('WAITING'))
 
-    def join_a_game(self):
+    def join_a_game(self, color=None, player_mat=None):
         waiting_games = self.get_waiting_games()
         if len(waiting_games) > 0:
             self.game_id = waiting_games[0]
         else:
             self.game_id = self.create_game()
 
-        color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
+        if color is None:
+            color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
+        if player_mat is None:
+            player_mat = random.choice(['engineering', 'agricultural', 'industrial', 'mechanical', 'patriotic', 'innovative', 'militant'])
 
-        self.perform_command('JOIN {} {} {}'.format(self.game_id, color, 'agricultural'))
+        while len(re.compile('joined').findall(self.perform_command('JOIN {} {} {}'.format(self.game_id, color, player_mat)))) == 0:
+            pass
 
     def create_game(self):
         return self.uuid_regex.findall(self.perform_command('NEW'))[1]
@@ -45,7 +49,6 @@ class Client(BaseClient):
     def get_available_options(self, action):
         result = []
         message = self.perform_command('ACTION {} {} {}'.format(self.game_id, self.player_id, action))
-        time.sleep(0.1)
         while message is not None:
             for m in message.split('\n'):
                 m = m.strip()
