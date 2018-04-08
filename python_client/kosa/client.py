@@ -43,8 +43,8 @@ class Client(BaseClient):
         self.perform_command('START {}'.format(self.game_id))
 
     def get_available_actions(self):
-        result = self.perform_command('ACTION {} {}'.format(self.game_id, self.player_id))
-        return result.replace('\n', '').replace(' ', '').split(',')
+        result = self.perform_command('ACTION {} {}'.format(self.game_id, self.player_id)).strip()
+        return json.loads(result)
 
     def get_available_options(self, action):
         result = []

@@ -1,3 +1,4 @@
+import re
 import socket
 
 import time
@@ -23,10 +24,18 @@ class BaseClient:
         self.socket.setblocking(True)
         return message
 
+    def get_msg(self):
+        m = ''
+        while True:
+            mm = self.get_message_non_blocking()
+            m = m + (mm or '')
+            if len(re.compile('\n\n').findall(m)) > 0:
+                return m
+
     def perform_command(self, command, expect_output=True):
         while self.get_message_non_blocking() is not None:
             pass
         self.socket.send(command.encode('UTF-8'))
         time.sleep(0.05)
         if expect_output:
-            return self.get_message()
+            return self.get_msg()
