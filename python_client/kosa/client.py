@@ -30,7 +30,7 @@ class Client(BaseClient):
 
         color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
 
-        self.perform_command('JOIN {} {} {}'.format(self.game_id, color, 'mechanical'))
+        self.perform_command('JOIN {} {} {}'.format(self.game_id, color, 'agricultural'))
 
     def create_game(self):
         return self.uuid_regex.findall(self.perform_command('NEW'))[1]
@@ -58,5 +58,8 @@ class Client(BaseClient):
     def perform_action(self, action, option):
         self.perform_command('OPTION {} {} {}'.format(self.game_id, self.player_id, option), expect_output=False)
 
-    def export(self):
+    def export_game(self):
         return json.loads(self.perform_command('EXPORT ' + self.game_id).strip())
+
+    def import_game(self, game):
+        return self.perform_command('IMPORT {}'.format(json.dumps(game)))

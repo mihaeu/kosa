@@ -30,3 +30,14 @@ def test_perfoming_actions():
 
     client.perform_action('MOVE', 10)
 
+def test_import_export():
+    client = Client()
+    client.join_a_game()
+    client.start()
+
+    game = client.export_game()
+
+    client2 = Client()
+
+    client2.import_game(game)
+
