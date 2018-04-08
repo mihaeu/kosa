@@ -206,10 +206,11 @@ const server = net.createServer((socket) => {
 
                 if (matches.length === 3) {
                     socket.write(
-                        availableTopActions(game.log, currentPlayer).join(", ") +
-                            ", " +
-                            availableBottomActions(game.log, currentPlayer).join(", ") +
-                            "\n\n",
+                        JSON.stringify(
+                            availableTopActions(game.log, currentPlayer).concat(
+                                availableBottomActions(game.log, currentPlayer),
+                            ),
+                        ) + "\n\n",
                     );
                 } else if (matches.length === 4) {
                     const action = matches[3].toUpperCase();
@@ -314,23 +315,13 @@ const hostname = process.argv[2] ? process.argv[2] : "0.0.0.0";
 const port = process.argv[3] ? parseInt(process.argv[3], 10) : 1337;
 server.listen(port, hostname);
 
-// const httpServer = http.createServer().listen(3000, "0.0.0.0");
-// httpServer.on("request", (req, res) => {
-//     let body = "";
-//     req.on("data", (data: string) => {
-//         body += data
-//     });
-//
-//     req.on("end", () => {
-//         console.log(querystring.parse(body));
-//         res.writeHead(200, {"Content-Type": "text/html"});
-//         res.end("<h1>Hello World</h1>");
-//     });
-// });
-
 const app = express();
 
-app.get("/load", (req, res) => res.json(req.query.gameId));
+app.get("/load", (req, res) => {
+    if (runningGames.has(req.query.gameId)) {
+        res.json(runningGames.get(req.query.gameId).log)
+    }
+});
 app.use(express.static('public'));
 
 app.listen(3000);
