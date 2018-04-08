@@ -2,6 +2,8 @@ import json
 import random
 import re
 
+import time
+
 from .base_client import BaseClient
 
 
@@ -36,3 +38,25 @@ class Client(BaseClient):
     def start(self):
         self.perform_command('START {}'.format(self.game_id))
 
+    def get_available_actions(self):
+        result = self.perform_command('ACTION {} {}'.format(self.game_id, self.player_id))
+        return result.replace('\n', '').replace(' ', '').split(',')
+
+    def get_available_options(self, action):
+        result = []
+        message = self.perform_command('ACTION {} {} {}'.format(self.game_id, self.player_id, action))
+        time.sleep(0.1)
+        while message is not None:
+            for m in message.split('\n'):
+                m = m.strip()
+                if len(m) >1 and m[0] == '{':
+                    result.append(m)
+            message = self.get_message_non_blocking()
+
+        return result
+
+    def perform_action(self, action, option):
+        self.perform_command('OPTION {} {} {}'.format(self.game_id, self.player_id, option), expect_output=False)
+
+    def export(self):
+        return json.loads(self.perform_command('EXPORT ' + self.game_id).strip())

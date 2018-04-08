@@ -20,4 +20,13 @@ def test_can_get_wating():
 
     assert client.get_waiting_games() == []
 
+def test_perfoming_actions():
+    client = Client()
+    client.join_a_game()
+    client.start()
+
+    assert client.get_available_actions() == ['TRADE', 'BOLSTER', 'MOVE', 'PRODUCE']
+    assert len(client.get_available_options('MOVE')) > 10
+
+    client.perform_action('MOVE', 10)
 

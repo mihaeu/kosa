@@ -15,10 +15,15 @@ class BaseClient:
             return
         return message.decode('utf-8')
 
-    def perform_command(self, command):
+    def get_message_non_blocking(self):
         self.socket.setblocking(False)
-        while self.get_message() is not None:
-            pass
+        message = self.get_message()
         self.socket.setblocking(True)
+        return message
+
+    def perform_command(self, command, expect_output=True):
+        while self.get_message_non_blocking() is not None:
+            pass
         self.socket.send(command.encode('UTF-8'))
-        return self.get_message()
+        if expect_output:
+            return self.get_message()
