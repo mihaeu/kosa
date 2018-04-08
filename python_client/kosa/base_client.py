@@ -20,5 +20,5 @@ class BaseClient:
         while self.get_message() is not None:
             pass
         self.socket.setblocking(True)
-        self.socket.send(command)
+        self.socket.send(command.encode('UTF-8'))
         return self.get_message()

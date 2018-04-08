@@ -14,3 +14,10 @@ def test_can_get_wating():
     client.join_a_game()
 
     assert isinstance(client.get_waiting_games(), list)
+    assert len(client.get_waiting_games()) == 1
+
+    client.start()
+
+    assert client.get_waiting_games() == []
+
+

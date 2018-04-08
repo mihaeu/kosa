@@ -17,7 +17,7 @@ class Client(BaseClient):
         return self.uuid_regex.findall(self.get_message())[0]
 
     def get_waiting_games(self):
-        return json.loads(self.perform_command(b'WAITING'))
+        return json.loads(self.perform_command('WAITING'))
 
     def join_a_game(self):
         waiting_games = self.get_waiting_games()
@@ -28,8 +28,11 @@ class Client(BaseClient):
 
         color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
 
-        self.perform_command('JOIN {} {} {}'.format(self.game_id, color, 'mechanical').encode('utf-8'))
+        self.perform_command('JOIN {} {} {}'.format(self.game_id, color, 'mechanical'))
 
     def create_game(self):
-        return self.uuid_regex.findall(self.perform_command(b'NEW'))[1]
+        return self.uuid_regex.findall(self.perform_command('NEW'))[1]
+
+    def start(self):
+        self.perform_command('START {}'.format(self.game_id))
 
