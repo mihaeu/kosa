@@ -3,12 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const BottomAction_1 = require("./BottomAction");
 const CoinEvent_1 = require("./Events/CoinEvent");
 const PopularityEvent_1 = require("./Events/PopularityEvent");
+const PlayerMatName_1 = require("./PlayerMatName");
 const ResourceCost_1 = require("./ResourceCost");
 const ResourceType_1 = require("./ResourceType");
 const TopAction_1 = require("./TopAction");
 class PlayerMat {
-    constructor(startPosition, // the actual game uses 1, 2, 2a, 3, 3a, 4, 5
+    constructor(name, startPosition, // the actual game uses 1, 2, 2a, 3, 3a, 4, 5
     setupEvents = [], actionMap, bottomActionBaseCost, bottomActionReward, topActionBaseCost = PlayerMat.topActionBaseCost()) {
+        this.name = name;
         this.startPosition = startPosition;
         this.setupEvents = setupEvents;
         this.actionMap = actionMap;
@@ -18,19 +20,19 @@ class PlayerMat {
     }
     static createFromString(playerMat, playerId) {
         switch (playerMat) {
-            case "engineering":
+            case PlayerMatName_1.PlayerMatName.ENGINEERING:
                 return PlayerMat.engineering(playerId);
-            case "agricultural":
+            case PlayerMatName_1.PlayerMatName.AGRICULTURAL:
                 return PlayerMat.agricultural(playerId);
-            case "industrial":
+            case PlayerMatName_1.PlayerMatName.INDUSTRIAL:
                 return PlayerMat.industrial(playerId);
-            case "mechanical":
+            case PlayerMatName_1.PlayerMatName.MECHANICAL:
                 return PlayerMat.mechanical(playerId);
-            case "patriotic":
+            case PlayerMatName_1.PlayerMatName.PATRIOTIC:
                 return PlayerMat.patriotic(playerId);
-            case "innovative":
+            case PlayerMatName_1.PlayerMatName.INNOVATIVE:
                 return PlayerMat.innovative(playerId);
-            case "militant":
+            case PlayerMatName_1.PlayerMatName.MILITANT:
             default:
                 return PlayerMat.militant(playerId);
         }
@@ -46,7 +48,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 3));
-        return new PlayerMat(2, [new PopularityEvent_1.PopularityEvent(playerId, 2), new CoinEvent_1.CoinEvent(playerId, 5)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.ENGINEERING, 2, [new PopularityEvent_1.PopularityEvent(playerId, 2), new CoinEvent_1.CoinEvent(playerId, 5)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.UPGRADE, 1)
             .set(BottomAction_1.BottomAction.BUILD, 2)
             .set(BottomAction_1.BottomAction.ENLIST, 3));
@@ -62,7 +64,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 3));
-        return new PlayerMat(7, [new PopularityEvent_1.PopularityEvent(playerId, 4), new CoinEvent_1.CoinEvent(playerId, 7)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.AGRICULTURAL, 7, [new PopularityEvent_1.PopularityEvent(playerId, 4), new CoinEvent_1.CoinEvent(playerId, 7)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.UPGRADE, 2)
             .set(BottomAction_1.BottomAction.BUILD, 3)
             .set(BottomAction_1.BottomAction.ENLIST, 1));
@@ -78,7 +80,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 4));
-        return new PlayerMat(1, [new PopularityEvent_1.PopularityEvent(playerId, 2), new CoinEvent_1.CoinEvent(playerId, 4)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.INDUSTRIAL, 1, [new PopularityEvent_1.PopularityEvent(playerId, 2), new CoinEvent_1.CoinEvent(playerId, 4)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.UPGRADE, 3)
             .set(BottomAction_1.BottomAction.DEPLOY, 2)
             .set(BottomAction_1.BottomAction.BUILD, 1));
@@ -94,7 +96,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 4));
-        return new PlayerMat(6, [new PopularityEvent_1.PopularityEvent(playerId, 3), new CoinEvent_1.CoinEvent(playerId, 6)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.MECHANICAL, 6, [new PopularityEvent_1.PopularityEvent(playerId, 3), new CoinEvent_1.CoinEvent(playerId, 6)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.DEPLOY, 2)
             .set(BottomAction_1.BottomAction.BUILD, 2)
             .set(BottomAction_1.BottomAction.ENLIST, 2));
@@ -110,7 +112,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 3));
-        return new PlayerMat(4, [new PopularityEvent_1.PopularityEvent(playerId, 2), new CoinEvent_1.CoinEvent(playerId, 6)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.PATRIOTIC, 4, [new PopularityEvent_1.PopularityEvent(playerId, 2), new CoinEvent_1.CoinEvent(playerId, 6)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.UPGRADE, 1)
             .set(BottomAction_1.BottomAction.DEPLOY, 3)
             .set(BottomAction_1.BottomAction.ENLIST, 2));
@@ -126,7 +128,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 3));
-        return new PlayerMat(5, [new PopularityEvent_1.PopularityEvent(playerId, 3), new CoinEvent_1.CoinEvent(playerId, 5)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.INNOVATIVE, 5, [new PopularityEvent_1.PopularityEvent(playerId, 3), new CoinEvent_1.CoinEvent(playerId, 5)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.UPGRADE, 3)
             .set(BottomAction_1.BottomAction.DEPLOY, 1)
             .set(BottomAction_1.BottomAction.BUILD, 2));
@@ -143,7 +145,7 @@ class PlayerMat {
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.DEPLOY, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.METAL, 3));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.BUILD, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.WOOD, 4));
         bottomActionBaseCosts.set(BottomAction_1.BottomAction.ENLIST, new ResourceCost_1.ResourceCost(ResourceType_1.ResourceType.FOOD, 3));
-        return new PlayerMat(3, [new PopularityEvent_1.PopularityEvent(playerId, 3), new CoinEvent_1.CoinEvent(playerId, 4)], actionMap, bottomActionBaseCosts, this.defaultRewards()
+        return new PlayerMat(PlayerMatName_1.PlayerMatName.MILITANT, 3, [new PopularityEvent_1.PopularityEvent(playerId, 3), new CoinEvent_1.CoinEvent(playerId, 4)], actionMap, bottomActionBaseCosts, this.defaultRewards()
             .set(BottomAction_1.BottomAction.DEPLOY, 3)
             .set(BottomAction_1.BottomAction.BUILD, 1)
             .set(BottomAction_1.BottomAction.ENLIST, 2));

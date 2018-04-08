@@ -2,6 +2,11 @@ html {
   background: #EEE;
 }
 
+#log-container {
+  overflow: auto;
+  height: 600px;
+}
+
 #map {
   float: left;
   top: 0;
@@ -238,4 +243,9 @@ aside {
   overflow: hidden;
   width: 100px;
   text-align: center;
+}
+
+.uuid {
+  text-overflow: ellipsis;
+  width: 50px;
 }

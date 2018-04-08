@@ -18,11 +18,13 @@
     "author": "Michael Haeuslmann <haeuslmann@gmail.com>",
     "license": "MIT",
     "dependencies": {
-        "ramda": "^0.25.0"
+        "ramda": "^0.25.0",
+        "uuid": "^3.2.1"
     },
     "devDependencies": {
         "@types/jest": "^21.1.10",
         "@types/ramda": "^0.25.20",
+        "@types/uuid": "^3.4.3",
         "jest": "^21.2.1",
         "prettier": "^1.11.1",
         "ts-jest": "^21.2.4",

@@ -3,6 +3,7 @@ import { CoinEvent } from "./Events/CoinEvent";
 import { Event } from "./Events/Event";
 import { PopularityEvent } from "./Events/PopularityEvent";
 import { PlayerId } from "./PlayerId";
+import { PlayerMatName } from "./PlayerMatName";
 import { ResourceCost } from "./ResourceCost";
 import { ResourceType } from "./ResourceType";
 import { TopAction } from "./TopAction";
@@ -10,19 +11,19 @@ import { TopAction } from "./TopAction";
 export class PlayerMat {
     public static createFromString(playerMat: string, playerId: PlayerId): PlayerMat {
         switch (playerMat) {
-            case "engineering":
+            case PlayerMatName.ENGINEERING:
                 return PlayerMat.engineering(playerId);
-            case "agricultural":
+            case PlayerMatName.AGRICULTURAL:
                 return PlayerMat.agricultural(playerId);
-            case "industrial":
+            case PlayerMatName.INDUSTRIAL:
                 return PlayerMat.industrial(playerId);
-            case "mechanical":
+            case PlayerMatName.MECHANICAL:
                 return PlayerMat.mechanical(playerId);
-            case "patriotic":
+            case PlayerMatName.PATRIOTIC:
                 return PlayerMat.patriotic(playerId);
-            case "innovative":
+            case PlayerMatName.INNOVATIVE:
                 return PlayerMat.innovative(playerId);
-            case "militant":
+            case PlayerMatName.MILITANT:
             default:
                 return PlayerMat.militant(playerId);
         }
@@ -42,6 +43,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
+            PlayerMatName.ENGINEERING,
             2,
             [new PopularityEvent(playerId, 2), new CoinEvent(playerId, 5)],
             actionMap,
@@ -67,6 +69,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
+            PlayerMatName.AGRICULTURAL,
             7,
             [new PopularityEvent(playerId, 4), new CoinEvent(playerId, 7)],
             actionMap,
@@ -92,6 +95,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 4));
 
         return new PlayerMat(
+            PlayerMatName.INDUSTRIAL,
             1,
             [new PopularityEvent(playerId, 2), new CoinEvent(playerId, 4)],
             actionMap,
@@ -117,6 +121,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 4));
 
         return new PlayerMat(
+            PlayerMatName.MECHANICAL,
             6,
             [new PopularityEvent(playerId, 3), new CoinEvent(playerId, 6)],
             actionMap,
@@ -142,6 +147,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
+            PlayerMatName.PATRIOTIC,
             4,
             [new PopularityEvent(playerId, 2), new CoinEvent(playerId, 6)],
             actionMap,
@@ -167,6 +173,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
+            PlayerMatName.INNOVATIVE,
             5,
             [new PopularityEvent(playerId, 3), new CoinEvent(playerId, 5)],
             actionMap,
@@ -193,6 +200,7 @@ export class PlayerMat {
         bottomActionBaseCosts.set(BottomAction.ENLIST, new ResourceCost(ResourceType.FOOD, 3));
 
         return new PlayerMat(
+            PlayerMatName.MILITANT,
             3,
             [new PopularityEvent(playerId, 3), new CoinEvent(playerId, 4)],
             actionMap,
@@ -222,6 +230,7 @@ export class PlayerMat {
     }
 
     private constructor(
+        public readonly name: PlayerMatName,
         public readonly startPosition: 1 | 2 | 3 | 4 | 5 | 6 | 7, // the actual game uses 1, 2, 2a, 3, 3a, 4, 5
         public readonly setupEvents: Event[] = [],
         private readonly actionMap: Map<TopAction, BottomAction>,

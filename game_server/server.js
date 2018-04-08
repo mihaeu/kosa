@@ -287,7 +287,7 @@ app.get("/load", (req, res) => {
                 combatCards: GameInfo_1.GameInfo.combatCards(game.log, player).length,
                 faction: player.faction,
                 playerId: player.playerId.playerId,
-                playerMat: "tbd",
+                playerMat: player.playerMat.name,
                 popularity: GameInfo_1.GameInfo.popularity(game.log, player),
                 power: GameInfo_1.GameInfo.power(game.log, player),
                 stars: GameInfo_1.GameInfo.stars(game.log, player).length,

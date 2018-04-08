@@ -362,7 +362,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Player</th>
+                    <th class="uuid">Player</th>
                     <th>Faction</th>
                     <th>Player Mat</th>
                     <th>Coins</th>
@@ -377,19 +377,20 @@
             </tbody>
         </table>
 
-        <h1>Log</h1>
-        <table>
-            <thead>
-            <tr>
-                <th>UUID</th>
-                <th>Name</th>
-                <th>Event</th>
-            </tr>
-            </thead>
-            <tbody id="log">
+        <section id="#log-container">
+            <h1>Log</h1>
+            <table>
+                <thead>
+                <tr>
+                    <th class="uuid">UUID</th>
+                    <th>Event</th>
+                </tr>
+                </thead>
+                <tbody id="log">
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </section>
     </aside>
     <script>
       (function() {
@@ -418,8 +419,7 @@
                 for (const event of data.log) {
                   logElement.innerHTML += `
                     <tr>
-                        <td>TBD</td>
-                        <td>${event.constructor.name}</td>
+                        <td class="uuid">${event.id}</td>
                         <td>${JSON.stringify(event, null, '    ')}</td>
                     </tr>
                   `;
@@ -427,7 +427,7 @@
                 for (const playerStats of data.players) {
                   statsElement.innerHTML += `
                     <tr>
-                        <td>${playerStats.playerId}</td>
+                        <td class="uuid">${playerStats.playerId}</td>
                         <td>${playerStats.faction}</td>
                         <td>${playerStats.playerMat}</td>
                         <td>${playerStats.coins}</td>

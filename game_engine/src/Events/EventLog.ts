@@ -1,4 +1,5 @@
 import * as _ from "ramda";
+import { v4 } from "uuid";
 import { PlayerId } from "../PlayerId";
 import { Event } from "./Event";
 
@@ -6,6 +7,8 @@ export class EventLog {
     constructor(public log: Event[] = []) {}
 
     public add(event: Event): this {
+        event.id = v4();
+        event.type = event.constructor.name.toString();
         this.log.push(event);
         return this;
     }

@@ -1,11 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("ramda");
+const uuid_1 = require("uuid");
 class EventLog {
     constructor(log = []) {
         this.log = log;
     }
     add(event) {
+        event.id = uuid_1.v4();
+        event.type = event.constructor.name.toString();
         this.log.push(event);
         return this;
     }

@@ -13,6 +13,7 @@ import {
 } from "../game_engine/src/Availability";
 import { EventLogSerializer } from "../game_engine/src/Events/EventLogSerializer";
 import { Game } from "../game_engine/src/Game";
+import { UUID } from "../game_engine/src/UUID";
 import { GameInfo } from "../game_engine/src/GameInfo";
 import { Option } from "../game_engine/src/Options/Option";
 import { Player } from "../game_engine/src/Player";
@@ -23,8 +24,8 @@ import ErrnoException = NodeJS.ErrnoException;
 
 const helpMessage = fs.readFileSync("./helpMessage.txt");
 
-type GameUUID = string;
-type PlayerUUID = string;
+type GameUUID = UUID;
+type PlayerUUID = UUID;
 
 const clients = new Map<string, Socket>();
 const waitingGames: Map<GameUUID, Player[]> = new Map();
@@ -149,7 +150,7 @@ const server = net.createServer((socket) => {
                 socket.write(errorMsg("START <gameId>\n"));
             } else {
                 try {
-                    const game = new Game(waitingGames.get(gameId));
+                    const game = new Game(waitingGames.get(gameId) as Player[]);
                     waitingGames.delete(gameId);
                     runningGames.set(gameId, game);
 
@@ -169,7 +170,7 @@ const server = net.createServer((socket) => {
                 socket.write(errorMsg(`STOP <gameId>\n`));
             } else {
                 finishedGames.push(gameId);
-                const game = runningGames.get(gameId);
+                const game = runningGames.get(gameId) as Game;
                 fs.writeFile(
                     `./finished/${gameId}`,
                     EventLogSerializer.serialize(game.log),
@@ -329,7 +330,7 @@ app.get("/load", (req, res) => {
                 combatCards: GameInfo.combatCards(game.log, player).length,
                 faction: player.faction,
                 playerId: player.playerId.playerId,
-                playerMat: "tbd",
+                playerMat: player.playerMat.name,
                 popularity: GameInfo.popularity(game.log, player),
                 power: GameInfo.power(game.log, player),
                 stars: GameInfo.stars(game.log, player).length,
