@@ -38,6 +38,4 @@ def test_import_export():
     game = client.export_game()
 
     client2 = Client()
-
-    client2.import_game(game)
-
+    assert len(re.compile('imported').findall(client2.import_game(game))) == 1

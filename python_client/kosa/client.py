@@ -62,4 +62,6 @@ class Client(BaseClient):
         return json.loads(self.perform_command('EXPORT ' + self.game_id).strip())
 
     def import_game(self, game):
-        return self.perform_command('IMPORT {}'.format(json.dumps(game)))
+        if not self.game_id:
+            self.join_a_game()
+        return self.perform_command('IMPORT {} {}'.format(self.game_id, json.dumps(game, separators=(',', ':'))))
