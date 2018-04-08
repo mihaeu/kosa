@@ -1,14 +1,14 @@
 import json
+import random
 import re
-import socket
+
+from .base_client import BaseClient
 
 
-class Client:
+class Client(BaseClient):
     def __init__(self, host='localhost', port=1337):
+        super().__init__(host, port)
         self.uuid_regex = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
-
-        self.socket = socket.socket()
-        self.socket.connect((host, port))
 
         self.player_id = self.get_player_uuid()
         self.game_id = None
@@ -17,11 +17,7 @@ class Client:
         return self.uuid_regex.findall(self.get_message())[0]
 
     def get_waiting_games(self):
-        self.socket.send(b'WAITING')
-        return json.loads(self.get_message())
-
-    def get_message(self):
-        return self.socket.recv(2**20).decode('utf-8')
+        return json.loads(self.perform_command(b'WAITING'))
 
     def join_a_game(self):
         waiting_games = self.get_waiting_games()
@@ -30,9 +26,10 @@ class Client:
         else:
             self.game_id = self.create_game()
 
-        self.socket.send('JOIN {} {} {}'.format(self.game_id, 'red', 'mechanical').encode('utf-8'))
-        self.get_message()
+        color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
+
+        self.perform_command('JOIN {} {} {}'.format(self.game_id, color, 'mechanical').encode('utf-8'))
 
     def create_game(self):
-        self.socket.send(b'NEW')
-        return self.uuid_regex.findall(self.get_message())[1]
+        return self.uuid_regex.findall(self.perform_command(b'NEW'))[1]
+
