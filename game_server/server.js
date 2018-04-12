@@ -37,6 +37,7 @@ var Command;
     Command["ACTION"] = "ACTION";
     Command["OPTION"] = "OPTION";
     Command["SU"] = "SU";
+    Command["SG"] = "SG";
     Command["EXPORT"] = "EXPORT";
     Command["IMPORT"] = "IMPORT";
 })(Command || (Command = {}));
@@ -95,6 +96,29 @@ const server = net.createServer((socket) => {
                 clients.set(newPlayerUuid, socket);
                 broadcast(infoMsg(`${playerUuid} is now ${newPlayerUuid}`), clients);
                 playerUuid = newPlayerUuid;
+            }
+        }
+        else if (request.toUpperCase().startsWith(Command.SG)) {
+            /**
+             * SWITCH NAME OF CURRENT GAME
+             */
+            const matches = request.split(" ");
+            const gameId = matches[1];
+            const newGameId = matches[2];
+            const runningGame = runningGames.get(gameId);
+            const waitingGame = waitingGames.get(gameId);
+            if (runningGame !== undefined) {
+                runningGames.set(newGameId, runningGame);
+                runningGames.delete(gameId);
+                broadcast(`${playerUuid} changed game ${gameId} to ${newGameId} ...`, clients);
+            }
+            else if (waitingGame !== undefined) {
+                waitingGames.set(newGameId, waitingGame);
+                waitingGames.delete(gameId);
+                broadcast(`${playerUuid} changed game ${gameId} to ${newGameId} ...`, clients);
+            }
+            else {
+                socket.write(errorMsg("SG <gameId> <newGameId>"));
             }
         }
         else if (request.toUpperCase().startsWith(Command.JOIN)) {
@@ -266,6 +290,11 @@ const server = net.createServer((socket) => {
             }
         }
         else if (request.toUpperCase().startsWith(Command.STATS)) {
+            /**
+             * SHOW STATS
+             *
+             * STATS <gameId>
+             */
             const matches = request.split(" ");
             const gameId = matches[1];
             if (gameId === undefined) {
