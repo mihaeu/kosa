@@ -205,8 +205,9 @@ const server = net.createServer((socket) => {
                     const options = Availability_1.availableOptionsForAction(action, game.log, currentPlayer);
                     hackyOptions.set(playerId, options);
                     for (const index in options) {
-                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n\n");
+                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n");
                     }
+                    socket.write("\n\n");
                 }
             }
         }
@@ -324,6 +325,7 @@ app.get("/load", (req, res) => {
         const game = runningGames.get(req.query.gameId);
         const players = GameInfo_1.GameInfo.players(game.log);
         let stats = GameInfo_1.GameInfo.stats(game.log);
+        stats.log = game.log.log;
         res.json(stats);
     }
 });

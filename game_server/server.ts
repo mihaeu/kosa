@@ -365,6 +365,7 @@ app.get("/load", (req, res) => {
         const game = runningGames.get(req.query.gameId) as Game;
         const players = GameInfo.players(game.log);
         let stats = GameInfo.stats(game.log);
+        stats.log = game.log.log;
         res.json(stats);
     }
 });
