@@ -378,7 +378,7 @@
         </table>
 
         <section id="log-container">
-            <h1>Log</h1>
+            <h1>Log (reversed)</h1>
             <table>
                 <thead>
                 <tr>
@@ -416,11 +416,11 @@
                 logElement.innerHTML = "";
                 statsElement.innerHTML = "";
 
-                for (const event of data.log) {
+                for (const event of data.log.reverse()) {
                   logElement.innerHTML += `
                     <tr>
                         <td class="uuid">${event.id}</td>
-                        <td>${JSON.stringify(event, null, '    ')}</td>
+                        <td class="event">${JSON.stringify(event, null, '    ')}</td>
                     </tr>
                   `;
                 }
