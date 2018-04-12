@@ -53,18 +53,21 @@ Commands:
         Play an action by specifying the option
     SU <playerId>
         Change your identity to that of another player
+    STATS <gameId>
+        Show stats like coins, resources for the current game
     EXPORT <gameId>
         Exports the game state as serialized JSON
-    IMPORT <gameId>
-        Imports serialized game state and adds the game to the waiting list
+    IMPORT <gameId> <serializedEvents>
+        Imports serialized game state and adds the game to the list of running games
 
 Arguments:
-    <gameId>        UUID v4 strings which you get after joining a game.
-    <playerId>      UUID v4 strings which you get after joining the server.
-    <faction>       one of the following: green black yellow white purple blue red
-    <playerMat>     one of the following: engineering agricultural industrial mechanical patriotic innovative militant
-    <action>        one of the following: trade move bolster produce
-    <option>        index of the options you got from the available action command
+    <gameId>            UUID v4 strings which you get after joining a game.
+    <playerId>          UUID v4 strings which you get after joining the server.
+    <faction>           One of the following: green black yellow white purple blue red
+    <playerMat>         One of the following: engineering agricultural industrial mechanical patriotic innovative militant
+    <action>            One of the following: trade move bolster produce
+    <option>            Index of the options you got from the available action command
+    <serializedEvents>  A JSON array of serialized events
 
 
 ```

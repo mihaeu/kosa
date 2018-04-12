@@ -32,6 +32,7 @@ var Command;
     Command["NEW"] = "NEW";
     Command["JOIN"] = "JOIN";
     Command["START"] = "START";
+    Command["STATS"] = "STATS";
     Command["STOP"] = "STOP";
     Command["ACTION"] = "ACTION";
     Command["OPTION"] = "OPTION";
@@ -53,7 +54,7 @@ const server = net.createServer((socket) => {
         broadcast(`${playerUuid} left the server ...`, clients);
     });
     socket.on("data", (data) => {
-        const request = data.toString().trim();
+        const request = data.toString().trim().replace(/  +/, " ");
         if (request.toUpperCase() === Command.WAITING) {
             /**
              * SHOW WAITING GAMES
@@ -264,6 +265,22 @@ const server = net.createServer((socket) => {
                 }
             }
         }
+        else if (request.toUpperCase().startsWith(Command.STATS)) {
+            const matches = request.split(" ");
+            const gameId = matches[1];
+            if (gameId === undefined) {
+                socket.write(errorMsg(`STATS <gameId>\n`));
+            }
+            else {
+                try {
+                    const game = runningGames.get(gameId);
+                    socket.write(JSON.stringify(GameInfo_1.GameInfo.stats(game.log)) + "\n\n");
+                }
+                catch (e) {
+                    socket.write(`Unable to export stats\n\n${e.message}\n\n`);
+                }
+            }
+        }
         else {
             socket.write(helpMessage);
         }
@@ -277,23 +294,7 @@ app.get("/load", (req, res) => {
     if (runningGames.has(req.query.gameId)) {
         const game = runningGames.get(req.query.gameId);
         const players = GameInfo_1.GameInfo.players(game.log);
-        let stats = {};
-        stats.players = [];
-        players.forEach((player) => {
-            stats.players.push({
-                coins: GameInfo_1.GameInfo.coins(game.log, player),
-                combatCards: GameInfo_1.GameInfo.combatCards(game.log, player).length,
-                faction: player.faction,
-                playerId: player.playerId,
-                playerMat: player.playerMat.name,
-                popularity: GameInfo_1.GameInfo.popularity(game.log, player),
-                power: GameInfo_1.GameInfo.power(game.log, player),
-                stars: GameInfo_1.GameInfo.stars(game.log, player).length,
-                units: Array.from(GameInfo_1.GameInfo.units(game.log, player).entries()),
-            });
-        });
-        stats.resources = GameInfo_1.GameInfo.allResources(game.log);
-        stats.log = game.log.log;
+        let stats = GameInfo_1.GameInfo.stats(game.log);
         res.json(stats);
     }
 });

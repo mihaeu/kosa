@@ -23,6 +23,8 @@ Commands:
         Play an action by specifying the option
     SU <playerId>
         Change your identity to that of another player
+    STATS <gameId>
+        Show stats like coins, resources for the current game
     EXPORT <gameId>
         Exports the game state as serialized JSON
     IMPORT <gameId> <serializedEvents>

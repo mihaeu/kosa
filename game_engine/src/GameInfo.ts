@@ -21,8 +21,11 @@ import { ResourceEvent } from "./Events/ResourceEvent";
 import { SpendResourceEvent } from "./Events/SpendResourceEvent";
 import { StarEvent } from "./Events/StarEvent";
 import { UpgradeEvent } from "./Events/UpgradeEvent";
+import { Faction } from "./Faction";
 import { Field } from "./Field";
 import { Player } from "./Player";
+import { PlayerId } from "./PlayerId";
+import { PlayerMatName } from "./PlayerMatName";
 import { Recruit } from "./Recruit";
 import { Resource } from "./Resource";
 import { Resources } from "./Resources";
@@ -34,7 +37,45 @@ import { Unit } from "./Units/Unit";
 import { Worker } from "./Units/Worker";
 import { Upgrade } from "./Upgrade";
 
+interface PlayerStats {
+    coins: number,
+    combatCards: number,
+    faction: Faction,
+    playerId: PlayerId,
+    playerMat: PlayerMatName,
+    popularity: number,
+    power: number,
+    stars: number,
+    units: [Unit, Field][],
+}
+
+interface Stats {
+    players: PlayerStats[],
+    resources: Resource[],
+}
+
 export class GameInfo {
+    public static stats(log: EventLog): Stats {
+        const players = GameInfo.players(log);
+        let stats: Stats = {};
+        stats.players = [];
+        players.forEach((player: Player) => {
+            stats.players.push({
+                coins: GameInfo.coins(log, player),
+                combatCards: GameInfo.combatCards(log, player).length,
+                faction: player.faction,
+                playerId: player.playerId,
+                playerMat: player.playerMat.name,
+                popularity: GameInfo.popularity(log, player),
+                power: GameInfo.power(log, player),
+                stars: GameInfo.stars(log, player).length,
+                units: Array.from(GameInfo.units(log, player).entries()),
+            });
+        });
+        stats.resources = GameInfo.allResources(log);
+        return stats;
+    }
+
     public static players(log: EventLog): Player[] {
         const players = [];
         for (const event of log.log) {

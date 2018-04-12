@@ -30,6 +30,26 @@ const Mech_1 = require("./Units/Mech");
 const Worker_1 = require("./Units/Worker");
 const Upgrade_1 = require("./Upgrade");
 class GameInfo {
+    static stats(log) {
+        const players = GameInfo.players(log);
+        let stats = {};
+        stats.players = [];
+        players.forEach((player) => {
+            stats.players.push({
+                coins: GameInfo.coins(log, player),
+                combatCards: GameInfo.combatCards(log, player).length,
+                faction: player.faction,
+                playerId: player.playerId,
+                playerMat: player.playerMat.name,
+                popularity: GameInfo.popularity(log, player),
+                power: GameInfo.power(log, player),
+                stars: GameInfo.stars(log, player).length,
+                units: Array.from(GameInfo.units(log, player).entries()),
+            });
+        });
+        stats.resources = GameInfo.allResources(log);
+        return stats;
+    }
     static players(log) {
         const players = [];
         for (const event of log.log) {
