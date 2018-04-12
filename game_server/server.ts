@@ -240,8 +240,9 @@ const server = net.createServer((socket) => {
                     const options = availableOptionsForAction(action, game.log, currentPlayer);
                     hackyOptions.set(playerId, options);
                     for (const index in options) {
-                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n\n");
+                        socket.write(`[${index}]\n    ` + JSON.stringify(options[index]) + "\n");
                     }
+                    socket.write("\n\n");
                 }
             }
         } else if (request.toUpperCase().startsWith(Command.OPTION)) {
