@@ -42,6 +42,9 @@ class Client(BaseClient):
     def start(self):
         self.perform_command('START {}'.format(self.game_id))
 
+    def get_stats(self):
+        return json.loads(self.perform_command('STATS ' + self.game_id).strip())
+
     def get_available_actions(self):
         result = self.perform_command('ACTION {} {}'.format(self.game_id, self.player_id)).strip()
         return json.loads(result)
