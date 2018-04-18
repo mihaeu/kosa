@@ -46,6 +46,7 @@ interface PlayerStats {
     popularity: number,
     power: number,
     stars: number,
+    score: number,
     units: [Unit, Field][],
 }
 
@@ -59,6 +60,7 @@ export class GameInfo {
         const players = GameInfo.players(log);
         let stats: Stats = {};
         stats.players = [];
+        const score = GameInfo.score(log, players);
         players.forEach((player: Player) => {
             stats.players.push({
                 coins: GameInfo.coins(log, player),
@@ -69,6 +71,7 @@ export class GameInfo {
                 popularity: GameInfo.popularity(log, player),
                 power: GameInfo.power(log, player),
                 stars: GameInfo.stars(log, player).length,
+                score: score.get(player) as number,
                 units: Array.from(GameInfo.units(log, player).entries()),
             });
         });

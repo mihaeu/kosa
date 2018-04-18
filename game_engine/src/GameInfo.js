@@ -34,6 +34,7 @@ class GameInfo {
         const players = GameInfo.players(log);
         let stats = {};
         stats.players = [];
+        const score = GameInfo.score(log, players);
         players.forEach((player) => {
             stats.players.push({
                 coins: GameInfo.coins(log, player),
@@ -44,6 +45,7 @@ class GameInfo {
                 popularity: GameInfo.popularity(log, player),
                 power: GameInfo.power(log, player),
                 stars: GameInfo.stars(log, player).length,
+                score: score.get(player),
                 units: Array.from(GameInfo.units(log, player).entries()),
             });
         });
