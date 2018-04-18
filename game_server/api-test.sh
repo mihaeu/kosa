@@ -5,6 +5,9 @@
 GAME_ID=$(http GET localhost:3000/new -b | sed -e "s/\"//g")
 PLAYER_ID=$(http GET localhost:3000/connect -b | sed -e "s/\"//g")
 
+echo "gameId: $GAME_ID"
+echo "playerId: $PLAYER_ID"
+
 http POST localhost:3000/join gameId=$GAME_ID playerId=$PLAYER_ID faction=GREEN playerMat=industrial -o /dev/null
 http POST localhost:3000/start gameId=$GAME_ID -o /dev/null
 

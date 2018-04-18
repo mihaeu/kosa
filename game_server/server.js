@@ -323,6 +323,7 @@ server.listen(port, hostname);
 const mapToJson = (x) => JSON.parse(JSON.stringify([...x]));
 const app = express();
 app.use(bodyParser.json());
+app.use(express.static("public"));
 app.get("/waiting", (req, res) => {
     res.json(mapToJson(waitingGames));
 });
@@ -482,5 +483,4 @@ app.get("/load", (req, res) => {
 app.use((req, res) => {
     res.send(404);
 });
-app.use(express.static("public"));
 app.listen(3000);
