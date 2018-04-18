@@ -5,6 +5,7 @@ import net = require("net");
 import * as querystring from "querystring";
 import * as _ from "ramda";
 import * as express from "express";
+import * as bodyParser from "body-parser";
 import { v4 } from "uuid";
 import {
     availableBottomActions,
@@ -358,7 +359,182 @@ const hostname = process.argv[2] ? process.argv[2] : "0.0.0.0";
 const port = process.argv[3] ? parseInt(process.argv[3], 10) : 1337;
 server.listen(port, hostname);
 
+const mapToJson = (x: any) => JSON.parse(JSON.stringify([...x]));
+
 const app = express();
+app.use(bodyParser.json());
+
+app.get("/waiting", (req, res) => {
+    res.json(mapToJson(waitingGames));
+});
+
+app.get("/running", (req, res) => {
+    res.json(mapToJson(runningGames));
+});
+
+app.get("/finished", (req, res) => {
+    res.json(mapToJson(finishedGames));
+});
+
+app.get("/new", (req, res) => {
+    const gameId = v4();
+    waitingGames.set(gameId, []);
+    res.json(gameId);
+});
+
+app.get("/connect", (req, res) => {
+    res.json(v4());
+});
+
+app.post("/join", (req, res) => {
+    try {
+        const gameId = req.body.gameId;
+        const playerId = req.body.playerId;
+        const faction = req.body.faction.toUpperCase();
+        const playerMat = req.body.playerMat.toLowerCase();
+        const player = PlayerFactory.createFromString(
+            faction,
+            playerId,
+            PlayerMat.createFromString(playerMat, playerId),
+        );
+        waitingGames.get(gameId).push(player);
+        res.json("OK");
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.post("/start", (req, res) => {
+    try {
+        const gameId = req.body.gameId;
+        const game = new Game(waitingGames.get(gameId) as Player[]);
+        waitingGames.delete(gameId);
+        runningGames.set(gameId, game);
+        res.json("OK");
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.post("/stop", (req, res) => {
+    try {
+        const gameId = req.body.gameId;
+        const game = runningGames.get(gameId) as Game;
+        finishedGames.push(gameId);
+        fs.writeFile(
+            `./finished/${gameId}`,
+            EventLogSerializer.serialize(game.log),
+            (err: ErrnoException) => err,
+        );
+        runningGames.delete(gameId);
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.post("/action", (req, res) => {
+    try {
+        const gameId = req.body.gameId;
+        const game = runningGames.get(gameId) as Game;
+
+        const playerId = req.body.playerId;
+        const currentPlayer = _.find(
+            (player: Player) => playerId === player.playerId,
+            GameInfo.players(game.log),
+        ) as Player;
+
+        if (!req.body.action) {
+            res.json(
+                availableTopActions(game.log, currentPlayer).concat(
+                    availableBottomActions(game.log, currentPlayer),
+                ),
+            );
+        } else {
+            const action = req.body.action.toUpperCase();
+            const options = availableOptionsForAction(action, game.log, currentPlayer);
+            hackyOptions.set(playerId, options);
+            res.json(options);
+        }
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.post("/option", (req, res) => {
+    try {
+        const gameId = req.body.gameId;
+        const game = runningGames.get(gameId) as Game;
+
+        const playerId = req.body.playerId;
+        const currentPlayer = _.find(
+            (player: Player) => playerId === player.playerId,
+            GameInfo.players(game.log),
+        ) as Player;
+
+        const optionIndex = parseInt(req.body.option, 10);
+        game.actionFromOption(currentPlayer, hackyOptions.get(playerId)[optionIndex]);
+
+        if (GameInfo.gameOver(game.log)) {
+            finishedGames.push(gameId);
+            runningGames.delete(gameId);
+
+            fs.writeFile(
+                `./finished/${gameId}`,
+                EventLogSerializer.serialize(game.log),
+                (err: ErrnoException) => err,
+            );
+            res.status(418);
+            res.json("GAME OVER")
+        } else {
+            res.json("OK")
+        }
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.post("/export", (req, res) => {
+    try {
+        const gameId = req.body.gameId;
+        if (gameId === undefined) {
+            // todo
+        } else {
+            try {
+                const game = runningGames.get(gameId) as Game;
+                res.json(EventLogSerializer.serialize(game.log));
+            } catch (e) {
+                res.json({message: "error"});
+            }
+        }
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.post("/import", (req, res) => {
+    const gameId = req.body.gameId;
+    const serializedEventLog = req.body.log;
+    try {
+        const log = EventLogSerializer.deserialize(serializedEventLog);
+        runningGames.set(gameId, new Game(GameInfo.players(log), log));
+    } catch (e) {
+        res.json({message: "error"});
+    }
+});
+
+app.get("/stats", (req, res) => {
+    const gameId = req.query.gameId;
+    if (gameId === undefined) {
+        // todo
+    } else {
+        try {
+            const game = runningGames.get(gameId) as Game;
+            res.json(GameInfo.stats(game.log));
+        } catch (e) {
+            res.json({message: "error"});
+        }
+    }
+});
 
 app.get("/load", (req, res) => {
     if (runningGames.has(req.query.gameId)) {
@@ -369,6 +545,11 @@ app.get("/load", (req, res) => {
         res.json(stats);
     }
 });
-app.use(express.static('public'));
+
+app.use((req, res) => {
+    res.send(404);
+});
+
+app.use(express.static("public"));
 
 app.listen(3000);
