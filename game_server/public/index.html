@@ -440,12 +440,12 @@
                     </tr>
                   `;
                   for (const unit of playerStats.units) {
-                    document.querySelector(`#${unit[1].name} .units`).innerHTML += unit[0].name;
+                    document.querySelector(`#${unit[1].name} .units`).innerHTML += unit[0].name.replace(/(ORKER_|ECH_)/, '');
                   }
                 }
 
                 for (const resource of data.resources) {
-                  document.querySelector(`#${resource.location.name} .resources`).innerHTML += resource.type + ".";
+                  document.querySelector(`#${resource.location.name} .resources`).innerHTML += resource.type.substring(0, 1) + ".";
                 }
 
               });
