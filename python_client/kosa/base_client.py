@@ -9,6 +9,7 @@ class BaseClient:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
 
+
     def get_message(self):
         try:
             message = self.socket.recv(2 ** 20)
