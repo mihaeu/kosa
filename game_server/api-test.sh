@@ -20,3 +20,6 @@ http POST localhost:3000/option gameId=$GAME_ID playerId=$PLAYER_ID option=2 -b
 http GET localhost:3000/export/$GAME_ID -b
 
 http GET localhost:3000/stats/$GAME_ID -b
+
+echo "gameId: $GAME_ID"
+echo "playerId: $PLAYER_ID"

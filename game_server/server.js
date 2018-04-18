@@ -44,8 +44,8 @@ var Command;
 })(Command || (Command = {}));
 // temp hack
 const hackyOptions = new Map();
-if (!fs.existsSync("./finished")) {
-    fs.mkdirSync("./finished");
+if (!fs.existsSync(`${__dirname}/finished`)) {
+    fs.mkdirSync(`${__dirname}/finished`);
 }
 const server = net.createServer((socket) => {
     let playerUuid = uuid_1.v4();
@@ -172,7 +172,7 @@ const server = net.createServer((socket) => {
             else {
                 finishedGames.push(gameId);
                 const game = runningGames.get(gameId);
-                fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
+                fs.writeFile(`${__dirname}/finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
                     ? socket.write(errorMsg(`Failed to serialize ${gameId}\n\n`))
                     : socket.write(successMsg(`Stopped and saved game to finished/${gameId}\n\n`)));
                 runningGames.delete(gameId);
@@ -237,7 +237,7 @@ const server = net.createServer((socket) => {
                         broadcast(successMsg(`Game ${gameId} is over ...`), clients);
                         finishedGames.push(gameId);
                         runningGames.delete(gameId);
-                        fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
+                        fs.writeFile(`${__dirname}/finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err
                             ? socket.write(errorMsg(`Failed to serialize ${gameId}\n\n`))
                             : socket.write(successMsg(`Saved game to finished/${gameId}\n\n`)));
                     }
@@ -331,7 +331,7 @@ app.get("/running", (req, res) => {
     res.json(mapToJson(runningGames));
 });
 app.get("/finished", (req, res) => {
-    res.json(mapToJson(finishedGames));
+    res.json(finishedGames);
 });
 app.get("/new", (req, res) => {
     const gameId = uuid_1.v4();
@@ -352,7 +352,7 @@ app.post("/join", (req, res) => {
         res.json("OK");
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.post("/start", (req, res) => {
@@ -364,7 +364,7 @@ app.post("/start", (req, res) => {
         res.json("OK");
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.post("/stop", (req, res) => {
@@ -372,11 +372,13 @@ app.post("/stop", (req, res) => {
         const gameId = req.body.gameId;
         const game = runningGames.get(gameId);
         finishedGames.push(gameId);
-        fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err);
+        console.log(`${__dirname}/finished/${gameId}`);
+        fs.writeFileSync(`${__dirname}/finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log));
         runningGames.delete(gameId);
+        res.json("OK");
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.post("/action", (req, res) => {
@@ -396,7 +398,7 @@ app.post("/action", (req, res) => {
         }
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.post("/option", (req, res) => {
@@ -410,36 +412,25 @@ app.post("/option", (req, res) => {
         if (GameInfo_1.GameInfo.gameOver(game.log)) {
             finishedGames.push(gameId);
             runningGames.delete(gameId);
-            fs.writeFile(`./finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err);
-            res.status(418);
-            res.json("GAME OVER");
+            fs.writeFile(`${__dirname}/finished/${gameId}`, EventLogSerializer_1.EventLogSerializer.serialize(game.log), (err) => err);
+            res.status(418).json("GAME OVER");
         }
         else {
             res.json("OK");
         }
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.get("/export/:gameId", (req, res) => {
     try {
         const gameId = req.params.gameId;
-        if (gameId === undefined) {
-            // todo
-        }
-        else {
-            try {
-                const game = runningGames.get(gameId);
-                res.json(EventLogSerializer_1.EventLogSerializer.serialize(game.log));
-            }
-            catch (e) {
-                res.json({ message: "error" });
-            }
-        }
+        const game = runningGames.get(gameId);
+        res.json(EventLogSerializer_1.EventLogSerializer.serialize(game.log));
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.post("/import", (req, res) => {
@@ -450,13 +441,13 @@ app.post("/import", (req, res) => {
         runningGames.set(gameId, new Game_1.Game(GameInfo_1.GameInfo.players(log), log));
     }
     catch (e) {
-        res.json({ message: e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 app.get("/stats/:gameId", (req, res) => {
     const gameId = req.params.gameId;
     if (gameId === undefined) {
-        res.json({ message: "error" });
+        res.status(500).json({ message: "error" });
     }
     else {
         try {
@@ -464,20 +455,35 @@ app.get("/stats/:gameId", (req, res) => {
             res.json(GameInfo_1.GameInfo.stats(game.log));
         }
         catch (e) {
-            res.json({ message: e.message });
+            res.status(500).json({ message: e.message });
         }
     }
 });
+const readFinishedGameLog = (gameId) => {
+    const serializedEventLog = fs.readFileSync(`${__dirname}/finished/${gameId}`).toString();
+    return EventLogSerializer_1.EventLogSerializer.deserialize(serializedEventLog);
+};
 app.get("/load", (req, res) => {
-    if (runningGames.has(req.query.gameId)) {
-        const game = runningGames.get(req.query.gameId);
-        const players = GameInfo_1.GameInfo.players(game.log);
-        let stats = GameInfo_1.GameInfo.stats(game.log);
-        stats.log = game.log.log;
+    const gameId = req.query.gameId;
+    if (!gameId) {
+        res.status(500).json({ message: "gameId required" });
+        return;
+    }
+    try {
+        const log = runningGames.has(gameId)
+            ? runningGames.get(gameId).log
+            : readFinishedGameLog(gameId);
+        if (!log) {
+            res.status(500).json({ message: "Unable to load game" });
+            return;
+        }
+        const players = GameInfo_1.GameInfo.players(log);
+        let stats = GameInfo_1.GameInfo.stats(log);
+        stats.log = log.log;
         res.json(stats);
     }
-    else {
-        res.json({ message: "error" });
+    catch (e) {
+        res.status(500).json({ message: e.message });
     }
 });
 app.use((req, res) => {
