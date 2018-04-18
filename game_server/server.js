@@ -351,7 +351,7 @@ app.post("/join", (req, res) => {
         res.json("OK");
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
 app.post("/start", (req, res) => {
@@ -363,7 +363,7 @@ app.post("/start", (req, res) => {
         res.json("OK");
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
 app.post("/stop", (req, res) => {
@@ -375,7 +375,7 @@ app.post("/stop", (req, res) => {
         runningGames.delete(gameId);
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
 app.post("/action", (req, res) => {
@@ -395,7 +395,7 @@ app.post("/action", (req, res) => {
         }
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
 app.post("/option", (req, res) => {
@@ -418,12 +418,12 @@ app.post("/option", (req, res) => {
         }
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
-app.post("/export", (req, res) => {
+app.get("/export/:gameId", (req, res) => {
     try {
-        const gameId = req.body.gameId;
+        const gameId = req.params.gameId;
         if (gameId === undefined) {
             // todo
         }
@@ -438,7 +438,7 @@ app.post("/export", (req, res) => {
         }
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
 app.post("/import", (req, res) => {
@@ -449,13 +449,13 @@ app.post("/import", (req, res) => {
         runningGames.set(gameId, new Game_1.Game(GameInfo_1.GameInfo.players(log), log));
     }
     catch (e) {
-        res.json({ message: "error" });
+        res.json({ message: e.message });
     }
 });
-app.get("/stats", (req, res) => {
-    const gameId = req.query.gameId;
+app.get("/stats/:gameId", (req, res) => {
+    const gameId = req.params.gameId;
     if (gameId === undefined) {
-        // todo
+        res.json({ message: "error" });
     }
     else {
         try {
@@ -463,7 +463,7 @@ app.get("/stats", (req, res) => {
             res.json(GameInfo_1.GameInfo.stats(game.log));
         }
         catch (e) {
-            res.json({ message: "error" });
+            res.json({ message: e.message });
         }
     }
 });
@@ -474,6 +474,9 @@ app.get("/load", (req, res) => {
         let stats = GameInfo_1.GameInfo.stats(game.log);
         stats.log = game.log.log;
         res.json(stats);
+    }
+    else {
+        res.json({ message: "error" });
     }
 });
 app.use((req, res) => {

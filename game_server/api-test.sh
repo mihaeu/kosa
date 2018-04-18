@@ -14,4 +14,6 @@ http POST localhost:3000/action gameId=$GAME_ID playerId=$PLAYER_ID -b
 http POST localhost:3000/action gameId=$GAME_ID playerId=$PLAYER_ID action=trade -b
 http POST localhost:3000/option gameId=$GAME_ID playerId=$PLAYER_ID option=2 -b
 
-http POST localhost:3000/export gameId=$GAME_ID
+http GET localhost:3000/export/$GAME_ID -b
+
+http GET localhost:3000/stats/$GAME_ID -b

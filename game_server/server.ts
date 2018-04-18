@@ -400,7 +400,7 @@ app.post("/join", (req, res) => {
         waitingGames.get(gameId).push(player);
         res.json("OK");
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
@@ -412,7 +412,7 @@ app.post("/start", (req, res) => {
         runningGames.set(gameId, game);
         res.json("OK");
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
@@ -428,7 +428,7 @@ app.post("/stop", (req, res) => {
         );
         runningGames.delete(gameId);
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
@@ -456,7 +456,7 @@ app.post("/action", (req, res) => {
             res.json(options);
         }
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
@@ -489,13 +489,13 @@ app.post("/option", (req, res) => {
             res.json("OK")
         }
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
-app.post("/export", (req, res) => {
+app.get("/export/:gameId", (req, res) => {
     try {
-        const gameId = req.body.gameId;
+        const gameId = req.params.gameId;
         if (gameId === undefined) {
             // todo
         } else {
@@ -507,7 +507,7 @@ app.post("/export", (req, res) => {
             }
         }
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
@@ -518,20 +518,20 @@ app.post("/import", (req, res) => {
         const log = EventLogSerializer.deserialize(serializedEventLog);
         runningGames.set(gameId, new Game(GameInfo.players(log), log));
     } catch (e) {
-        res.json({message: "error"});
+        res.json({message: e.message});
     }
 });
 
-app.get("/stats", (req, res) => {
-    const gameId = req.query.gameId;
+app.get("/stats/:gameId", (req, res) => {
+    const gameId = req.params.gameId;
     if (gameId === undefined) {
-        // todo
+        res.json({message: "error"});
     } else {
         try {
             const game = runningGames.get(gameId) as Game;
             res.json(GameInfo.stats(game.log));
         } catch (e) {
-            res.json({message: "error"});
+            res.json({message: e.message});
         }
     }
 });
@@ -543,6 +543,8 @@ app.get("/load", (req, res) => {
         let stats = GameInfo.stats(game.log);
         stats.log = game.log.log;
         res.json(stats);
+    } else {
+        res.json({message: "error"});
     }
 });
 
