@@ -70,4 +70,4 @@ class Client(BaseClient):
     def import_game(self, game):
         if not self.game_id:
             self.join_a_game()
-        return self.perform_command('IMPORT {} {}'.format(self.game_id, json.dumps(game, separators=(',', ':'))))
+        return self.post_raw('IMPORT/{}'.format(self.game_id), game)
