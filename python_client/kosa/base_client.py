@@ -12,7 +12,11 @@ class BaseClient:
         return requests.get(self.base + command).json()
 
     def post(self, command, attributes):
-        return requests.post(self.base + command, json=attributes).json()
+        res = requests.post(self.base + command, json=attributes)\
+
+        if res.status_code == 418:
+            raise('game over')
+        return res.json()
 
     def post_raw(self, command, attributes):
         return requests.post(self.base + command, json=attributes).text
