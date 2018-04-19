@@ -4,18 +4,26 @@ import json
 class BaseClient:
     def __init__(self, host, port):
         self.base = 'http://{}:{}/'.format(host, port)
+        self.game_over = False
 
     def get(self, command):
+        if self.game_over:
+            return
         return requests.get(self.base + command).text
 
     def get_as_json(self, command):
+        if self.game_over:
+            return
         return requests.get(self.base + command).json()
 
     def post(self, command, attributes):
+        if self.game_over:
+            return
         res = requests.post(self.base + command, json=attributes)\
 
         if res.status_code == 418:
-            raise('game over')
+            self.game_over = True
+            return
         return res.json()
 
     def post_raw(self, command, attributes):

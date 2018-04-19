@@ -18,6 +18,8 @@ class Client(BaseClient):
         print('player_id ', self.player_id)
         self.game_id = None
 
+    def is_game_over(self):
+        return self.game_over
 
     def get_player_uuid(self):
         return self.get('connect').replace('"', '')
