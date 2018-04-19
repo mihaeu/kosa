@@ -446,8 +446,8 @@ app.post("/import", (req, res) => {
 });
 app.get("/stats/:gameId", (req, res) => {
     const gameId = req.params.gameId;
-    if (gameId === undefined) {
-        res.status(500).json({ message: "error" });
+    if (gameId === undefined || !runningGames.has(gameId)) {
+        res.status(500).json({ message: "gameId unknown" });
     }
     else {
         try {

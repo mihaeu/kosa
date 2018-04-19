@@ -15,7 +15,6 @@ import { EventLog } from "../src/Events/EventLog";
 import { Game } from "../src/Game";
 import { GameInfo } from "../src/GameInfo";
 import { PlayerFactory } from "../src/PlayerFactory";
-import { PlayerId } from "../src/PlayerId";
 import { PlayerMat } from "../src/PlayerMat";
 import { Star } from "../src/Star";
 import { TopAction } from "../src/TopAction";
@@ -39,7 +38,7 @@ do {
 
     let count = 0;
 
-    while (count < 100) {
+    while (count < 300) {
         count += 1;
         const topActions = availableTopActions(log, player);
         if (topActions.length > 0) {
@@ -85,4 +84,4 @@ do {
         `Stopped at count ${count} with ${stars.length ? stars : "no"} stars.`,
     );
 
-} while (stars.length < 5);
+} while (stars.length < 6);

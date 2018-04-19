@@ -22,7 +22,7 @@ do {
     players = [player];
     game = new Game_1.Game(players, log);
     let count = 0;
-    while (count < 100) {
+    while (count < 300) {
         count += 1;
         const topActions = Availability_1.availableTopActions(log, player);
         if (topActions.length > 0) {
@@ -63,4 +63,4 @@ do {
     }
     stars = GameInfo_1.GameInfo.stars(log, player);
     console.log(`Stopped at count ${count} with ${stars.length ? stars : "no"} stars.`);
-} while (stars.length < 5);
+} while (stars.length < 6);
