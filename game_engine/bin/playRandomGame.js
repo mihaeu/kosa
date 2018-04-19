@@ -22,7 +22,7 @@ do {
     players = [player];
     game = new Game_1.Game(players, log);
     let count = 0;
-    while (count < 300) {
+    while (count < 100) {
         count += 1;
         const topActions = Availability_1.availableTopActions(log, player);
         if (topActions.length > 0) {

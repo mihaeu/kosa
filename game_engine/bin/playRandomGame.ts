@@ -38,7 +38,7 @@ do {
 
     let count = 0;
 
-    while (count < 300) {
+    while (count < 100) {
         count += 1;
         const topActions = availableTopActions(log, player);
         if (topActions.length > 0) {

@@ -32,42 +32,6 @@ if (!fs.existsSync(`${__dirname}/finished`)) {
     fs.mkdirSync(`${__dirname}/finished`);
 }
 
-// } else if (request.toUpperCase().startsWith(Command.SU)) {
-//     /**
-//      * SWITCH TO ANOTHER USER/PLAYER
-//      */
-//     const matches = request.split(" ");
-//     const newPlayerUuid: PlayerUUID = matches[1];
-//     if (newPlayerUuid === undefined) {
-//         socket.write(errorMsg("SU <playerId>"));
-//     } else {
-//         clients.delete(playerUuid);
-//         clients.set(newPlayerUuid, socket);
-//         broadcast(infoMsg(`${playerUuid} is now ${newPlayerUuid}`), clients);
-//         playerUuid = newPlayerUuid;
-//     }
-// } else if (request.toUpperCase().startsWith(Command.SG)) {
-//     /**
-//      * SWITCH NAME OF CURRENT GAME
-//      */
-//     const matches = request.split(" ");
-//     const gameId = matches[1];
-//     const newGameId = matches[2];
-//     const runningGame = runningGames.get(gameId) as Game;
-//     const waitingGame = waitingGames.get(gameId) as Player[];
-//
-//     if (runningGame !== undefined) {
-//         runningGames.set(newGameId, runningGame);
-//         runningGames.delete(gameId);
-//         broadcast(`${playerUuid} changed game ${gameId} to ${newGameId} ...`, clients);
-//     } else if (waitingGame !== undefined) {
-//         waitingGames.set(newGameId, waitingGame);
-//         waitingGames.delete(gameId);
-//         broadcast(`${playerUuid} changed game ${gameId} to ${newGameId} ...`, clients);
-//     } else {
-//         socket.write(errorMsg("SG <gameId> <newGameId>"));
-//     }
-
 const mapToJson = (x: any) => JSON.parse(JSON.stringify([...x]));
 
 const app = express();
@@ -242,6 +206,8 @@ const readFinishedGameLog = (gameId: UUID) => {
     const serializedEventLog = fs.readFileSync(`${__dirname}/finished/${gameId}`).toString();
     return EventLogSerializer.deserialize(serializedEventLog);
 };
+
+const
 
 app.get("/load", (req, res) => {
     const gameId = req.query.gameId;
