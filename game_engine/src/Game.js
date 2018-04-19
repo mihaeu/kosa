@@ -305,15 +305,16 @@ class Game {
         const currentStars = GameInfo_1.GameInfo.stars(this.log, player);
         const missingStars = _.difference(allStars, currentStars);
         let starCount = currentStars.length;
-        _.forEach((star) => {
-            if (GameInfo_1.GameInfo.starCondition(this.log, player, star) && starCount <= 6) {
+        for (const star of missingStars) {
+            if (GameInfo_1.GameInfo.starCondition(this.log, player, star)) {
                 this.log.add(new StarEvent_1.StarEvent(player.playerId, star));
                 starCount += 1;
             }
             if (starCount === 6) {
                 this.log.add(new GameEndEvent_1.GameEndEvent(player.playerId));
+                break;
             }
-        }, missingStars);
+        }
     }
 }
 Game.PRODUCE_POWER_THRESHOLD = 4;
