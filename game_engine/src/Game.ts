@@ -424,15 +424,16 @@ export class Game {
         const missingStars = _.difference(allStars, currentStars);
 
         let starCount = currentStars.length;
-        _.forEach((star: Star) => {
-            if (GameInfo.starCondition(this.log, player, star) && starCount <= 6) {
+        for (const star of missingStars) {
+            if (GameInfo.starCondition(this.log, player, star)) {
                 this.log.add(new StarEvent(player.playerId, star));
                 starCount += 1;
             }
 
             if (starCount === 6) {
                 this.log.add(new GameEndEvent(player.playerId));
+                break;
             }
-        }, missingStars);
+        }
     }
 }
