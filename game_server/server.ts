@@ -183,6 +183,7 @@ app.post("/import", (req, res) => {
     try {
         const log = EventLogSerializer.deserialize(serializedEventLog);
         runningGames.set(gameId, new Game(GameInfo.players(log), log));
+        hackyOptions.delete(GameInfo.players(log)[0].playerId);
     } catch (e) {
         res.status(500).json({message: e.message});
     }
@@ -194,6 +195,7 @@ app.post("/revert", (req, res) => {
     const game = runningGames.get(gameId) as Game;
     try {
         game.log.resetUntilEvent(eventId);
+        hackyOptions.delete(GameInfo.players(game.log)[0].playerId);
         res.json(eventId);
     } catch (e) {
         res.status(500).json({message: e.message});

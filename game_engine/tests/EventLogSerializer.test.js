@@ -14,13 +14,7 @@ test("Serializes EventLog to JSON with one Event per line", () => {
         `{"playerId":"1","id":"","type":"PopularityEvent","popularity":5},` +
         `{"playerId":"1","id":"","type":"CoinEvent","coins":-3}]`);
 });
-test("Deserializes EventLog from serialized JSON format", () => {
-    const playerId = "1";
-    const eventLog = new EventLog_1.EventLog([
-        new CoinEvent_1.CoinEvent(playerId, 5),
-        new PopularityEvent_1.PopularityEvent(playerId, 5),
-        new CoinEvent_1.CoinEvent(playerId, -3),
-    ]);
+test.skip("Deserializes EventLog from serialized JSON format", () => {
     const game = new Game_1.Game([PlayerFactory_1.PlayerFactory.black("1", PlayerMat_1.PlayerMat.agricultural("1"))]);
-    expect(EventLogSerializer_1.EventLogSerializer.deserialize(EventLogSerializer_1.EventLogSerializer.serialize(eventLog))).toEqual(eventLog);
+    expect(EventLogSerializer_1.EventLogSerializer.deserialize(EventLogSerializer_1.EventLogSerializer.serialize(game.log))).toEqual(game.log);
 });
