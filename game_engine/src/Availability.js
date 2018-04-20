@@ -177,6 +177,9 @@ function availableMoveOptions(log, player) {
     }
     const moveOptions = [];
     for (const [unit, location] of GameInfo_1.GameInfo.units(log, player).entries()) {
+        if (!(unit instanceof Worker_1.Worker)) {
+            continue;
+        }
         _.forEach((destination) => moveOptions.push(new Move_1.Move(unit, destination)), GameMap_1.GameMap.options(location));
     }
     const moveCombinations = [];

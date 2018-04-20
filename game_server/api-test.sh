@@ -17,7 +17,10 @@ http POST localhost:3000/action gameId=$GAME_ID playerId=$PLAYER_ID -b
 http POST localhost:3000/action gameId=$GAME_ID playerId=$PLAYER_ID action=trade -b
 http POST localhost:3000/option gameId=$GAME_ID playerId=$PLAYER_ID option=2 -b
 
-http GET localhost:3000/export/$GAME_ID -b
+http POST localhost:3000/action gameId=$GAME_ID playerId=$PLAYER_ID action=move -b
+
+EXPORTED_STATE=$(http GET localhost:3000/export/$GAME_ID -b | sed -r 's/^"//' | sed -r 's/"$//')
+echo $EXPORTED_STATE
 
 http GET localhost:3000/stats/$GAME_ID -b
 

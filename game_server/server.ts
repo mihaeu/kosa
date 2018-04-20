@@ -188,6 +188,18 @@ app.post("/import", (req, res) => {
     }
 });
 
+app.post("/revert", (req, res) => {
+    const gameId = req.body.gameId;
+    const eventId = req.body.eventId;
+    const game = runningGames.get(gameId) as Game;
+    try {
+        game.log.resetUntilEvent(eventId);
+        res.json(eventId);
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
 app.get("/stats/:gameId", (req, res) => {
     const gameId = req.params.gameId;
     if (gameId === undefined || !runningGames.has(gameId)) {

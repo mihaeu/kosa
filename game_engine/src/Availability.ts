@@ -196,6 +196,9 @@ export function availableMoveOptions(log: EventLog, player: Player): Option[] {
 
     const moveOptions: Move[] = [];
     for (const [unit, location] of GameInfo.units(log, player).entries()) {
+        if (!(unit instanceof Worker)) {
+            continue;
+        }
         _.forEach((destination: Field) => moveOptions.push(new Move(unit, destination)), GameMap.options(location));
     }
 

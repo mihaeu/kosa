@@ -78,10 +78,10 @@ describe("Options", () => {
         });
     });
     describe(TopAction_1.TopAction.MOVE, () => {
-        test("Players on their starting position have 22 move options", () => {
+        test.skip("Players on their starting position have 22 move options", () => {
             expect(Availability_1.availableMoveOptions(log, blackIndustrialPlayer).length).toBe(22);
         });
-        test("Player with starting position and one mech on factory has 46 moves", () => {
+        test.skip("Player with starting position and one mech on factory has 46 moves", () => {
             game.log.add(new DeployEvent_1.DeployEvent(blackIndustrialPlayerId, Mech_1.Mech.MECH_1, Field_1.Field.F));
             expect(Availability_1.availableMoveOptions(log, blackIndustrialPlayer).length).toBe(46);
         });
