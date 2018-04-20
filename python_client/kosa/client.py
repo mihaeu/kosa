@@ -15,8 +15,11 @@ class Client(BaseClient):
 
         self.player_id = self.get_player_uuid()
 
-        print('player_id ', self.player_id)
+        # print('player_id ', self.player_id)
         self.game_id = None
+
+    def stop(self):
+        self.post('stop', {'gameId': self.game_id})
 
     def is_game_over(self):
         return self.game_over
@@ -37,20 +40,20 @@ class Client(BaseClient):
         else:
             self.game_id = self.create_game()
 
-        print('joined game with id ', self.game_id)
+        # print('joined game with id ', self.game_id)
 
         if color is None:
             color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
         if player_mat is None:
             player_mat = random.choice(['engineering', 'agricultural', 'industrial', 'mechanical', 'patriotic', 'innovative', 'militant'])
 
-        print('join', self.post('join', {'gameId': self.game_id, 'playerId': self.player_id, 'faction': color, 'playerMat': player_mat}))
+        self.post('join', {'gameId': self.game_id, 'playerId': self.player_id, 'faction': color, 'playerMat': player_mat})
 
     def create_game(self):
         return self.get_as_json('new')
 
     def start(self):
-        print('start', self.post('start', {'gameId': self.game_id}))
+        self.post('start', {'gameId': self.game_id})
 
     def get_stats(self):
         return self.get_as_json('stats/{}'.format(self.game_id))
@@ -62,7 +65,8 @@ class Client(BaseClient):
         return self.post('action', {'gameId': self.game_id, 'playerId': self.player_id, 'action': action})
 
     def perform_action(self, action, option):
-        self.post('OPTION', {'gameId': self.game_id, 'playerId': self.player_id, 'option': option})
+        self.get_available_options(action)
+        self.post('OPTION', {'gameId': self.game_id, 'playerId': self.player_id, 'option': str(option)})
 
     def export_game(self):
         return self.get_as_json('EXPORT/{}'.format(self.game_id))
