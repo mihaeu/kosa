@@ -58,13 +58,14 @@ def test_revert_game_state():
     state = json.loads(client.export_game())
     print(state[-1])
     event_id = state[-1]['id']
+    game = client.export_game()
 
     assert client.get_available_actions() == ['TRADE', 'BOLSTER', 'MOVE', 'PRODUCE']
     assert len(client.get_available_options('MOVE')) > 10
 
     client.perform_action('MOVE', 10)
-
-    print(client.revert(event_id))
+    client.revert(event_id)
+    assert json.loads(game) == json.loads(client.export_game())
 
     assert len(state) == len(json.loads(client.export_game()))
 
@@ -74,10 +75,8 @@ def test_import_export():
     client.start()
 
     game = client.export_game()
-
-    assert len(game) > 0
-
-    # client2 = Client()
-    # assert len(re.compile('imported').findall(client2.import_game(game))) == 1
-
-#
+    client.perform_action("MOVE", 10)
+    available_actions = client.get_available_actions()
+    client.import_game(game)
+    client.perform_action("MOVE", 10)
+    assert available_actions == client.get_available_actions()
