@@ -440,7 +440,7 @@
                     </tr>
                   `;
                   for (const unit of playerStats.units) {
-                    document.querySelector(`#${unit[1].name} .units`).innerHTML += unit[0].name.replace(/(ORKER_|ECH_)/, '');
+                    document.querySelector(`#${unit[1].name} .units`).innerHTML += unit[0].name.replace(/(HARACTER|ORKER_|ECH_)/, '');
                   }
                 }
 
