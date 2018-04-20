@@ -207,8 +207,6 @@ const readFinishedGameLog = (gameId: UUID) => {
     return EventLogSerializer.deserialize(serializedEventLog);
 };
 
-const
-
 app.get("/load", (req, res) => {
     const gameId = req.query.gameId;
     if (!gameId) {

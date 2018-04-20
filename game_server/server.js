@@ -162,8 +162,7 @@ const readFinishedGameLog = (gameId) => {
     const serializedEventLog = fs.readFileSync(`${__dirname}/finished/${gameId}`).toString();
     return EventLogSerializer_1.EventLogSerializer.deserialize(serializedEventLog);
 };
-const app, get;
-("/load", (req, res) => {
+app.get("/load", (req, res) => {
     const gameId = req.query.gameId;
     if (!gameId) {
         res.status(500).json({ message: "gameId required" });
