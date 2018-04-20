@@ -68,6 +68,20 @@ class EventLog {
         this.cache.set(hash, lastOf);
         return lastOf;
     }
+    resetUntilEvent(id) {
+        let index = 0;
+        for (const event of this.log) {
+            if (event.id === id) {
+                break;
+            }
+            index += 1;
+        }
+        if (index === this.log.length - 1) {
+            return this;
+        }
+        this.log = this.log.splice(0, index + 1);
+        return this;
+    }
     lastOf(fn) {
         for (let i = this.log.length - 1; i >= 0; --i) {
             if (fn(this.log[i])) {

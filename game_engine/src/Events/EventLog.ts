@@ -1,6 +1,7 @@
 import * as _ from "ramda";
 import { v4 } from "uuid";
 import { PlayerId } from "../PlayerId";
+import { UUID } from "../UUID";
 import { Event } from "./Event";
 
 export class EventLog {
@@ -78,6 +79,22 @@ export class EventLog {
         );
         this.cache.set(hash, lastOf);
         return lastOf;
+    }
+
+    public resetUntilEvent(id: UUID) {
+        let index = 0;
+        for (const event of this.log) {
+            if (event.id === id) {
+                break;
+            }
+            index += 1;
+        }
+        if (index === this.log.length - 1) {
+            return this;
+        }
+
+        this.log = this.log.splice(0, index + 1);
+        return this;
     }
 
     private lastOf(fn: (event: Event) => boolean): Event | null {
