@@ -15,7 +15,6 @@ class Client(BaseClient):
 
         self.player_id = self.get_player_uuid()
 
-        # print('player_id ', self.player_id)
         self.game_id = None
 
     def stop(self):
@@ -40,8 +39,6 @@ class Client(BaseClient):
         else:
             self.game_id = self.create_game()
 
-        # print('joined game with id ', self.game_id)
-
         if color is None:
             color = random.choice(['green', 'blue', 'red', 'purple', 'yellow', 'black', 'white'])
         if player_mat is None:
@@ -56,7 +53,6 @@ class Client(BaseClient):
         self.post('start', {'gameId': self.game_id})
 
     def revert(self, event_id):
-        print(event_id)
         return self.post_raw('revert', {'gameId': self.game_id, 'eventId': event_id})
 
     def get_stats(self):
