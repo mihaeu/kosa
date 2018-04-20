@@ -1,3 +1,4 @@
+import json
 import re
 
 from kosa import Client
@@ -46,6 +47,26 @@ def test_perfoming_actions():
     assert len(client.get_available_options('MOVE')) > 10
 
     client.perform_action('MOVE', 10)
+
+def test_revert_game_state():
+    client = Client()
+    client.join_a_game()
+    client.start()
+
+    print('game_id', client.game_id, 'playerid', client.player_id)
+
+    state = json.loads(client.export_game())
+    print(state[-1])
+    event_id = state[-1]['id']
+
+    assert client.get_available_actions() == ['TRADE', 'BOLSTER', 'MOVE', 'PRODUCE']
+    assert len(client.get_available_options('MOVE')) > 10
+
+    client.perform_action('MOVE', 10)
+
+    print(client.revert(event_id))
+
+    assert len(state) == len(json.loads(client.export_game()))
 
 def test_import_export():
     client = Client()

@@ -22,7 +22,4 @@ http POST localhost:3000/action gameId=$GAME_ID playerId=$PLAYER_ID action=move 
 EXPORTED_STATE=$(http GET localhost:3000/export/$GAME_ID -b | sed -r 's/^"//' | sed -r 's/"$//')
 echo $EXPORTED_STATE
 
-http GET localhost:3000/stats/$GAME_ID -b
 
-echo "gameId: $GAME_ID"
-echo "playerId: $PLAYER_ID"

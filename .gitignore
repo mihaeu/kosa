@@ -4,3 +4,6 @@ node_modules
 yarn-error.log
 game_server/finished
 __pycache__
+.pytest_cache
+*.swp
+.ipynb_checkpoints

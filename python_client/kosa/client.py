@@ -55,6 +55,10 @@ class Client(BaseClient):
     def start(self):
         self.post('start', {'gameId': self.game_id})
 
+    def revert(self, event_id):
+        print(event_id)
+        return self.post_raw('revert', {'gameId': self.game_id, 'eventId': event_id})
+
     def get_stats(self):
         return self.get_as_json('stats/{}'.format(self.game_id))
 
