@@ -293,8 +293,8 @@ export class Game {
 
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.BUILD))
-            .add(new SpendResourceEvent(player.playerId, resources))
             .add(new BuildEvent(player.playerId, location, building))
+            .add(new SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.BUILD)));
         return this.pass(player, BottomAction.BUILD);
     }
@@ -321,10 +321,12 @@ export class Game {
         );
         assertUnitNotDeployed(this.log, player, mech);
 
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction.DEPLOY);
         const location = GameInfo.unitLocation(this.log, player, worker);
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.DEPLOY))
             .add(new DeployEvent(player.playerId, mech, location))
+            .add(new SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.DEPLOY)));
         return this.pass(player, BottomAction.DEPLOY);
     }
@@ -339,10 +341,11 @@ export class Game {
             resources,
         );
 
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction.ENLIST);
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.ENLIST))
             .addIfNew(new EnlistEvent(player.playerId, recruitReward, bottomAction))
-            .add(new SpendResourceEvent(player.playerId, resources))
+            .add(new SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.ENLIST)));
         return this.pass(player, BottomAction.ENLIST);
     }
@@ -357,9 +360,11 @@ export class Game {
             resources,
         );
 
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction.UPGRADE);
         this.log
             .add(new ActionEvent(player.playerId, BottomAction.UPGRADE))
             .add(new UpgradeEvent(player.playerId, topAction, bottomAction))
+            .add(new SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction.UPGRADE)));
         return this.pass(player, BottomAction.UPGRADE);
     }
@@ -435,5 +440,20 @@ export class Game {
                 break;
             }
         }
+    }
+
+    private selectRequiredResources(count: number, resourceType: ResourceType, resources: Resource[]) {
+        const resourcesToSpend: Resource[] = [];
+        for (const resource of resources) {
+            if (count === 0) {
+                break;
+            }
+
+            if (resource.type === resourceType) {
+                resourcesToSpend.push(resource);
+                --count;
+            }
+        }
+        return resourcesToSpend;
     }
 }

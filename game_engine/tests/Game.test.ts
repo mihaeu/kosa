@@ -350,11 +350,14 @@ test("Player can build a mill", () => {
         new Resource(Field.black, ResourceType.WOOD),
         new Resource(Field.black, ResourceType.WOOD),
         new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.WOOD),
+        new Resource(Field.black, ResourceType.OIL),
     ];
     game.log.add(new GainResourceEvent(blackIndustrialPlayerId, res));
     game.build(blackIndustrialPlayer, Worker.WORKER_1, BuildingType.MILL, res);
 
-    expect(GameInfo.resources(log, blackIndustrialPlayer).countByType(ResourceType.WOOD)).toBe(0);
+    expect(GameInfo.resources(log, blackIndustrialPlayer).countByType(ResourceType.WOOD)).toBe(1);
+    expect(GameInfo.resources(log, blackIndustrialPlayer).countByType(ResourceType.OIL)).toBe(1);
     expect(GameInfo.buildings(log, blackIndustrialPlayer).pop()).toEqual(new Building(BuildingType.MILL, Field.m6));
 });
 

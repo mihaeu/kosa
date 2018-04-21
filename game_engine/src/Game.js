@@ -209,8 +209,8 @@ class Game {
         Availability_1.assertLocationHasNoOtherBuildings(this.log, player, location);
         this.log
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.BUILD))
-            .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, resources))
             .add(new BuildEvent_1.BuildEvent(player.playerId, location, building))
+            .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.BUILD)));
         return this.pass(player, BottomAction_1.BottomAction.BUILD);
     }
@@ -226,29 +226,34 @@ class Game {
         Availability_1.assertActionCanBeTaken(this.log, this.players, player, BottomAction_1.BottomAction.DEPLOY);
         Availability_1.assertAvailableResources(this.log, player, ResourceType_1.ResourceType.METAL, player.playerMat.bottomActionCost(BottomAction_1.BottomAction.DEPLOY).count, resources);
         Availability_1.assertUnitNotDeployed(this.log, player, mech);
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction_1.BottomAction.DEPLOY);
         const location = GameInfo_1.GameInfo.unitLocation(this.log, player, worker);
         this.log
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.DEPLOY))
             .add(new DeployEvent_1.DeployEvent(player.playerId, mech, location))
+            .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.DEPLOY)));
         return this.pass(player, BottomAction_1.BottomAction.DEPLOY);
     }
     enlist(player, bottomAction, recruitReward, resources) {
         Availability_1.assertActionCanBeTaken(this.log, this.players, player, BottomAction_1.BottomAction.ENLIST);
         Availability_1.assertAvailableResources(this.log, player, ResourceType_1.ResourceType.FOOD, player.playerMat.bottomActionCost(BottomAction_1.BottomAction.ENLIST).count, resources);
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction_1.BottomAction.ENLIST);
         this.log
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.ENLIST))
             .addIfNew(new EnlistEvent_1.EnlistEvent(player.playerId, recruitReward, bottomAction))
-            .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, resources))
+            .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.ENLIST)));
         return this.pass(player, BottomAction_1.BottomAction.ENLIST);
     }
     upgrade(player, topAction, bottomAction, resources) {
         Availability_1.assertActionCanBeTaken(this.log, this.players, player, BottomAction_1.BottomAction.UPGRADE);
         Availability_1.assertAvailableResources(this.log, player, ResourceType_1.ResourceType.OIL, player.playerMat.bottomActionCost(BottomAction_1.BottomAction.UPGRADE).count, resources);
+        const { resourceType, count } = player.playerMat.bottomActionCost(BottomAction_1.BottomAction.UPGRADE);
         this.log
             .add(new ActionEvent_1.ActionEvent(player.playerId, BottomAction_1.BottomAction.UPGRADE))
             .add(new UpgradeEvent_1.UpgradeEvent(player.playerId, topAction, bottomAction))
+            .add(new SpendResourceEvent_1.SpendResourceEvent(player.playerId, this.selectRequiredResources(count, resourceType, resources)))
             .add(new CoinEvent_1.CoinEvent(player.playerId, player.playerMat.bottomReward(BottomAction_1.BottomAction.UPGRADE)));
         return this.pass(player, BottomAction_1.BottomAction.UPGRADE);
     }
@@ -315,6 +320,19 @@ class Game {
                 break;
             }
         }
+    }
+    selectRequiredResources(count, resourceType, resources) {
+        const resourcesToSpend = [];
+        for (const resource of resources) {
+            if (count === 0) {
+                break;
+            }
+            if (resource.type === resourceType) {
+                resourcesToSpend.push(resource);
+                --count;
+            }
+        }
+        return resourcesToSpend;
     }
 }
 Game.PRODUCE_POWER_THRESHOLD = 4;
