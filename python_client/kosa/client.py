@@ -9,11 +9,14 @@ from .base_client import BaseClient
 
 
 class Client(BaseClient):
-    def __init__(self, host='localhost', port=3000):
+    def __init__(self, host='localhost', port=3000, player_id=None):
         super().__init__(host, port)
         self.uuid_regex = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
 
-        self.player_id = self.get_player_uuid()
+        if player_id:
+            self.player_id = player_id
+        else:
+            self.player_id = self.get_player_uuid()
 
         self.game_id = None
 
