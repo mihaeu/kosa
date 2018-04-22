@@ -30,5 +30,3 @@ if __name__ == '__main__':
         exodus_counter = exodus_counter + 1
 
         agent.move(client)
-
-    print(client.get_stats()['players'][0])

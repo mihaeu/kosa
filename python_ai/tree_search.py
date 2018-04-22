@@ -25,13 +25,13 @@ class Leaf:
         self.depth = depth
 
         client = self.build_client_for_leaf(export, next_move)
-        # self.export = json.loads(client.export_game())
+        self.export = json.loads(client.export_game() or '[]')
         self.build_leaf_containers(client)
         self.determine_stars_for_client(client)
 
     def build_client_for_leaf(self, export, next_move):
         client = start_game_as_green_industrial_player()
-        if False:
+        if False: # export:
             client.import_game(export)
         else:
             for m in self.moves:
@@ -39,7 +39,8 @@ class Leaf:
         if next_move:
             client.perform_action(next_move[0], next_move[1])
             self.moves = self.moves + [next_move]
-            return client
+
+        return client
 
     def determine_stars_for_client(self, client):
         if client.is_game_over():
@@ -52,7 +53,7 @@ class Leaf:
 
         self.star = get_stars(client)
         for l in range(self.depth):
-            actions = client.get_available_actions()
+            actions = client.get_available_actions() or []
             if actions:
                 action = random.choice(actions)
                 option = random.randint(0, len(client.get_available_options(action)))
@@ -62,7 +63,7 @@ class Leaf:
         client.stop()
 
     def build_leaf_containers(self, client):
-        self.actions = client.get_available_actions()
+        self.actions = client.get_available_actions() or []
 
         self.leaf_map = {}
         self.star_map = {}
@@ -93,7 +94,7 @@ class Leaf:
         leaf = self.leaf_map[action][option]
 
         if leaf is None:
-            leaf = Leaf(moves=(self.moves), next_move=[action, option], depth=depth)
+            leaf = Leaf(moves=(self.moves), next_move=[action, option], depth=depth, export=self.export)
             self.leaf_map[action][option] = leaf
         else:
             leaf.explore(depth=depth)
@@ -132,19 +133,19 @@ class Leaf:
             if self.leaf_map[action][option]:
                 return self.leaf_map[action][option]
 
-        return Leaf(moves=self.moves, next_move=move, depth=self.depth)
+        return Leaf(moves=self.moves, next_move=move, depth=self.depth, export=self.export)
 
 
 class TreeAgent:
     def __init__(self):
         self.leaf = Leaf()
-        self.depth=5
+        self.depth=0
 
     def move(self, client):
         time_start = time.time()
         initial_star = int(self.leaf.star)
 
-        self.depth = max(self.depth - 0.5, 10)
+        self.depth = max(self.depth - 1, 4)
 
         while self.leaf.star == initial_star:
             self.depth = min(self.depth + 1, 99)
@@ -152,7 +153,7 @@ class TreeAgent:
             sys.stdout.flush()
             self.leaf.explore(depth=int(self.depth))
 
-        for _ in range(100):
+        for _ in range(200):
             sys.stdout.write('.')
             sys.stdout.flush()
             self.leaf.explore(depth=int(self.depth))
@@ -161,10 +162,9 @@ class TreeAgent:
         print('time', time.time()-time_start, 'visits', self.leaf.visits, 'stars', self.leaf.star, 'depth', self.depth)
         print(self.leaf.moves)
 
-
 def get_stars(client):
     if client.is_game_over():
         return 100
     stats = client.get_stats()['players'][0]
 
-    return stats['stars']  + min(stats['popularity'], 17)/17.0
+    return stats['stars']  + 4 * min(stats['popularity'], 17)/17.0 +  min(stats['power'], 15)/15.0
